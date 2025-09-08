@@ -1,0 +1,644 @@
+@import url('https://fonts.googleapis.com/css2?family=Martel+Sans:wght@600&family=Poppins:wght@300;400;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+html,body{
+    overflow-y: auto;
+    scrollbar-width: none;
+    background-color: black;
+
+}
+
+
+.hero {
+    position: relative;
+    width: 100vw;
+    color: white;
+    height: auto;
+    background-image: url(assets/images/bg.jpg);
+    border-bottom: solid 8px rgb(44, 43, 43);
+}
+
+.bg-box {
+    position: absolute;
+    content: "";
+    top: 0;
+    object-fit: contain;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: .70;
+    background-color: black;
+    z-index: 1;
+}
+
+header,
+main {
+    position: relative;
+    z-index: 2;
+}
+
+
+.hero header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 2400px;
+    top: 0;
+    justify-content: space-between;
+    padding: 1.7rem 20rem;
+    margin: 0 auto;
+
+}
+
+.logo img {
+    width: 130px;
+    height: auto;
+}
+
+.right-section button {
+    width: 70px;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+.lang-select-btn {
+    background-color: hsla(0, 0%, 0%, 0.25);
+    border: solid 1px white;
+    color: white;
+    padding: 5px;
+}
+
+.sign-in-btn{
+    background-color: red;
+    border: solid 1px white;
+    color: white;
+    padding: 5px;
+}
+
+main {
+    padding: 10em 0;
+    display: flex;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.hero-text {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.hero-text h1 {
+    font-size: 48px;
+    font-weight: 900;
+}
+
+.hero-text h3 {
+    font-size: 28px;
+    font-weight: 100;
+}
+
+.hero-text h5 {
+    font-size: 20px;
+    font-weight: 100;
+}
+
+
+#email {
+    width: 250px;
+    height: auto;
+    font-size: 16px;
+    border-radius: 5px;
+    padding: 8px 15px;
+    border: .5px solid white;
+}
+
+input[type="email"] {
+    background-color: hsla(0, 0%, 0%, 0.25);
+}
+
+#email-signup-btn {
+    margin-left: 10px;
+    width: 180px;
+    background-color: red;
+    color: white;
+    border-radius: 5px;
+    font-size: 20px;
+    padding: 4px 15px;
+    border: solid 2px white;
+}
+
+
+
+/*.enjoy-tv,.download-shows,.watch-everywhere,.kid-proile*/
+
+section{
+    justify-content: center;
+    background-color: black;
+    width: 100vw;
+    height: auto;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    border-bottom: 8px solid rgb(44, 43, 43);
+    align-items: center;
+    padding: 3rem 10rem;
+}
+
+/*Inserting video inside the TV Images*/
+
+a{
+    position: relative;
+}
+
+a img{
+    width: 555px;
+    position: relative;
+    z-index: 10;
+}
+
+a video{
+    position: absolute;
+    top: 51px;
+    right: 0;
+    width: 555px;
+}
+
+
+
+.text-desc h2{
+    font-size: 42px;
+    font-weight: 900;
+}
+.text-desc h4{
+    font-size: 28px;
+    font-weight: 400;
+}
+
+/*
+.faq{
+    background-color: black;
+    width: 100vw;
+    height: auto;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 8px solid rgb(85, 84, 84);
+    align-items: center;
+    padding: 3rem 10rem;
+
+}*/
+.faq{
+    flex-direction: column;
+    gap: 30px;
+    border-bottom: 8px solid rgb(44, 43, 43);
+}
+
+.faq h2{
+    font-size: 42px;
+    font-weight: 900;
+}
+
+.faqbox{
+    width: 65vw;
+    max-width: 90vw;
+    height: auto;
+    font-size: 28px;
+    color: white;
+    background-color:rgb(44, 43, 43);
+    padding: 1.5rem 2rem ;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+svg{
+    filter: invert(1);
+}
+
+footer{
+    color: white;
+    font-weight: 400;
+    max-width: 65vw;
+    margin: auto;
+    padding: 2.5rem 4rem;
+    /*
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 5rem 0;*/
+}
+
+
+
+.footer-links{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 5rem;
+    color: white;
+
+}
+
+.questions{
+    position: relative;
+    padding: 3rem 0;
+}
+.footer-item{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.footer-item a{
+    color: #eae6e6;
+    text-decoration: underline 1px;
+
+}
+
+
+
+/*large screens*/
+
+@media screen and (max-width:2560px) {
+    section{
+        padding: 3rem 20rem;
+    }
+}
+
+@media screen and (max-width:1600px) {
+    section{
+        padding: 3rem 15rem;
+    }
+}
+
+/*laptops*/
+@media screen and (max-width:1440px) {
+    .hero-text h1 {
+        font-size: 36px;
+        font-weight: 900;
+    }
+    
+    .hero-text h3 {
+        font-size: 24px;
+        font-weight: 100;
+    }
+    
+    .hero-text h5 {
+        font-size: 18px;
+        font-weight: 100;
+    }
+
+    section{
+        padding: 3rem 10rem;
+    }
+
+    .text-desc h2{
+        font-size: 36px;
+    }
+    .text-desc h4{
+        font-size: 24px;
+    }
+    
+    .faq h2{
+        font-size: 36px;
+    }
+
+    .faqbox{
+        font-size:  24px;
+        padding: 1em 1.5em;
+    }
+}
+
+/*small laptops*/
+@media screen and (max-width:1024px) {
+    .hero header{
+        padding: 40px 250px;
+        
+    }
+    .hero-text h1 {
+        font-size: 32px;
+        font-weight: 900;
+    }
+    
+    .hero-text h3 {
+        font-size: 20px;
+        font-weight: 100;
+    }
+    
+    .hero-text h5 {
+        font-size: 16px;
+        font-weight: 100;
+    }
+    main{
+        padding: 5em 0;
+    }
+
+
+    #email {
+        width: 150px;
+        font-size: 12px;
+        padding: 5px 12px;
+    }
+        
+    #email-signup-btn {
+        margin-left: 10px;
+        width: 120px;
+        font-size: 14px;
+        padding: 2px 10px;
+    }
+
+    a img{
+        width: 400px;
+    }
+    a video{
+        width: 400px;
+    }
+
+    .text-desc h2{
+        font-size: 28px;
+    }
+
+    .text-desc h4{
+        font-size: 18px
+    }
+
+    .faq h2{
+        font-size: 28px;
+    }
+
+    .faqbox{
+        font-size:  18px;
+        padding: 1em 1.5em;
+    }
+}
+
+/*tablets*/
+@media screen and (max-width:768px) {
+    .logo img {
+        width: 100px;
+    }
+    
+    .right-section button {
+        width: 70px;
+        font-size: 12px;
+    }
+    
+    .lang-select-btn {
+        padding: 2px;
+    }
+    
+    .sign-in-btn{
+        padding: 2px;
+    }
+    
+    #email {
+        width: 150px;
+        font-size: 12px;
+        padding: 5px 12px;
+    }
+    
+    
+    .hero header{
+        padding: 30px 150px;
+    }
+
+    main{
+        padding-top: 3em;
+    }
+    
+    main h1{
+        max-width: 75vw;
+    }
+
+    .hero-text h1 {
+        font-size: 28px;
+        font-weight: 900;
+    }
+    
+    .hero-text h3 {
+        font-size: 18px;
+        font-weight: 100;
+    }
+    
+    .hero-text h5 {
+        font-size: 12px;
+        font-weight: 100;
+    }
+
+
+    a img{
+        width: 200px;
+    }
+    a video{
+        width: 200px;
+        top: auto;
+    }
+
+    .text-desc h2{
+        font-size: 24px;
+    }
+
+    .text-desc h4{
+        font-size: 16px
+    }
+
+    section{
+        padding: 3rem 5rem;
+    }
+
+    .faq h2{
+        font-size: 24px;
+    }
+
+    .faqbox{
+        font-size:  16px;
+        padding: 1em 1.5em;
+    }
+
+    .footer-item a{
+        font-size: 8px;
+        margin: 0 0;
+    }
+
+
+}
+
+/*small tablets*/
+@media screen and (max-width:600px){
+    
+
+    .hero header{
+        padding: 30px 100px;
+    }
+
+    main{
+        padding-top: 3em;
+    }
+    
+    main h1{
+        max-width: 75vw;
+    }
+
+    .hero-text h1 {
+        font-size: 24px;
+        font-weight: 900;
+    }
+    
+    .hero-text h3 {
+        font-size: 16px;
+        font-weight: 100;
+    }
+    
+    .hero-text h5 {
+        font-size: 10px;
+        font-weight: 100;
+    }
+
+
+
+    .text-desc h2{
+        font-size: 20px;
+    }
+
+    .text-desc h4{
+        font-size: 12px
+    }
+
+    section{
+        padding: 3rem 5rem;
+    }
+
+    .faq h2{
+        font-size: 20px;
+    }
+
+    .faqbox{
+        font-size:  12px;
+        padding: .8em .8em;
+    }
+
+
+
+}
+
+/*mobile screen L*/
+@media screen and (max-width:426px) {
+    .hero header{
+        padding: 20px 30px;
+    }
+
+    .hero-text{
+        align-items: center;
+        gap: 10px;
+    }
+
+    .hero-text h1{
+        font-size: 20px;
+    }
+    .hero-text h3{
+        font-size: 14px;
+    }
+
+    .hero-text h5{
+        font-size: 8px;
+    }
+
+    .email-signup form{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #email {
+        width: 120px;
+        font-size: 10px;
+        padding: 5px 12px;
+    }
+        
+    #email-signup-btn {
+        width: 120px;
+        font-size: 10px;
+        padding: 5px 12px;
+        margin-left: 0;
+    }
+
+
+
+    section{
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .text-desc{
+        text-align: center;
+    }
+
+    .faq{
+        align-items: center;
+        gap: 10px;
+    }
+
+    .faq h2{
+        text-align: center;
+        font-size: 16px;
+    }
+    .faqbox{
+        padding: .7em 2em;
+        font-size: 8px;
+        
+    }
+
+    footer{
+        max-width: 90vw;
+    }
+    .questions{
+        font-size: 12px;
+    }
+
+    .footer-links{
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 10px;
+        align-items: center;
+    }
+
+
+    .footer-links{}
+}
+
+@media screen and (max-width:376px) {
+    #email, #email-signup-btn{
+        width: 90px;
+        font-size: 8px
+    }
+
+    .text-desc h2{
+        font-size: 16px;
+    }
+
+    .text-desc h4{
+        font-size: 8px;
+    }
+
+    .faq h2{
+        font-size: 12px;
+    }
+    .faqbox{
+        font-size: 6px;
+        padding: .5em 1.5em;
+    }
+
+}
