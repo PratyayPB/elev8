@@ -13,6 +13,9 @@ Complete Phase 01 Repository Initialization & Landing Page UI, prepare for Phase
 - [x] Configured root config & tool files (`package.json`, `tsconfig.json`, `tailwind.config.ts`, `next.config.ts`, `components.json`, `postcss.config.js`, `.eslintrc`, `.prettierrc`, `.prettierignore`, `.gitignore`, `.env.example`).
 - [x] Resolved dependency conflicts with `@clerk/nextjs` by upgrading `next` and `eslint-config-next` to `^15.2.3` and adding `autoprefixer`.
 - [x] Documented UI design tokens, aesthetics, and layout rules in `context/ui-context-native.md`.
+- [x] Verified and generated all missing project scaffolding from Phase 1 (features folders, services, placeholder pages, empty config files, empty stores, markdown specs) based on `02-project-setup.md`.
+- [x] Implemented App Router route groups (`(public)`, `(auth)`, `(dashboard)`), layouts, fallback error/loading pages, metadata exports, and navigation constants based on `03-routing.md`.
+- [x] Configured Clerk Authentication foundation (middleware route protection, ClerkAuthProvider in root layout, Sign In & Sign Up pages, auth component wrappers, server helpers in `lib/auth.ts`, and updated `.env.example`) based on `04-auth-foundation.md`.
 - [x] Implemented all 16 landing page sections using the Grovia design system:
   1. `Header` — Floating pill navigation bar & responsive drawer
   2. `Hero` — Display heading, badge, CTAs & mock executive dashboard

@@ -1,8 +1,12 @@
-// Application route constants
 export const ROUTES = {
   HOME: "/",
+  ABOUT: "/about",
+  PRICING: "/pricing",
+  CONTACT: "/contact",
+  FAQ: "/faq",
   SIGN_IN: "/sign-in",
   SIGN_UP: "/sign-up",
+  FORGOT_PASSWORD: "/forgot-password",
   DASHBOARD: "/dashboard",
   CAREER_ASSESSMENT: "/career-assessment",
   CAREER_GUIDANCE: "/career-guidance",
@@ -10,6 +14,5 @@ export const ROUTES = {
   RESUME: "/resume",
   INTERVIEW: "/interview",
   PROGRESS: "/progress",
-  PRICING: "/pricing",
   SETTINGS: "/settings",
-};
+} as const;

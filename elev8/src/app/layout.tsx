@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkAuthProvider } from "@/providers/clerk-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,10 +13,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="font-sans antialiased bg-background text-foreground selection:bg-accent-cyan selection:text-black">
-        {children}
-      </body>
-    </html>
+    <ClerkAuthProvider>
+      <html lang="en" className="scroll-smooth">
+        <body className="font-sans antialiased bg-background text-foreground selection:bg-accent-cyan selection:text-black">
+          {children}
+        </body>
+      </html>
+    </ClerkAuthProvider>
   );
 }
