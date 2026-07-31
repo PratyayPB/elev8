@@ -1,0 +1,11 @@
+// Prisma schema file for Elev8
+// TODO: Define models for User, CareerAssessment, CareerGuidance, Roadmap, Resume, InterviewSession, Analytics
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

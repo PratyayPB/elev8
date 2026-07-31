@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Elev8 AI | Low-Fidelity Career Growth Wireframe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#4e453a",
+                      "tertiary-fixed": "#eee0d1",
+                      "surface-dim": "#dcd9dd",
+                      "surface": "#fbf8fc",
+                      "outline-variant": "#c7c5cb",
+                      "inverse-primary": "#c6c5cf",
+                      "on-primary-container": "#f9f7ff",
+                      "surface-container": "#f0edf1",
+                      "on-surface": "#1b1b1e",
+                      "primary-fixed-dim": "#c6c5cf",
+                      "secondary-container": "#dfdfe0",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "tertiary": "#61584b",
+                      "tertiary-fixed-dim": "#d1c5b5",
+                      "on-background": "#1b1b1e",
+                      "on-tertiary-container": "#fff6ee",
+                      "secondary-fixed": "#e2e2e3",
+                      "primary-fixed": "#e3e1ec",
+                      "inverse-surface": "#303033",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#211b11",
+                      "primary": "#585961",
+                      "surface-container-lowest": "#ffffff",
+                      "background": "#fbf8fc",
+                      "on-surface-variant": "#46464b",
+                      "secondary": "#5d5e60",
+                      "on-primary-fixed": "#1a1b22",
+                      "outline": "#77767c",
+                      "surface-tint": "#5d5e66",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#fbf8fc",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "surface-container-low": "#f6f2f7",
+                      "on-primary-fixed-variant": "#46464e",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#616364",
+                      "tertiary-container": "#7a7063",
+                      "surface-container-high": "#eae7eb",
+                      "surface-variant": "#e4e1e6",
+                      "on-secondary-fixed": "#1a1c1d",
+                      "surface-container-highest": "#e4e1e6",
+                      "on-secondary-fixed-variant": "#454748",
+                      "error-container": "#ffdad6",
+                      "inverse-on-surface": "#f3f0f4",
+                      "primary-container": "#71717a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1200px",
+                      "gutter": "24px",
+                      "section-gap": "128px",
+                      "margin-desktop": "64px",
+                      "margin-mobile": "20px",
+                      "element-gap": "24px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "display": ["Inter"],
+                      "display-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "display-mobile": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .placeholder-box {
+            border: 1px solid #e4e4e7;
+            position: relative;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .placeholder-box::before, .placeholder-box::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 142%;
+            height: 1px;
+            background: #e4e4e7;
+        }
+        .placeholder-box::before { transform: translate(-50%, -50%) rotate(45deg); }
+        .placeholder-box::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+        .blueprint-border { border: 1px solid #e4e4e7; }
+        .blueprint-bg { background-color: #fafafa; }
+        .blueprint-bg-alt { background-color: #ffffff; }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            color: #71717a;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- 1. Sticky Header -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer md:hidden">menu</span>
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Elev8</span>
+</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Features</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Pricing</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">FAQ</a>
+</nav>
+<button class="bg-[#71717a] text-white px-6 py-2 text-label-md font-label-md rounded">Get Started</button>
+</header>
+<main class="mt-16">
+<!-- 2. Hero Section -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap flex flex-col items-center text-center">
+<div class="bg-[#f4f4f5] text-[#3f3f46] px-4 py-1 rounded-full text-label-sm font-label-sm border border-outline-variant mb-6">
+                AI-Powered Career Growth
+            </div>
+<h1 class="text-display-mobile md:text-display font-display mb-6 max-w-4xl">Unlock Your Professional Potential</h1>
+<p class="text-body-lg text-on-surface-variant mb-10 max-w-2xl">
+                Leverage generative intelligence to map your career trajectory, optimize your professional presence, and ace your next big opportunity.
+            </p>
+<div class="flex flex-col sm:flex-row gap-4 mb-16">
+<button class="bg-[#71717a] text-white px-8 py-3 text-label-md font-label-md rounded">Start Free</button>
+<button class="border border-[#e4e4e7] bg-transparent text-[#18181b] px-8 py-3 text-label-md font-label-md rounded">View Demo</button>
+</div>
+<div class="w-full max-w-4xl h-[300px] placeholder-box rounded-lg flex items-center justify-center">
+<span class="bg-surface px-4 py-1 z-10 text-label-md font-label-md blueprint-border">Dashboard Mockup</span>
+</div>
+</section>
+<!-- 3. Social Proof -->
+<section class="blueprint-bg border-y border-outline-variant py-12">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<p class="text-center text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-8">Trusted by professionals at</p>
+<div class="flex flex-wrap justify-center gap-12 md:gap-24 items-center opacity-50 grayscale">
+<div class="text-headline-md font-bold">50k+ Users</div>
+<div class="text-headline-md font-bold">10k+ Roadmaps</div>
+<div class="text-headline-md font-bold">FEAT:TECH</div>
+<div class="text-headline-md font-bold">LOGOMARK</div>
+</div>
+</div>
+</section>
+<!-- 4. About Section -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap grid md:grid-cols-2 gap-16 items-center">
+<div class="h-[400px] placeholder-box rounded-lg flex items-center justify-center">
+<span class="bg-surface px-4 py-1 z-10 text-label-md font-label-md blueprint-border">About Illustration</span>
+</div>
+<div>
+<h2 class="text-headline-lg font-headline-lg mb-8">Why Elev8?</h2>
+<ul class="space-y-6">
+<li class="flex gap-4 items-start">
+<span class="w-6 h-6 bg-[#f4f4f5] border border-outline-variant flex-shrink-0 mt-1"></span>
+<div>
+<p class="font-bold">Personalized Insight</p>
+<p class="text-on-surface-variant">Data-driven analysis tailored to your specific background.</p>
+</div>
+</li>
+<li class="flex gap-4 items-start">
+<span class="w-6 h-6 bg-[#f4f4f5] border border-outline-variant flex-shrink-0 mt-1"></span>
+<div>
+<p class="font-bold">Real-time Adaptation</p>
+<p class="text-on-surface-variant">Roadmaps that shift as the industry trends evolve.</p>
+</div>
+</li>
+<li class="flex gap-4 items-start">
+<span class="w-6 h-6 bg-[#f4f4f5] border border-outline-variant flex-shrink-0 mt-1"></span>
+<div>
+<p class="font-bold">Scalable Learning</p>
+<p class="text-on-surface-variant">From entry-level to C-suite transitions supported.</p>
+</div>
+</li>
+<li class="flex gap-4 items-start">
+<span class="w-6 h-6 bg-[#f4f4f5] border border-outline-variant flex-shrink-0 mt-1"></span>
+<div>
+<p class="font-bold">Objective Evaluation</p>
+<p class="text-on-surface-variant">Bias-free skill assessment using advanced AI scoring.</p>
+</div>
+</li>
+</ul>
+</div>
+</section>
+<!-- 5. Core Features -->
+<section class="blueprint-bg py-section-gap border-y border-outline-variant">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="text-center mb-16">
+<h2 class="text-headline-lg font-headline-lg mb-4">Powerful Features</h2>
+<p class="text-on-surface-variant max-w-xl mx-auto">Comprehensive tools designed to give you a competitive edge.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Cards -->
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg flex flex-col gap-4">
+<span class="material-symbols-outlined text-4xl">psychology</span>
+<h3 class="font-bold text-headline-md">Assessment</h3>
+<p class="text-on-surface-variant">Deep-dive into your hard and soft skills with interactive testing.</p>
+</div>
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg flex flex-col gap-4">
+<span class="material-symbols-outlined text-4xl">smart_toy</span>
+<h3 class="font-bold text-headline-md">AI Guidance</h3>
+<p class="text-on-surface-variant">24/7 career coaching focused on your professional objectives.</p>
+</div>
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg flex flex-col gap-4">
+<span class="material-symbols-outlined text-4xl">route</span>
+<h3 class="font-bold text-headline-md">Roadmaps</h3>
+<p class="text-on-surface-variant">Step-by-step navigation from your current role to your dream job.</p>
+</div>
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg flex flex-col gap-4">
+<span class="material-symbols-outlined text-4xl">edit_document</span>
+<h3 class="font-bold text-headline-md">Resume Builder</h3>
+<p class="text-on-surface-variant">Craft high-impact resumes using AI-optimized templates.</p>
+</div>
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg flex flex-col gap-4">
+<span class="material-symbols-outlined text-4xl">query_stats</span>
+<h3 class="font-bold text-headline-md">ATS Scorer</h3>
+<p class="text-on-surface-variant">Ensure your application clears automated tracking systems.</p>
+</div>
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg flex flex-col gap-4">
+<span class="material-symbols-outlined text-4xl">record_voice_over</span>
+<h3 class="font-bold text-headline-md">Interview Simulation</h3>
+<p class="text-on-surface-variant">Practice with realistic AI avatars and receive instant feedback.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. Workflow -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+<h2 class="text-headline-lg font-headline-lg mb-16 text-center">How It Works</h2>
+<div class="relative max-w-2xl mx-auto">
+<div class="absolute left-6 top-0 bottom-0 w-[1px] bg-outline-variant"></div>
+<div class="space-y-12">
+<!-- Step 1 -->
+<div class="flex gap-8 items-start relative">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface flex items-center justify-center font-bold text-headline-md z-10 flex-shrink-0">1</div>
+<div class="pt-2 flex-grow">
+<h4 class="font-bold mb-2">Create Your Profile</h4>
+<div class="h-20 placeholder-box rounded mb-2"></div>
+<p class="text-on-surface-variant">Import your LinkedIn or upload a CV to begin.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex gap-8 items-start relative">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface flex items-center justify-center font-bold text-headline-md z-10 flex-shrink-0">2</div>
+<div class="pt-2 flex-grow">
+<h4 class="font-bold mb-2">Skills Assessment</h4>
+<p class="text-on-surface-variant">Complete a quick 10-minute AI-driven benchmark.</p>
+</div>
+</div>
+<!-- Step 3-6 repeated structure -->
+<div class="flex gap-8 items-start relative">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface flex items-center justify-center font-bold text-headline-md z-10 flex-shrink-0">3</div>
+<div class="pt-2 flex-grow">
+<h4 class="font-bold mb-2">Generate Roadmap</h4>
+<p class="text-on-surface-variant">Receive a custom learning and growth path.</p>
+</div>
+</div>
+<div class="flex gap-8 items-start relative">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface flex items-center justify-center font-bold text-headline-md z-10 flex-shrink-0">4</div>
+<div class="pt-2 flex-grow">
+<h4 class="font-bold mb-2">Optimize Assets</h4>
+<p class="text-on-surface-variant">Upgrade your resume and cover letters.</p>
+</div>
+</div>
+<div class="flex gap-8 items-start relative">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface flex items-center justify-center font-bold text-headline-md z-10 flex-shrink-0">5</div>
+<div class="pt-2 flex-grow">
+<h4 class="font-bold mb-2">Interview Training</h4>
+<p class="text-on-surface-variant">Simulate high-stakes scenarios with AI.</p>
+</div>
+</div>
+<div class="flex gap-8 items-start relative">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface flex items-center justify-center font-bold text-headline-md z-10 flex-shrink-0">6</div>
+<div class="pt-2 flex-grow">
+<h4 class="font-bold mb-2">Land the Role</h4>
+<p class="text-on-surface-variant">Apply with confidence and track your success.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 7. Product Showcase -->
+<section class="blueprint-bg border-y border-outline-variant">
+<!-- Section 1 -->
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-32 grid md:grid-cols-2 gap-24 items-center border-b border-outline-variant">
+<div class="h-[320px] placeholder-box rounded-lg flex items-center justify-center">
+<span class="bg-surface px-4 py-1 z-10 text-label-md font-label-md blueprint-border">Dashboard UI</span>
+</div>
+<div>
+<h3 class="text-headline-lg font-headline-lg mb-6">Master Your Progress</h3>
+<p class="text-body-lg text-on-surface-variant">View your career health at a glance with integrated charts and skill trackers that update in real-time.</p>
+</div>
+</div>
+<!-- Section 2 -->
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-32 grid md:grid-cols-2 gap-24 items-center border-b border-outline-variant">
+<div class="order-2 md:order-1">
+<h3 class="text-headline-lg font-headline-lg mb-6">Strategic Pathing</h3>
+<p class="text-body-lg text-on-surface-variant">Every action item is linked to a career milestone. No more guesswork in your professional development.</p>
+</div>
+<div class="h-[320px] placeholder-box rounded-lg flex items-center justify-center order-1 md:order-2">
+<span class="bg-surface px-4 py-1 z-10 text-label-md font-label-md blueprint-border">Roadmap UI</span>
+</div>
+</div>
+<!-- Section 3 -->
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-32 grid md:grid-cols-2 gap-24 items-center">
+<div class="h-[320px] placeholder-box rounded-lg flex items-center justify-center">
+<span class="bg-surface px-4 py-1 z-10 text-label-md font-label-md blueprint-border">Interview UI</span>
+</div>
+<div>
+<h3 class="text-headline-lg font-headline-lg mb-6">Live Simulations</h3>
+<p class="text-body-lg text-on-surface-variant">Experience low-stakes practice with high-stakes fidelity. Detailed feedback reports after every session.</p>
+</div>
+</div>
+</section>
+<!-- 8. Dashboard Preview -->
+<section class="py-section-gap">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="blueprint-bg-alt border border-outline-variant rounded-xl p-8 md:p-12">
+<h2 class="text-headline-lg font-headline-lg mb-12 text-center">Analytics &amp; Insights</h2>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="col-span-1 md:col-span-1 flex flex-col gap-4">
+<div class="h-40 placeholder-box rounded flex items-center justify-center">Score Gauge</div>
+<div class="h-40 placeholder-box rounded flex items-center justify-center">Activity Heatmap</div>
+</div>
+<div class="col-span-1 md:col-span-3 h-auto min-h-[340px] placeholder-box rounded flex items-center justify-center">
+                            Large Growth Trend Chart
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- 9. Success Gallery -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+<h2 class="text-headline-lg font-headline-lg mb-8 text-center">Sample Reports</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="h-64 placeholder-box rounded"></div>
+<div class="h-80 placeholder-box rounded"></div>
+<div class="h-72 placeholder-box rounded"></div>
+<div class="h-64 placeholder-box rounded"></div>
+</div>
+</section>
+<!-- 10. Pricing -->
+<section class="blueprint-bg py-section-gap border-y border-outline-variant" id="pricing">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="text-center mb-16">
+<h2 class="text-headline-lg font-headline-lg mb-4">Simple Pricing</h2>
+<p class="text-on-surface-variant">Plans for every stage of your career.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Free -->
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg">
+<h4 class="font-bold text-headline-md mb-2">Free</h4>
+<div class="text-display-mobile mb-6">$0<span class="text-label-md">/mo</span></div>
+<ul class="space-y-4 mb-8 text-on-surface-variant">
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Basic Profile</li>
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Resume Scan</li>
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Public Forum</li>
+</ul>
+<button class="w-full border border-[#e4e4e7] py-2 rounded font-bold">Select Plan</button>
+</div>
+<!-- Pro -->
+<div class="blueprint-bg-alt border-2 border-[#71717a] p-8 rounded-lg relative scale-105 shadow-sm">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#71717a] text-white px-3 py-1 text-label-sm uppercase rounded">Most Popular</div>
+<h4 class="font-bold text-headline-md mb-2">Pro</h4>
+<div class="text-display-mobile mb-6">$29<span class="text-label-md">/mo</span></div>
+<ul class="space-y-4 mb-8 text-on-surface-variant">
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Full Assessment</li>
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Roadmap Engine</li>
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Interview Basic</li>
+</ul>
+<button class="w-full bg-[#71717a] text-white py-2 rounded font-bold">Select Plan</button>
+</div>
+<!-- Premium -->
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg">
+<h4 class="font-bold text-headline-md mb-2">Premium</h4>
+<div class="text-display-mobile mb-6">$99<span class="text-label-md">/mo</span></div>
+<ul class="space-y-4 mb-8 text-on-surface-variant">
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Unlimited Sim</li>
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Human Feedback</li>
+<li class="flex gap-2 items-center"><span class="w-2 h-2 bg-[#71717a]"></span> Priority Support</li>
+</ul>
+<button class="w-full border border-[#e4e4e7] py-2 rounded font-bold">Select Plan</button>
+</div>
+</div>
+</div>
+</section>
+<!-- 11. Testimonials -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+<h2 class="text-headline-lg font-headline-lg mb-16 text-center">User Success</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg italic text-on-surface-variant relative">
+                    "Elev8 transformed how I look at my skills. Within two months of following the roadmap, I landed a Lead Engineer position."
+                    <div class="mt-8 flex items-center gap-4 not-italic">
+<div class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center bg-surface">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="font-bold">Alex Johnson</p>
+<p class="text-label-sm">Software Architect</p>
+</div>
+</div>
+</div>
+<div class="blueprint-bg-alt border border-outline-variant p-8 rounded-lg italic text-on-surface-variant relative">
+                    "The interview simulations are scarily accurate. It helped me overcome my anxiety and negotiate a 30% raise."
+                    <div class="mt-8 flex items-center gap-4 not-italic">
+<div class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center bg-surface">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="font-bold">Sarah Chen</p>
+<p class="text-label-sm">Marketing Director</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 12. FAQ Accordion -->
+<section class="blueprint-bg py-section-gap border-y border-outline-variant">
+<div class="max-w-2xl mx-auto px-margin-mobile">
+<h2 class="text-headline-lg font-headline-lg mb-12 text-center">Frequently Asked Questions</h2>
+<div class="divide-y divide-outline-variant">
+<div class="py-6 cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-bold">Is my data secure?</h4>
+<span class="material-symbols-outlined">add</span>
+</div>
+<p class="mt-4 text-on-surface-variant hidden">Yes, we use enterprise-grade encryption for all user data.</p>
+</div>
+<div class="py-6 cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-bold">Can I cancel anytime?</h4>
+<span class="material-symbols-outlined">add</span>
+</div>
+<p class="mt-4 text-on-surface-variant hidden">Subscription models are flexible and can be paused or cancelled at the end of any billing cycle.</p>
+</div>
+<div class="py-6 cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-bold">How often is the roadmap updated?</h4>
+<span class="material-symbols-outlined">add</span>
+</div>
+</div>
+<div class="py-6 cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-bold">Do you offer team plans?</h4>
+<span class="material-symbols-outlined">add</span>
+</div>
+</div>
+<div class="py-6 cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-bold">What AI models do you use?</h4>
+<span class="material-symbols-outlined">add</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 13. Final CTA -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap text-center">
+<h2 class="text-display-mobile md:text-headline-lg font-bold mb-6">Ready to Elevate?</h2>
+<p class="text-body-lg text-on-surface-variant mb-10">Join 50,000+ professionals reaching their peak potential.</p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<button class="bg-[#71717a] text-white px-10 py-4 text-label-md font-bold rounded">Get Started Now</button>
+<button class="border border-[#e4e4e7] px-10 py-4 text-label-md font-bold rounded">Talk to Sales</button>
+</div>
+</section>
+<!-- 14. Contact Form -->
+<section class="blueprint-bg border-t border-outline-variant py-section-gap">
+<div class="max-w-xl mx-auto px-margin-mobile">
+<h2 class="text-headline-lg font-headline-lg mb-8 text-center">Contact Us</h2>
+<form class="space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Full Name</label>
+<input class="bg-[#fafafa] border border-[#e4e4e7] p-3 rounded" placeholder="John Doe" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Email Address</label>
+<input class="bg-[#fafafa] border border-[#e4e4e7] p-3 rounded" placeholder="john@example.com" type="email"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Subject</label>
+<input class="bg-[#fafafa] border border-[#e4e4e7] p-3 rounded" placeholder="Inquiry about..." type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Message</label>
+<textarea class="bg-[#fafafa] border border-[#e4e4e7] p-3 rounded" placeholder="How can we help?" rows="4"></textarea>
+</div>
+<button class="w-full bg-[#71717a] text-white py-3 rounded font-bold" type="submit">Submit</button>
+</form>
+</div>
+</section>
+</main>
+<!-- 15. Footer -->
+<footer class="flex flex-col gap-element-gap px-margin-mobile md:px-margin-desktop py-12 w-full bg-surface-container-lowest border-t border-outline-variant">
+<div class="max-w-container-max mx-auto w-full grid grid-cols-2 md:grid-cols-4 gap-12">
+<div>
+<span class="text-label-md font-label-md font-bold text-on-surface mb-6 block">Product</span>
+<ul class="space-y-4 text-label-sm text-on-surface-variant">
+<li class="hover:text-primary cursor-pointer transition-colors">Features</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Integrations</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Pricing</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Changelog</li>
+</ul>
+</div>
+<div>
+<span class="text-label-md font-label-md font-bold text-on-surface mb-6 block">Company</span>
+<ul class="space-y-4 text-label-sm text-on-surface-variant">
+<li class="hover:text-primary cursor-pointer transition-colors">About Us</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Careers</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Blog</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Privacy</li>
+</ul>
+</div>
+<div>
+<span class="text-label-md font-label-md font-bold text-on-surface mb-6 block">Support</span>
+<ul class="space-y-4 text-label-sm text-on-surface-variant">
+<li class="hover:text-primary cursor-pointer transition-colors">Documentation</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Help Center</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Community</li>
+<li class="hover:text-primary cursor-pointer transition-colors">Contact</li>
+</ul>
+</div>
+<div>
+<span class="text-label-md font-label-md font-bold text-on-surface mb-6 block">Newsletter</span>
+<p class="text-label-sm text-on-surface-variant mb-4">The latest in AI and career growth.</p>
+<div class="flex gap-2">
+<input class="bg-surface border border-outline-variant p-2 text-label-sm rounded flex-grow" placeholder="Email" type="email"/>
+<button class="bg-[#71717a] text-white px-3 rounded material-symbols-outlined">send</button>
+</div>
+</div>
+</div>
+<div class="max-w-container-max mx-auto w-full pt-12 border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4 text-label-sm text-on-surface-variant">
+<p>© 2024 Elev8 AI. All rights reserved.</p>
+<div class="flex gap-6">
+<span class="hover:text-primary cursor-pointer">Privacy Policy</span>
+<span class="hover:text-primary cursor-pointer">Terms of Service</span>
+</div>
+</div>
+</footer>
+<!-- 16. Floating Chat Button -->
+<div class="fixed bottom-8 right-8 z-[70]">
+<button class="w-14 h-14 bg-[#71717a] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+</button>
+</div>
+<script>
+        // Simple micro-interactions for the Wireframe
+        document.querySelectorAll('.group.cursor-pointer').forEach(item => {
+            item.addEventListener('click', () => {
+                const p = item.querySelector('p');
+                const icon = item.querySelector('.material-symbols-outlined');
+                const isOpen = !p.classList.contains('hidden');
+                
+                // Close others
+                document.querySelectorAll('.group.cursor-pointer p').forEach(otherP => otherP.classList.add('hidden'));
+                document.querySelectorAll('.group.cursor-pointer .material-symbols-outlined').forEach(otherIcon => otherIcon.innerText = 'add');
+
+                if (!isOpen) {
+                    p.classList.remove('hidden');
+                    icon.innerText = 'remove';
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,2 @@
+// Modals components module
+export {};

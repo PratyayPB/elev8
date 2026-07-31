@@ -1,0 +1,2 @@
+// Resume components
+export {};

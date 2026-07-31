@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Fragment+Mono&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F4F2EE;
+  --foreground: #1A1A1A;
+  --surface-primary: #FFFFFF;
+  --surface-muted: #EDE9E6;
+  --text-primary: #000000;
+  --text-secondary: #605F5F;
+  --text-muted: #999999;
+  --border-subtle: #E6E6E6;
+  --border-strong: #1A1A1A;
+  
+  --accent-cyan: #84E6F6;
+  --accent-coral: #F7A49E;
+  --accent-gold: #FECD1A;
+  --accent-cream: #FEF7AF;
+  --accent-red: #E83043;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+  }
+}
+
