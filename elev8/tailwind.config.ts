@@ -35,8 +35,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "Albert Sans", "sans-serif"],
-        display: ["Inter", "sans-serif"],
+        sans: ["var(--font-geist-sans)", "sans-serif"],
+        display: ["var(--font-albert-sans)", "sans-serif"],
         mono: ["Fragment Mono", "monospace"],
       },
       maxWidth: {

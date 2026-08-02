@@ -1,10 +1,11 @@
 'use client';
 
 export default function Error({
-  error,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _error,
   reset,
 }: {
-  error: Error & { digest?: string };
+  _error: Error & { digest?: string };
   reset: () => void;
 }) {
   return (

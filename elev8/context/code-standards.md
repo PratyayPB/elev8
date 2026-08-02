@@ -81,13 +81,8 @@ Do not duplicate persisted database state inside Zustand.
 
 ## AI
 
-- Every AI feature must have its own prompt.
-- Store prompts under:
-
-```
-lib/ai/prompts/
-```
-
+- Every AI feature must have its own prompt stored under `lib/ai/prompts/`.
+- Consult the [gemini-api-dev](file:///.agents/skills/gemini-api-dev/SKILL.md) skill guide for `@google/genai` SDK usage, multimodal content, function calling, and structured output parsing.
 - Request structured JSON responses whenever possible.
 - Validate every AI response using Zod.
 - Never persist invalid AI output.
@@ -106,6 +101,11 @@ Use Trigger.dev for:
 - Interview generation
 - Interview evaluation
 - Future scheduled jobs
+
+Consult the Trigger.dev skills in `.agents/skills/`:
+- [trigger-setup](file:///.agents/skills/trigger-setup/SKILL.md) & [trigger-config](file:///.agents/skills/trigger-config/SKILL.md) for configuration.
+- [trigger-tasks](file:///.agents/skills/trigger-tasks/SKILL.md) & [trigger-realtime](file:///.agents/skills/trigger-realtime/SKILL.md) for background tasks and live UI hooks.
+- [trigger-agents](file:///.agents/skills/trigger-agents/SKILL.md) & [trigger-cost-savings](file:///.agents/skills/trigger-cost-savings/SKILL.md) for multi-agent workflows and cost optimization.
 
 Do not use Trigger.dev for:
 
@@ -138,6 +138,9 @@ Move business logic into:
 ## Database
 
 - Use Prisma for all database access.
+- Consult Prisma skills in `.agents/skills/`:
+  - [prisma-client-api](file:///.agents/skills/prisma-client-api/SKILL.md) for queries, filters, and transactions.
+  - [prisma-database-setup](file:///.agents/skills/prisma-database-setup/SKILL.md) & [prisma-postgres](file:///.agents/skills/prisma-postgres/SKILL.md) for connection config.
 - Prefer relations over duplicated data.
 - Use migrations for schema changes.
 - Never edit previous migrations.

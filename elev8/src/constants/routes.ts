@@ -15,4 +15,5 @@ export const ROUTES = {
   INTERVIEW: "/interview",
   PROGRESS: "/progress",
   SETTINGS: "/settings",
+  ONBOARDING: "/onboarding",
 } as const;

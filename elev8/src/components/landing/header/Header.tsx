@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -44,18 +45,29 @@ export function Header() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-4">
-          <Link
-            href="/sign-in"
-            className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className="bg-black text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-black/90 transition-all shadow-sm"
-          >
-            Get Started
-          </Link>
+          <SignedOut>
+            <Link
+              href="/sign-in"
+              className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/sign-up"
+              className="bg-black text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-black/90 transition-all shadow-sm"
+            >
+              Get Started
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+            >
+              Dashboard
+            </Link>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
 
         {/* Mobile menu trigger */}
@@ -100,18 +112,32 @@ export function Header() {
             FAQ
           </a>
           <div className="flex flex-col gap-3 pt-2">
-            <Link
-              href="/sign-in"
-              className="w-full text-center text-sm font-medium py-2.5 border border-[#E6E6E6] rounded-full text-black"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="w-full text-center bg-black text-white text-sm font-medium py-2.5 rounded-full"
-            >
-              Get Started
-            </Link>
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                className="w-full text-center text-sm font-medium py-2.5 border border-[#E6E6E6] rounded-full text-black"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="w-full text-center bg-black text-white text-sm font-medium py-2.5 rounded-full"
+              >
+                Get Started
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <div className="flex items-center justify-between px-2">
+                <Link
+                  href="/dashboard"
+                  className="flex-1 text-center bg-black text-white text-sm font-medium py-2.5 rounded-full mr-4"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <UserButton afterSignOutUrl="/" />
+              </div>
+            </SignedIn>
           </div>
         </div>
       )}

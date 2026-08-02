@@ -1,4 +1,1 @@
-// User service placeholder
-export class UserService {
-  // TODO: Add user profile management logic
-}
+export { ProfileService as UserService } from "@/features/profile/services/profile.service";

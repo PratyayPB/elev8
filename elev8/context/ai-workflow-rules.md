@@ -20,6 +20,7 @@ Do not invent features, workflows, or business logic that are not explicitly def
 
 - Build one feature or subsystem at a time.
 - Prefer small, verifiable increments over large implementations.
+- Consult the relevant domain guide in `.agents/skills/` before writing code for Clerk, Prisma, Gemini, or Trigger.dev.
 - Ensure every completed unit is functional before moving to the next.
 - Keep implementations loosely coupled and modular.
 - Reuse existing components whenever possible.

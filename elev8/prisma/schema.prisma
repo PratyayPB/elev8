@@ -1,5 +1,4 @@
 // Prisma schema file for Elev8
-// TODO: Define models for User, CareerAssessment, CareerGuidance, Roadmap, Resume, InterviewSession, Analytics
 
 generator client {
   provider = "prisma-client-js"
@@ -8,4 +7,361 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum CurrentStatus {
+  STUDENT
+  GRADUATE
+  WORKING_PROFESSIONAL
+  CAREER_SWITCHER
+}
+
+enum OnboardingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum CareerLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum RoadmapStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum ResumeStatus {
+  DRAFT
+  COMPLETED
+  ARCHIVED
+}
+
+enum InterviewStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum InterviewDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum InterviewCategory {
+  BEHAVIORAL
+  TECHNICAL
+  SYSTEM_DESIGN
+  ROLE_SPECIFIC
+  GENERAL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String?
+
+  profile           UserProfile?
+  careerAssessments CareerAssessment[]
+  careerGuidances   CareerGuidance[]
+  roadmaps          Roadmap[]
+  resumes           Resume[]
+  interviewSessions InterviewSession[]
+  progress          Progress?
+  notifications     Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clerkId])
+  @@map("users")
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal Information
+  fullName        String?
+  profilePicture  String?   // Read-only URL from Clerk
+  email           String?   // Read-only email synced from Clerk
+  country         String?   // Free-text input
+  timezone        String?   // Free-text input
+
+  // Academic Information
+  currentStatus   CurrentStatus?
+  degree          String?
+  major           String?
+  institution     String?
+  graduationYear  Int?
+
+  // Professional Information
+  currentRole       String?
+  yearsOfExperience Int?
+  industry          String?
+  employmentStatus  String?
+
+  // Career Interests, Skills, Goals
+  careerInterests   String[]
+  skills            Json?      // JSON object storing categorized arrays: { languages: [], frameworks: [], databases: [], cloud: [], tools: [], softSkills: [] }
+  careerGoals       String[]
+
+  // Preferences
+  learningStyle     String?
+  difficulty        String?
+  weeklyHours       Int?
+
+  // Onboarding tracking
+  onboardingStatus    OnboardingStatus  @default(NOT_STARTED)
+  onboardingStep      Int               @default(0)
+  profileCompletion   Int               @default(0)
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("user_profiles")
+}
+
+model CareerAssessment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  targetRole     String?
+  targetIndustry String?
+  currentLevel   CareerLevel?
+  skills         String[]
+  interests      String[]
+  goals          String[]
+  notes          String?
+
+  careerGuidances CareerGuidance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("career_assessments")
+}
+
+model CareerGuidance {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId String?
+  assessment   CareerAssessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+
+  title           String
+  status          RoadmapStatus? @default(NOT_STARTED)
+  contentUrl      String?        // Reference to large report artifact stored in Blob Storage
+  careerMatch     String?
+  marketReadiness Int?
+  salaryMin       Int?
+  salaryMax       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([assessmentId])
+  @@index([createdAt])
+  @@map("career_guidances")
+}
+
+model Roadmap {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title             String
+  description       String?
+  targetCareer      String
+  estimatedDuration String?
+  status            RoadmapStatus @default(NOT_STARTED)
+  contentUrl        String?       // Reference to large AI-generated JSON roadmap artifact in Blob Storage
+
+  milestones RoadmapMilestone[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("roadmaps")
+}
+
+model RoadmapMilestone {
+  id        String   @id @default(cuid())
+  roadmapId String
+  roadmap   Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  title          String
+  description    String?
+  order          Int
+  status         MilestoneStatus @default(NOT_STARTED)
+  estimatedHours Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roadmapId])
+  @@index([roadmapId, order])
+  @@map("roadmap_milestones")
+}
+
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title        String
+  version      Int          @default(1)
+  status       ResumeStatus @default(DRAFT)
+  atsScore     Int?
+  overallScore Int?
+  contentUrl   String?      // Reference to resume JSON/PDF artifact in Blob Storage
+
+  analyses ResumeAnalysis[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("resumes")
+}
+
+model ResumeAnalysis {
+  id       String @id @default(cuid())
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  contentUrl      String?  // Reference to detailed analysis report artifact in Blob Storage
+  atsScore        Int?
+  overallScore    Int?
+  suggestions     String[]
+  missingKeywords String[]
+  weakSections    String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resumeId])
+  @@index([createdAt])
+  @@map("resume_analyses")
+}
+
+model InterviewSession {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  targetRole      String
+  difficulty      InterviewDifficulty @default(MEDIUM)
+  status          InterviewStatus     @default(IN_PROGRESS)
+  overallScore    Int?
+  durationSeconds Int?
+  contentUrl      String?             // Reference to interview transcript/audio artifact in Blob Storage
+
+  questions InterviewQuestion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("interview_sessions")
+}
+
+model InterviewQuestion {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  question   String
+  category   InterviewCategory   @default(GENERAL)
+  difficulty InterviewDifficulty @default(MEDIUM)
+  userAnswer String?
+  aiFeedback String?
+  score      Int?
+  order      Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([sessionId, order])
+  @@map("interview_questions")
+}
+
+model Progress {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  completedMilestones Int  @default(0)
+  totalMilestones     Int  @default(0)
+  interviewReadiness  Int?
+  resumeReadiness     Int?
+  careerReadiness     Int?
+  overallProgress     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("progress")
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title  String
+  body   String?
+  status NotificationStatus @default(UNREAD)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notifications")
 }
