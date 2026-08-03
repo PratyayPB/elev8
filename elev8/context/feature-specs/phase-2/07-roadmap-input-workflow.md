@@ -1,4 +1,4 @@
-# Phase 7.1 - Roadmap Input Workflow
+# Roadmap Input Workflow
 
 ## Objective
 

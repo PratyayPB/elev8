@@ -45,3 +45,75 @@ export const RoadmapRequestSchema = z.object({
 });
 
 export type RoadmapRequest = z.infer<typeof RoadmapRequestSchema>;
+
+export interface RoadmapNode {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  category?: string;
+  estimatedHours?: number;
+}
+
+export interface RoadmapEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+export interface LearningResource {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  isFree: boolean;
+  description?: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  skillsRequired: string[];
+  keyFeatures?: string[];
+}
+
+export interface CareerTip {
+  id: string;
+  category: string;
+  tip: string;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  estimatedWeeks: number;
+  skillsCovered: string[];
+  resources: LearningResource[];
+  projects?: Project[];
+}
+
+export interface RoadmapMetadata {
+  title: string;
+  role: string;
+  estimatedDuration: string;
+  experienceLevel: ExperienceLevel;
+  generatedAt: string;
+}
+
+export interface GeneratedRoadmap {
+  metadata: RoadmapMetadata;
+  summary: string;
+  milestones: Milestone[];
+  projects: Project[];
+  resources: LearningResource[];
+  careerTips: CareerTip[];
+  logicalGraph: {
+    nodes: RoadmapNode[];
+    edges: RoadmapEdge[];
+  };
+}
+

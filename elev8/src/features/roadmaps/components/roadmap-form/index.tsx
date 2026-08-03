@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { StepIndicator } from "./step-indicator";
 import { RoleSelector } from "./role-selector";
 import { StudyHoursSelector } from "./study-hours-selector";
@@ -13,13 +14,16 @@ import { useRoadmapForm } from "../../hooks/use-roadmap-form";
 import { usePersonalization } from "../../hooks/use-personalization";
 import { useRoadmapRequest } from "../../hooks/use-roadmap-request";
 import { RoadmapRequest } from "../../types";
+import { generateRoadmapAction } from "../../actions/roadmap-actions";
 
 interface RoadmapWizardProps {
   onComplete?: (request: RoadmapRequest) => void;
 }
 
 export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Hook 1: Required Form Inputs (Stage 1)
   const form = useRoadmapForm();
@@ -38,6 +42,26 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
     role && role.trim().length > 0 && hoursPerWeek && experienceLevel
   );
 
+  const triggerGeneration = async (reqPayload: RoadmapRequest) => {
+    setIsSubmitting(true);
+    try {
+      if (onComplete) {
+        onComplete(reqPayload);
+      }
+      const res = await generateRoadmapAction(reqPayload);
+      if (res?.roadmapId) {
+        router.push(`/roadmaps/${res.roadmapId}`);
+      } else {
+        router.push("/roadmaps");
+      }
+    } catch (err) {
+      console.error("Failed to trigger roadmap generation:", err);
+      alert("Failed to start roadmap generation task. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (!isStage1Valid) return;
@@ -45,19 +69,15 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
     } else if (currentStep === 2) {
       // Build RoadmapRequest payload
       const formattedAnswers = personalization.getFormattedAnswers();
-      const compiledPayload = generateRequest(form.getValues(), {
+      generateRequest(form.getValues(), {
         skipped: personalization.skipped,
         answers: formattedAnswers,
       });
 
       setCurrentStep(3);
-
-      if (compiledPayload && onComplete) {
-        onComplete(compiledPayload);
-      }
     } else if (currentStep === 3) {
-      if (request && onComplete) {
-        onComplete(request);
+      if (request) {
+        triggerGeneration(request);
       }
     }
   };
@@ -70,15 +90,11 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
 
   const handleSkipPersonalization = () => {
     personalization.skipAll();
-    const compiledPayload = generateRequest(form.getValues(), {
+    generateRequest(form.getValues(), {
       skipped: true,
       answers: [],
     });
     setCurrentStep(3);
-
-    if (compiledPayload && onComplete) {
-      onComplete(compiledPayload);
-    }
   };
 
   return (
@@ -130,10 +146,13 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
               answers={personalization.answers}
               loading={personalization.loading}
               skipped={personalization.skipped}
+              hasOptedIn={personalization.hasOptedIn}
               error={personalization.error}
+              onOptIn={personalization.optIn}
               loadQuestions={personalization.loadQuestions}
               onToggleOption={personalization.toggleOption}
               onSkip={handleSkipPersonalization}
+              onUnskip={personalization.unskip}
             />
           </div>
         )}
@@ -148,6 +167,8 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
         <Navigation
           currentStep={currentStep}
           canContinue={currentStep === 1 ? isStage1Valid : true}
+          isSkipped={personalization.skipped}
+          isSubmitting={isSubmitting}
           onBack={handleBack}
           onNext={handleNext}
           onSkipPersonalization={currentStep === 2 ? handleSkipPersonalization : undefined}

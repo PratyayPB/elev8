@@ -11,7 +11,9 @@ export async function fetchPersonalizationQuestions(
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    console.warn("GEMINI_API_KEY is not configured. Returning fallback personalization questions.");
+    console.warn(
+      "GEMINI_API_KEY is not configured. Returning fallback personalization questions."
+    );
     return getFallbackQuestions(role);
   }
 
@@ -47,7 +49,7 @@ Return ONLY a JSON array matching this structure:
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -63,11 +65,17 @@ Return ONLY a JSON array matching this structure:
     if (parsedQuestions.success) {
       return parsedQuestions.data;
     } else {
-      console.error("Zod validation failed for Gemini response:", parsedQuestions.error);
+      console.error(
+        "Zod validation failed for Gemini response:",
+        parsedQuestions.error
+      );
       return getFallbackQuestions(role);
     }
   } catch (error) {
-    console.error("Failed to fetch personalization questions from Gemini:", error);
+    console.error(
+      "Failed to fetch personalization questions from Gemini:",
+      error
+    );
     return getFallbackQuestions(role);
   }
 }
@@ -78,13 +86,23 @@ function getFallbackQuestions(role: string): Question[] {
       id: "q_focus",
       question: `What primary area of ${role} do you want to emphasize?`,
       type: "single",
-      options: ["Practical Projects", "Theory & Fundamentals", "Interview Prep", "Balanced"],
+      options: [
+        "Practical Projects",
+        "Theory & Fundamentals",
+        "Interview Prep",
+        "Balanced",
+      ],
     },
     {
       id: "q_company",
       question: "What type of target organization are you aiming for?",
       type: "single",
-      options: ["Startup / Product Company", "Enterprise / Corporate", "Freelance / Agency", "No Preference"],
+      options: [
+        "Startup / Product Company",
+        "Enterprise / Corporate",
+        "Freelance / Agency",
+        "No Preference",
+      ],
     },
   ];
 }

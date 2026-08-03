@@ -79,6 +79,23 @@ enum NotificationStatus {
   ARCHIVED
 }
 
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum JobType {
+  ROADMAP
+  CAREER_GUIDANCE
+  INTERVIEW
+  RESUME_ANALYSIS
+  EXPORT
+}
+
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -96,6 +113,7 @@ model User {
   interviewSessions InterviewSession[]
   progress          Progress?
   notifications     Notification[]
+  jobs              Job[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -200,16 +218,20 @@ model CareerGuidance {
 }
 
 model Roadmap {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title             String
   description       String?
   targetCareer      String
+  targetRole        String?
+  experienceLevel   CareerLevel?
   estimatedDuration String?
   status            RoadmapStatus @default(NOT_STARTED)
   contentUrl        String?       // Reference to large AI-generated JSON roadmap artifact in Blob Storage
+  blobUrl           String?
+  version           String        @default("1.0.0")
 
   milestones RoadmapMilestone[]
 
@@ -221,6 +243,31 @@ model Roadmap {
   @@index([createdAt])
   @@map("roadmaps")
 }
+
+model Job {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         JobType
+  status       JobStatus @default(QUEUED)
+  progress     Int       @default(0)
+  step         String?
+  triggerRunId String?
+  artifactId   String?
+  artifactType String?
+  error        String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("jobs")
+}
+
 
 model RoadmapMilestone {
   id        String   @id @default(cuid())

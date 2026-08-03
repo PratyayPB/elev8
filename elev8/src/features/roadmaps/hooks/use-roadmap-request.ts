@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { Stage1FormData, Answer, RoadmapRequest } from "../types";
 import { RoadmapRequestService } from "../services/roadmap-request.service";
@@ -12,7 +13,10 @@ export function useRoadmapRequest() {
   ): RoadmapRequest | null => {
     try {
       setBuildError(null);
-      const payload = RoadmapRequestService.buildRequest(stage1Data, personalization);
+      const payload = RoadmapRequestService.buildRequest(
+        stage1Data,
+        personalization
+      );
       setRequest(payload);
       return payload;
     } catch (err: any) {

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { POPULAR_ROADMAP_ROLES } from "../../constants/roadmap-roles";
 import { Search, Briefcase } from "lucide-react";
