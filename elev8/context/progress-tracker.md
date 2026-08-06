@@ -3,10 +3,10 @@
 Update this file whenever the current phase, active feature, or implementation state changes.
 
 ## Current Phase
-Phase 2: Feature Development — Roadmap Library & Viewer
+Phase 4: AI Resume Builder / Scoring
 
 ## Current Goal
-Complete Roadmap Library management interface, search & filtering, CRUD actions (duplicate, delete, regenerate), PDF/SVG client-side export, and dynamic viewer routes.
+Implement Phase 4.4 - Resume Workspace (Central resume management hub, library, status sections, trends, actions).
 
 ## Completed
 - [x] Initialized production-ready repository directory structure under `src/`.
@@ -18,44 +18,28 @@ Complete Roadmap Library management interface, search & filtering, CRUD actions 
 - [x] Implemented all 16 landing page sections using the Grovia design system.
 - [x] Implemented complete optional User Profile & Onboarding system (Phase 1.5 based on `05-user-profile-onboarding.md`).
 - [x] Implemented complete relational Database Schema & Data Architecture (Phase 1.6 based on `06-DB_schema&Data-architecture.md`).
-- [x] Analyzed `.agents/skills` directory and integrated all 15 installed skills across core project documentation:
-  1. `Agents.md` — Linked all 15 skills grouped by domain (Clerk, Prisma, Gemini, Trigger.dev).
-  2. `Agent-Rules.md` — Added mandatory skill consultation section before implementing domain features.
-  3. `ARCHITECTURE.md` — Mapped tech stack layers to skill guides.
-  4. `context/code-standards.md` — Referenced skills for Database (Prisma), AI (Gemini), and Background Jobs (Trigger.dev).
-  5. `context/ai-workflow-rules.md` — Enforced reading domain `SKILL.md` prior to code generation.
-- [x] Implemented Phase 2 Spec 08 — Roadmap Generation Engine:
-  - Created `trigger.config.ts` and initialized `src/trigger` directory for Trigger.dev background jobs.
-  - Defined strict TypeScript types (`GeneratedRoadmap`, `RoadmapMetadata`, `RoadmapNode`, `RoadmapEdge`, `Milestone`, `LearningResource`, `Project`, `CareerTip`).
-  - Created Zod validation schemas (`roadmap-schema.ts`) and prompt templates (`roadmap-prompts.ts`).
-  - Built output validator (`roadmap-validator.ts`) with DAG cycle detection and node/edge integrity checks.
-  - Built prompt builder (`roadmap-prompt.service.ts`) and AI generation service (`roadmap-generation.service.ts`) using Google Gemini.
-  - Created Trigger.dev background task `src/trigger/generate-roadmap.ts` with progress reporting metadata and auto-retries.
-- [x] Implemented Phase 2 Spec 09 — Roadmap Processing, Storage & Rendering:
-  - Completely uninstalled `uploadthing` and installed `@vercel/blob`, `dagre`, `@types/dagre`, `@xyflow/react`.
-  - Added `Job`, `JobStatus`, `JobType` models & enums to `schema.prisma`, and updated `Roadmap` model (`blobUrl`, `version`, `targetRole`, `experienceLevel`).
-  - Implemented `JobService` (`job.service.ts`) for background job progress tracking.
-  - Implemented `LayoutService` (`layout.service.ts`) using Dagre for top-to-bottom node positioning.
-  - Implemented `RoadmapRenderService` (`roadmap-render.service.ts`) converting logical graphs into `@xyflow/react` node/edge structures.
-  - Implemented `BlobStorageService` (`blob-storage.service.ts`) using `@vercel/blob`.
-  - Implemented `RoadmapArtifactService` (`roadmap-artifact.service.ts`) for versioned `1.0.0` JSON schema storage.
-  - Updated Trigger.dev task `generate-roadmap.ts` to execute layout computation, blob upload, and Prisma metadata persistence.
-  - Built read-only React Flow roadmap viewer (`ReactFlowCanvas`, `ReadOnlyToolbar`, `LoadingOverlay`, `EmptyState`, `RoadmapViewer`).
-- [x] Implemented Phase 2 Spec 10 — Roadmap Library & Viewer:
-  - Installed `html-to-image` and `jspdf` for client-side SVG/PDF exports.
-  - Created `RoadmapLibraryService` (`roadmap-library.service.ts`) for searching, filtering by level/status, sorting, and pagination.
-  - Created `RoadmapViewerService` (`roadmap-viewer.service.ts`) for fetching metadata, Blob artifacts, and job progress.
-  - Created `RoadmapActionsService` (`roadmap-actions.service.ts`) for duplicating and deleting roadmaps (with orphan Blob cleanup).
-  - Built Server Actions in `src/features/roadmaps/actions/roadmap-actions.ts`.
-  - Built Library UI (`RoadmapLibrary`, `RoadmapCard`, `SearchBar`, `FilterPanel`, `DeleteDialog`).
-  - Built `RoadmapExportUtility` for SVG and PDF canvas export.
-  - Created dynamic viewer page at `/roadmaps/[roadmapId]` and updated `/roadmaps` library page.
+- [x] Analyzed `.agents/skills` directory and integrated all 15 installed skills across core project documentation.
+- [x] Implemented Phase 2 Spec 08 — Roadmap Generation Engine.
+- [x] Implemented Phase 2 Spec 09 — Roadmap Processing, Storage & Rendering.
+- [x] Implemented Phase 2 Spec 10 — Roadmap Library & Viewer.
+- [x] Implemented Phase 3 Spec 11 — Interview Request Workflow (Progressive wizard, required inputs, opt-in AI personalization).
+- [x] Implemented Phase 3 Spec 12 — Interview Generation Engine.
+- [x] **Phase 3.1: Config Wizard** (Wizard UI, validation, personalization state)
+- [x] **Phase 3.2: Generation Engine** (AI prompt pipeline, Artifact generation, Blob storage)
+- [x] **Phase 3.3: Session Engine** (State machine, autosave, Web Speech API integration)
+- [x] **Phase 3.4: Assessment Engine** (AI evaluation, report generation)
+- [x] **Phase 3.5: Library & Reports** (Dashboard views, detail pages, stats)
+- [x] **Phase 3.6: Workspace** (Central management hub, searching, filtering, trends, recommendations)
+- [x] **Phase 4.1: Resume Upload Workflow** (Upload dropzone, PDF validation, required inputs, personalization, review step)
+- [x] **Phase 4.2: Resume Scoring & Parsing Engine** (PDF text extraction, Gemini normalization & scoring, Trigger.dev background task)
+- [x] **Phase 4.3: Resume Improvement Hub** (Read-only artifact visualization dashboard, 7-section breakdown, ATS analysis, cross-module navigation)
+- [x] **Phase 4.5: Resume Builder Foundation** (Routing, types, schema, API endpoints, empty placeholders)
 
 ## In Progress
-- Phase 2: Feature Development (Career Guidance & Assessment).
+- **Phase 4.4: Resume Workspace** (Central resume management hub, search, filters, trends, re-scoring, PDF downloads)
 
 ## Next Up
-- Phase 2: Career Guidance & Assessment modules.
+- **Phase 4.6: Resume Builder State & Editing** (Active resume state, editing sections, dynamic preview)
 
 ## Open Questions
 - None at present.
@@ -65,3 +49,4 @@ Complete Roadmap Library management interface, search & filtering, CRUD actions 
 - All 15 installed agent skills in `.agents/skills/` are formally linked and required for subagents during build and execution.
 - Large AI-generated artifacts store `contentUrl` references to Blob Storage rather than large JSON strings in PostgreSQL.
 - Full type-safety across Zod schemas, Prisma models, Server Actions, and UI components.
+- Phase 3.1 uses strictly mocked AI personalization to avoid Gemini usage before Phase 3.2.

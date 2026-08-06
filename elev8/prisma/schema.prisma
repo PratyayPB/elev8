@@ -54,8 +54,11 @@ enum ResumeStatus {
 }
 
 enum InterviewStatus {
+  GENERATING
+  READY
   IN_PROGRESS
   COMPLETED
+  FAILED
   ABANDONED
 }
 
@@ -110,7 +113,7 @@ model User {
   careerGuidances   CareerGuidance[]
   roadmaps          Roadmap[]
   resumes           Resume[]
-  interviewSessions InterviewSession[]
+  interviews        Interview[]
   progress          Progress?
   notifications     Notification[]
   jobs              Job[]
@@ -289,18 +292,17 @@ model RoadmapMilestone {
 }
 
 model Resume {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String       @id @default(cuid())
+  userId             String
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  title        String
-  version      Int          @default(1)
-  status       ResumeStatus @default(DRAFT)
-  atsScore     Int?
-  overallScore Int?
-  contentUrl   String?      // Reference to resume JSON/PDF artifact in Blob Storage
-
-  analyses ResumeAnalysis[]
+  role               String
+  experienceLevel    String
+  overallScore       Int?
+  atsScore           Int?
+  artifactBlobUrl    String?      // Reference to ResumeArtifact JSON in Blob Storage
+  originalPdfBlobUrl String?      // Reference to original uploaded PDF in Blob Storage
+  status             ResumeStatus @default(DRAFT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -311,39 +313,23 @@ model Resume {
   @@map("resumes")
 }
 
-model ResumeAnalysis {
-  id       String @id @default(cuid())
-  resumeId String
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
-  contentUrl      String?  // Reference to detailed analysis report artifact in Blob Storage
-  atsScore        Int?
-  overallScore    Int?
-  suggestions     String[]
-  missingKeywords String[]
-  weakSections    String[]
+model Interview {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role              String
+  difficulty        String
+  experienceLevel   String
+  interviewType     String?
+  status            InterviewStatus   @default(GENERATING)
+  blobUrl           String?
+  questionCount     Int               @default(5)
+  estimatedDuration String?
 
-  @@index([resumeId])
-  @@index([createdAt])
-  @@map("resume_analyses")
-}
-
-model InterviewSession {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  targetRole      String
-  difficulty      InterviewDifficulty @default(MEDIUM)
-  status          InterviewStatus     @default(IN_PROGRESS)
-  overallScore    Int?
-  durationSeconds Int?
-  contentUrl      String?             // Reference to interview transcript/audio artifact in Blob Storage
-
-  questions InterviewQuestion[]
+  overallScore      Int?
+  durationSeconds   Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -351,28 +337,7 @@ model InterviewSession {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
-  @@map("interview_sessions")
-}
-
-model InterviewQuestion {
-  id        String           @id @default(cuid())
-  sessionId String
-  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  question   String
-  category   InterviewCategory   @default(GENERAL)
-  difficulty InterviewDifficulty @default(MEDIUM)
-  userAnswer String?
-  aiFeedback String?
-  score      Int?
-  order      Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([sessionId])
-  @@index([sessionId, order])
-  @@map("interview_questions")
+  @@map("interviews")
 }
 
 model Progress {

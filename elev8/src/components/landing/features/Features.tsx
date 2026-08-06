@@ -1,81 +1,85 @@
-import { Brain, Bot, Route, FileEdit, BarChart3, Mic } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
+import { Compass, FileCheck, MessageSquare, Map } from "lucide-react";
+
+const features = [
+  {
+    icon: <Compass className="w-6 h-6" />,
+    title: "AI Career Guidance",
+    description: "Get personalized career advice and role recommendations based on your unique skills and goals."
+  },
+  {
+    icon: <FileCheck className="w-6 h-6" />,
+    title: "Resume Scoring",
+    description: "Optimize your resume with our ATS-friendly scanner to increase your interview callbacks."
+  },
+  {
+    icon: <MessageSquare className="w-6 h-6" />,
+    title: "Mock Interviews",
+    description: "Practice with our AI interviewer and receive instant, actionable feedback on your responses."
+  },
+  {
+    icon: <Map className="w-6 h-6" />,
+    title: "Learning Roadmaps",
+    description: "Follow customized, step-by-step learning paths to bridge your skill gaps and advance."
+  }
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
 
 export function Features() {
-  const featuresList = [
-    {
-      icon: Brain,
-      title: "Assessment",
-      description: "Deep-dive into your technical and soft skills with adaptive interactive testing and diagnostic benchmarks.",
-      accent: "bg-[#84E6F6]",
-    },
-    {
-      icon: Bot,
-      title: "AI Guidance",
-      description: "24/7 career coaching tailored to your professional objectives, negotiation tactics, and career decisions.",
-      accent: "bg-[#FEF7AF]",
-    },
-    {
-      icon: Route,
-      title: "Roadmaps",
-      description: "Step-by-step navigation from your current role to your dream position with structured milestone tracking.",
-      accent: "bg-[#F7A49E]",
-    },
-    {
-      icon: FileEdit,
-      title: "Resume Builder",
-      description: "Craft high-impact resumes tailored to targeted job descriptions using AI-optimized achievement bullets.",
-      accent: "bg-[#84E6F6]",
-    },
-    {
-      icon: BarChart3,
-      title: "ATS Scorer",
-      description: "Ensure your application clears automated applicant tracking systems with instant breakdown reports.",
-      accent: "bg-[#FECD1A]",
-    },
-    {
-      icon: Mic,
-      title: "Interview Simulation",
-      description: "Practice with realistic AI voice/text avatars, receive instant feedback, and refine your delivery under pressure.",
-      accent: "bg-[#F7A49E]",
-    },
-  ];
-
   return (
-    <section id="features" className="bg-[#F4F2EE] border-y border-[#E6E6E6] py-24 px-4 sm:px-6">
-      <div className="max-w-container-max mx-auto">
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 bg-white text-black px-4 py-1.5 rounded-full text-xs font-semibold border border-[#E6E6E6]">
-            <span>End-to-End Career Intelligence</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-black">
-            Powerful Features
+    <section className="py-12 px-4 sm:px-6 lg:px-8" id="features">
+      <div className="max-w-container-max mx-auto bg-[#F0ECE6] rounded-[2.5rem] p-8 sm:p-12 lg:p-16 border border-border-subtle/60 shadow-sm">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-2xl md:text-3xl font-display font-medium text-text-primary mb-4">
+            A simple platform for complex paths.
           </h2>
-          <p className="text-lg text-[#605F5F] leading-relaxed">
-            Comprehensive AI-driven tools designed to give you an unfair advantage in today&apos;s competitive job market.
+          <p className="text-text-secondary text-base">
+            From resume optimization to interview prep, Elev8 provides the tools you need to navigate your career trajectory with confidence.
           </p>
         </div>
 
-        {/* Features Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuresList.map((feature, idx) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={idx}
-                className="bg-white border border-[#E6E6E6] rounded-2xl p-8 hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
-              >
-                <div className="space-y-4">
-                  <div className={`w-12 h-12 rounded-xl ${feature.accent} flex items-center justify-center border border-black/10 shadow-sm group-hover:scale-105 transition-transform`}>
-                    <Icon className="w-6 h-6 text-black" />
-                  </div>
-                  <h3 className="text-xl font-bold text-black">{feature.title}</h3>
-                  <p className="text-[#605F5F] leading-relaxed text-sm">{feature.description}</p>
-                </div>
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          {features.map((feature, index) => (
+            <motion.div 
+              key={index} 
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+              className="bg-white rounded-2xl p-8 border border-border-subtle shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center text-text-primary mb-6">
+                {feature.icon}
               </div>
-            );
-          })}
-        </div>
+              <h3 className="text-lg font-medium font-display text-text-primary mb-3">
+                {feature.title}
+              </h3>
+              <p className="text-text-secondary text-xs leading-relaxed">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

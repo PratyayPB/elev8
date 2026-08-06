@@ -8,39 +8,47 @@ import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const scrollToSection = (id: string) => {
+    setMobileMenuOpen(false);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <header className="fixed top-4 left-0 right-0 z-50 px-4 sm:px-6 flex justify-center">
       <div className="w-full max-w-[900px] glass-pill rounded-full px-6 py-3 flex items-center justify-between shadow-sm transition-all duration-300">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight text-black">Elev8</span>
+          <span className="text-lg font-medium tracking-tight text-black">Elev8</span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <a
-            href="#dashboard"
-            className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+          <button
+            onClick={() => scrollToSection("dashboard")}
+            className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors cursor-pointer"
           >
             Dashboard
-          </a>
-          <a
-            href="#features"
-            className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+          </button>
+          <button
+            onClick={() => scrollToSection("features")}
+            className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors cursor-pointer"
           >
             Features
-          </a>
-          <a
-            href="#pricing"
-            className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+          </button>
+          <button
+            onClick={() => scrollToSection("pricing")}
+            className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors cursor-pointer"
           >
             Pricing
-          </a>
-          <a
-            href="#faq"
-            className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+          </button>
+          <button
+            onClick={() => scrollToSection("faq")}
+            className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors cursor-pointer"
           >
             FAQ
-          </a>
+          </button>
         </nav>
 
         {/* CTA */}
@@ -48,13 +56,13 @@ export function Header() {
           <SignedOut>
             <Link
               href="/sign-in"
-              className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+              className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors"
             >
               Sign In
             </Link>
             <Link
               href="/sign-up"
-              className="bg-black text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-black/90 transition-all shadow-sm"
+              className="bg-black text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-black/90 transition-all shadow-sm"
             >
               Get Started
             </Link>
@@ -62,7 +70,7 @@ export function Header() {
           <SignedIn>
             <Link
               href="/dashboard"
-              className="text-sm font-medium text-[#605F5F] hover:text-black transition-colors"
+              className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors"
             >
               Dashboard
             </Link>
@@ -83,34 +91,30 @@ export function Header() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-[#E6E6E6] shadow-xl md:hidden flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
-          <a
-            href="#dashboard"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
+          <button
+            onClick={() => scrollToSection("dashboard")}
+            className="text-left text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
           >
             Dashboard
-          </a>
-          <a
-            href="#features"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
+          </button>
+          <button
+            onClick={() => scrollToSection("features")}
+            className="text-left text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
           >
             Features
-          </a>
-          <a
-            href="#pricing"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
+          </button>
+          <button
+            onClick={() => scrollToSection("pricing")}
+            className="text-left text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
           >
             Pricing
-          </a>
-          <a
-            href="#faq"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
+          </button>
+          <button
+            onClick={() => scrollToSection("faq")}
+            className="text-left text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
           >
             FAQ
-          </a>
+          </button>
           <div className="flex flex-col gap-3 pt-2">
             <SignedOut>
               <Link

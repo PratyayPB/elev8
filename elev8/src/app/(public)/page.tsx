@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import {
   Hero,
-  SocialProof,
-  About,
+  LogoBar,
   Features,
-  HowItWorks,
-  ProductShowcase,
-  DashboardPreview,
-  Gallery,
+  Showcase,
+  Stats,
+  Results,
   Pricing,
-  Testimonials,
+  Testimonial,
   FAQ,
   CTA,
-  Contact,
 } from "@/components/landing";
 
 export const metadata: Metadata = {
@@ -24,18 +21,15 @@ export default function LandingPage() {
   return (
     <>
       <Hero />
-      <SocialProof />
-      <About />
+      <LogoBar />
       <Features />
-      <HowItWorks />
-      <ProductShowcase />
-      <DashboardPreview />
-      <Gallery />
+      <Showcase />
+      <Stats />
+      <Results />
       <Pricing />
-      <Testimonials />
+      <Testimonial />
       <FAQ />
       <CTA />
-      <Contact />
     </>
   );
 }

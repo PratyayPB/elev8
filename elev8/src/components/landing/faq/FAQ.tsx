@@ -1,75 +1,98 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+
+const faqs = [
+  {
+    question: "How does Elev8 AI career guidance work?",
+    answer: "Our AI analyzes your skills, experience, and career goals to generate personalized roadmaps, recommend roles, and identify skill gaps you need to fill to reach your targets."
+  },
+  {
+    question: "Can I integrate it with my LinkedIn profile?",
+    answer: "Yes, you can easily import your LinkedIn profile data to jumpstart your Elev8 profile, allowing our AI to instantly begin tailoring recommendations for you."
+  },
+  {
+    question: "What is the Resume Scoring feature?",
+    answer: "Our Resume Scorer uses the same ATS (Applicant Tracking System) logic as major companies. It analyzes your resume against target job descriptions and provides a score with specific, actionable feedback to improve it."
+  },
+  {
+    question: "Are the mock interviews industry-specific?",
+    answer: "Absolutely. When you start a mock interview, you can select your target role, industry, and experience level. The AI will generate tailored questions and evaluate your responses accordingly."
+  },
+  {
+    question: "Is there a free tier available?",
+    answer: "Yes, our Starter plan offers essential tools including 1 resume analysis per month and basic roadmaps completely free of charge."
+  }
+];
 
 export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const faqs = [
-    {
-      question: "Is my data secure and private?",
-      answer: "Yes, absolutely. We use enterprise-grade AES-256 encryption for all user data, CV uploads, and interview logs. Your data is never sold or used to train public AI models without consent.",
-    },
-    {
-      question: "Can I cancel or change my plan anytime?",
-      answer: "Yes, all subscription plans are flexible and can be upgraded, downgraded, or cancelled at any time directly from your settings dashboard with zero hidden fees.",
-    },
-    {
-      question: "How often is the career roadmap updated?",
-      answer: "Your career roadmap updates dynamically in real-time as you log completed courses, skills, and certifications, or when market hiring requirements shift.",
-    },
-    {
-      question: "Do you offer team or enterprise plans?",
-      answer: "Yes! We offer tailored team packages for engineering leaders, bootcamps, and universities looking to upskill their teams. Contact our sales team for custom pricing.",
-    },
-    {
-      question: "What underlying AI models do you use?",
-      answer: "Elev8 leverages Google Gemini models via Vercel AI SDK, combined with custom-trained evaluation prompts to deliver structured JSON outputs.",
-    },
-  ];
-
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
   return (
-    <section id="faq" className="bg-[#F4F2EE] border-y border-[#E6E6E6] py-24 px-4 sm:px-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16 space-y-4">
-          <span className="text-xs font-semibold uppercase tracking-widest text-[#999999]">Got Questions?</span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-black">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-lg text-[#605F5F]">
-            Everything you need to know about the Elev8 platform and AI tools.
-          </p>
-        </div>
+    <section className="py-12 px-4 sm:px-6 lg:px-8" id="faq">
+      <div className="max-w-container-max mx-auto bg-[#F0ECE6] rounded-[2.5rem] p-8 sm:p-12 lg:p-16 border border-border-subtle/60 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+          
+          <div className="lg:col-span-5">
+            <h2 className="text-2xl md:text-3xl font-display font-medium text-text-primary mb-4">
+              Frequently Asked Questions.
+            </h2>
+            <p className="text-text-secondary text-base mb-8">
+              Find answers to common questions about Elev8&apos;s AI tools, pricing, and how we can accelerate your career.
+            </p>
+            <button className="hidden lg:inline-flex items-center justify-center rounded-full border border-border-subtle bg-white px-5 py-2 text-xs font-medium text-text-primary hover:bg-surface-muted transition-colors">
+              Contact Support
+            </button>
+          </div>
 
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => {
-            const isOpen = openIndex === idx;
-            return (
-              <div
-                key={idx}
-                onClick={() => toggleFAQ(idx)}
-                className="bg-white border border-[#E6E6E6] rounded-2xl p-6 cursor-pointer transition-all duration-200 hover:border-black/30 shadow-sm"
-              >
-                <div className="flex justify-between items-center gap-4">
-                  <h3 className="text-base sm:text-lg font-bold text-black">{faq.question}</h3>
-                  <div className="w-8 h-8 rounded-full bg-[#F4F2EE] border border-[#E6E6E6] flex items-center justify-center shrink-0">
-                    {isOpen ? <Minus className="w-4 h-4 text-black" /> : <Plus className="w-4 h-4 text-black" />}
-                  </div>
+          <div className="lg:col-span-7">
+            <div className="space-y-4">
+              {faqs.map((faq, idx) => (
+                <div 
+                  key={idx}
+                  className="border-b border-border-subtle pb-4 last:border-0"
+                >
+                  <button
+                    onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                    className="w-full flex justify-between items-center text-left py-2 group"
+                  >
+                    <span className="font-medium text-sm text-text-primary group-hover:text-black transition-colors">
+                      {faq.question}
+                    </span>
+                    <ChevronDown 
+                      className={`w-5 h-5 text-text-secondary transition-transform duration-300 ${
+                        openIndex === idx ? "rotate-180 text-text-primary" : ""
+                      }`} 
+                    />
+                  </button>
+                  <AnimatePresence>
+                    {openIndex === idx && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="py-4 text-text-secondary text-xs leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 lg:hidden">
+              <button className="w-full inline-flex justify-center items-center rounded-full border border-border-subtle bg-white px-6 py-2.5 text-sm font-medium text-text-primary hover:bg-surface-muted transition-colors">
+                Contact Support
+              </button>
+            </div>
+          </div>
 
-                {isOpen && (
-                  <p className="mt-4 text-sm sm:text-base text-[#605F5F] leading-relaxed border-t border-[#E6E6E6] pt-4 animate-in fade-in">
-                    {faq.answer}
-                  </p>
-                )}
-              </div>
-            );
-          })}
         </div>
       </div>
     </section>

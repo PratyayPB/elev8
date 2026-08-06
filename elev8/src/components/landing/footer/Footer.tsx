@@ -18,14 +18,14 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-white border-t border-[#E6E6E6] pt-16 pb-12 px-4 sm:px-6">
+    <footer className="border-t border-[#E6E6E6] pt-16 pb-12 px-4 sm:px-6">
       <div className="max-w-container-max mx-auto space-y-12">
         {/* Main Footer Links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Column 1: Product */}
           <div className="space-y-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-black block">Product</span>
-            <ul className="space-y-2.5 text-sm text-[#605F5F]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-black block">Product</span>
+            <ul className="space-y-2.5 text-xs text-[#605F5F]">
               <li><a href="#features" className="hover:text-black transition-colors">Features</a></li>
               <li><a href="#dashboard" className="hover:text-black transition-colors">Dashboard UI</a></li>
               <li><a href="#pricing" className="hover:text-black transition-colors">Pricing Plans</a></li>
@@ -35,8 +35,8 @@ export function Footer() {
 
           {/* Column 2: Company */}
           <div className="space-y-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-black block">Company</span>
-            <ul className="space-y-2.5 text-sm text-[#605F5F]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-black block">Company</span>
+            <ul className="space-y-2.5 text-xs text-[#605F5F]">
               <li><a href="#" className="hover:text-black transition-colors">About Us</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Careers</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Blog &amp; Insights</a></li>
@@ -46,8 +46,8 @@ export function Footer() {
 
           {/* Column 3: Support */}
           <div className="space-y-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-black block">Support</span>
-            <ul className="space-y-2.5 text-sm text-[#605F5F]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-black block">Support</span>
+            <ul className="space-y-2.5 text-xs text-[#605F5F]">
               <li><a href="#" className="hover:text-black transition-colors">Documentation</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Help Center</a></li>
               <li><a href="#faq" className="hover:text-black transition-colors">FAQ</a></li>
@@ -57,8 +57,8 @@ export function Footer() {
 
           {/* Column 4: Newsletter */}
           <div className="space-y-4 col-span-2 md:col-span-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-black block">Newsletter</span>
-            <p className="text-sm text-[#605F5F]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-black block">Newsletter</span>
+            <p className="text-xs text-[#605F5F]">
               Subscribe for the latest in AI career intelligence &amp; market hiring trends.
             </p>
 

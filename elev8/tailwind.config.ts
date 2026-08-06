@@ -17,6 +17,10 @@ const config: Config = {
           DEFAULT: "var(--surface-primary)",
           muted: "var(--surface-muted)",
         },
+        neutral: {
+          wrapper: "var(--color-neutral)",
+          DEFAULT: "var(--color-neutral)",
+        },
         text: {
           primary: "var(--text-primary)",
           secondary: "var(--text-secondary)",

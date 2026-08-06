@@ -4,5 +4,3 @@ export * from "./navigation";
 export * from "./career";
 export * from "./roadmap";
 export * from "./resume";
-export * from "./pricing";
-export * from "./faq";

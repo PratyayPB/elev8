@@ -1,16 +1,14 @@
 export { Header } from "./header/Header";
-export { Hero } from "./hero/Hero";
-export { SocialProof } from "./social-proof/SocialProof";
-export { About } from "./about/About";
-export { Features } from "./features/Features";
-export { HowItWorks } from "./how-it-works/HowItWorks";
-export { ProductShowcase } from "./features/ProductShowcase";
-export { DashboardPreview } from "./dashboard-preview/DashboardPreview";
-export { Gallery } from "./gallery/Gallery";
-export { Pricing } from "./pricing/Pricing";
-export { Testimonials } from "./testimonials/Testimonials";
-export { FAQ } from "./faq/FAQ";
-export { CTA } from "./cta/CTA";
-export { Contact } from "./contact/Contact";
 export { Footer } from "./footer/Footer";
 export { ChatButton } from "./chatbot/ChatButton";
+// New sections
+export { Hero } from "./hero/Hero";
+export { LogoBar } from "./logo-bar/LogoBar";
+export { Features } from "./features/Features";
+export { Showcase } from "./showcase/Showcase";
+export { Stats } from "./stats/Stats";
+export { Results } from "./results/Results";
+export { Pricing } from "./pricing/Pricing";
+export { Testimonial } from "./testimonial/Testimonial";
+export { FAQ } from "./faq/FAQ";
+export { CTA } from "./cta/CTA";

@@ -1,157 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import Link from "next/link";
-import { Check, Sparkles } from "lucide-react";
+
+const plans = [
+  {
+    name: "Starter",
+    price: "$49",
+    period: "/mo",
+    description: "Essential tools for career planning.",
+    features: ["1 Resume Analysis/mo", "Basic Career Roadmap", "Community Access"],
+    cta: "Start Free",
+    highlighted: false
+  },
+  {
+    name: "Professional",
+    price: "$199",
+    period: "/mo",
+    description: "Advanced AI tools for active job seekers.",
+    features: ["Unlimited Resume Scoring", "Mock Interview AI (5/mo)", "Personalized Roadmaps", "Priority Support"],
+    cta: "Get Started",
+    highlighted: true
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    description: "For teams and organizations.",
+    features: ["Team Analytics Dashboard", "Custom Skill Mapping", "Dedicated Success Manager", "API Access"],
+    cta: "Contact Us",
+    highlighted: false
+  }
+];
 
 export function Pricing() {
-  const [isAnnual, setIsAnnual] = useState(false);
-
-  const plans = [
-    {
-      name: "Free",
-      price: isAnnual ? "$0" : "$0",
-      period: "/mo",
-      description: "Essential tools to evaluate your career standing.",
-      features: [
-        "Basic Profile Assessment",
-        "1 ATS Resume Scan / Month",
-        "Public Career Community Access",
-        "Standard Roadmap Templates",
-      ],
-      cta: "Select Free Plan",
-      popular: false,
-      href: "/sign-up",
-    },
-    {
-      name: "Pro",
-      price: isAnnual ? "$24" : "$29",
-      period: "/mo",
-      description: "Everything you need to accelerate your job hunt and skills.",
-      features: [
-        "Full AI Diagnostic Assessment",
-        "Unlimited Roadmap Engine",
-        "Unlimited ATS Resume Scans",
-        "5 AI Voice Interview Sims / Mo",
-        "Real-time Market Skill Matching",
-      ],
-      cta: "Get Started with Pro",
-      popular: true,
-      href: "/sign-up",
-    },
-    {
-      name: "Premium",
-      price: isAnnual ? "$79" : "$99",
-      period: "/mo",
-      description: "Complete executive suite for high-stakes transitions.",
-      features: [
-        "Unlimited AI Voice & Text Sims",
-        "1-on-1 Human Coach Resume Review",
-        "Priority AI Processing & Support",
-        "Executive Negotiation Scripts",
-        "Custom Enterprise Benchmarking",
-      ],
-      cta: "Select Premium Plan",
-      popular: false,
-      href: "/sign-up",
-    },
-  ];
-
   return (
-    <section id="pricing" className="bg-[#F4F2EE] border-y border-[#E6E6E6] py-24 px-4 sm:px-6">
-      <div className="max-w-container-max mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
-          <span className="text-xs font-semibold uppercase tracking-widest text-[#999999]">Transparent Plans</span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-black">
-            Simple Pricing
+    <section className="py-12 px-4 sm:px-6 lg:px-8" id="pricing">
+      <div className="max-w-container-max mx-auto bg-[#F0ECE6] rounded-[2.5rem] p-8 sm:p-12 lg:p-16 border border-border-subtle/60 shadow-sm">
+        
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="text-2xl md:text-3xl font-display font-medium text-text-primary mb-4">
+            Simple, transparent pricing.
           </h2>
-          <p className="text-lg text-[#605F5F]">
-            Invest in your career growth with predictable plans designed for every stage.
+          <p className="text-text-secondary text-base">
+            Invest in your career growth with a plan that fits your needs.
           </p>
-
-          {/* Monthly / Annual Pill Toggle */}
-          <div className="inline-flex items-center bg-white border border-[#E6E6E6] rounded-full p-1 shadow-sm mt-4">
-            <button
-              onClick={() => setIsAnnual(false)}
-              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
-                !isAnnual ? "bg-black text-white shadow-sm" : "text-[#605F5F] hover:text-black"
-              }`}
-            >
-              Monthly Billing
-            </button>
-            <button
-              onClick={() => setIsAnnual(true)}
-              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                isAnnual ? "bg-black text-white shadow-sm" : "text-[#605F5F] hover:text-black"
-              }`}
-            >
-              <span>Annual Billing</span>
-              <span className="bg-[#84E6F6] text-black text-[10px] px-2 py-0.5 rounded-full font-bold">
-                Save 20%
-              </span>
-            </button>
-          </div>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-8 max-w-5xl mx-auto items-center">
           {plans.map((plan, idx) => (
-            <div
+            <motion.div
               key={idx}
-              className={`bg-white rounded-2xl p-8 border transition-all duration-300 flex flex-col justify-between relative ${
-                plan.popular
-                  ? "border-2 border-black shadow-xl md:-translate-y-2"
-                  : "border-[#E6E6E6] shadow-sm hover:shadow-md"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              whileHover={{ y: -8 }}
+              className={`relative rounded-3xl p-8 transition-all duration-300 ${
+                plan.highlighted 
+                  ? "bg-black text-white shadow-2xl scale-105 z-10" 
+                  : "bg-white border border-border-subtle shadow-sm"
               }`}
             >
-              {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-black text-white text-[11px] font-bold uppercase tracking-wider px-4 py-1 rounded-full border border-black shadow-sm flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-[#FECD1A]" />
-                  <span>Most Popular</span>
+              {plan.highlighted && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex px-3 py-1 rounded-full bg-accent-cream text-black text-[11px] font-medium uppercase tracking-wide">
+                  Most Popular
                 </div>
               )}
-
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-black">{plan.name}</h3>
-                    <p className="text-xs text-[#605F5F] mt-1 min-h-[32px]">{plan.description}</p>
-                  </div>
-                </div>
-
-                <div className="my-6">
-                  <span className="text-4xl sm:text-5xl font-extrabold text-black tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-[#999999] font-medium">{plan.period}</span>
-                </div>
-
-                <div className="border-t border-[#E6E6E6] pt-6 mb-8">
-                  <span className="text-xs font-semibold text-[#999999] uppercase tracking-wider block mb-4">
-                    What&apos;s included:
+              
+              <div className="mb-8">
+                <h3 className={`text-lg font-display font-medium mb-2 ${plan.highlighted ? "text-white" : "text-text-primary"}`}>
+                  {plan.name}
+                </h3>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className={`text-3xl md:text-4xl font-display font-medium tracking-tight ${plan.highlighted ? "text-white" : "text-text-primary"}`}>
+                    {plan.price}
                   </span>
-                  <ul className="space-y-3">
-                    {plan.features.map((feat, fIdx) => (
-                      <li key={fIdx} className="flex items-center gap-3 text-sm text-[#1A1A1A]">
-                        <div className="w-5 h-5 rounded-full bg-[#F4F2EE] border border-[#E6E6E6] flex items-center justify-center shrink-0">
-                          <Check className="w-3 h-3 text-black" />
-                        </div>
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <span className={plan.highlighted ? "text-white/70 text-xs" : "text-text-muted text-xs"}>
+                    {plan.period}
+                  </span>
                 </div>
+                <p className={`text-xs ${plan.highlighted ? "text-white/80" : "text-text-secondary"}`}>
+                  {plan.description}
+                </p>
               </div>
 
+              <ul className="space-y-4 mb-8">
+                {plan.features.map((feature, fIdx) => (
+                  <li key={fIdx} className="flex items-start">
+                    <Check className={`w-4 h-4 mr-2.5 shrink-0 mt-0.5 ${plan.highlighted ? "text-accent-cyan" : "text-text-primary"}`} />
+                    <span className={`text-xs ${plan.highlighted ? "text-white/90" : "text-text-secondary"}`}>
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
               <Link
-                href={plan.href}
-                className={`w-full py-3 rounded-full text-center text-sm font-semibold transition-all ${
-                  plan.popular
-                    ? "bg-black text-white hover:bg-black/90 shadow-md"
-                    : "bg-white text-black border border-[#E6E6E6] hover:bg-[#F4F2EE]"
+                href="/sign-up"
+                className={`w-full inline-flex justify-center items-center py-2.5 px-5 rounded-full text-xs font-medium transition-colors ${
+                  plan.highlighted
+                    ? "bg-white text-black hover:bg-surface-muted"
+                    : "bg-background border border-border-subtle text-text-primary hover:bg-border-subtle/50"
                 }`}
               >
                 {plan.cta}
               </Link>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
