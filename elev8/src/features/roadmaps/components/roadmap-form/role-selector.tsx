@@ -20,16 +20,16 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-1">
-          Target Role <span className="text-red-500">*</span>
+        <label className="block text-sm font-display font-semibold text-text-primary mb-1">
+          Target Role <span className="text-rose-500">*</span>
         </label>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs font-sans text-text-secondary mb-3">
           Select or type the exact job role you are aiming for.
         </p>
 
         {/* Input field */}
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
             <Search className="w-4 h-4" />
           </div>
           <input
@@ -40,19 +40,19 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
               setQuery(e.target.value);
             }}
             placeholder="e.g. Full Stack Developer, AI Engineer..."
-            className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+            className={`w-full pl-10 pr-4 py-3 bg-surface-muted border rounded-xl text-sm font-sans text-text-primary placeholder-text-muted focus:outline-none transition-all ${
               error
-                ? "border-red-300 focus:ring-red-200"
-                : "border-gray-200 focus:ring-black/10 focus:border-black"
+                ? "border-rose-300 focus:border-rose-500"
+                : "border-border-subtle focus:border-text-primary"
             }`}
           />
         </div>
-        {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
+        {error && <p className="text-xs font-sans text-rose-500 mt-1.5">{error}</p>}
       </div>
 
       {/* Suggested roles pill tags */}
       <div>
-        <span className="text-xs font-medium text-gray-400 block mb-2">
+        <span className="text-xs font-display font-semibold text-text-secondary block mb-2">
           Popular Roles
         </span>
         <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
@@ -63,10 +63,10 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
                 key={role}
                 type="button"
                 onClick={() => onChange(role)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium transition-all ${
                   isSelected
-                    ? "bg-black text-white shadow-sm"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-text-primary text-white shadow-sm"
+                    : "bg-surface-muted text-text-primary border border-border-subtle hover:bg-border-subtle"
                 }`}
               >
                 <Briefcase className="w-3 h-3" />

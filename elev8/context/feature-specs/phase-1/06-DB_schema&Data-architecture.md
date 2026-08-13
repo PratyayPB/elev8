@@ -193,29 +193,11 @@ Fields
 
 - Title
 - Description
-- Target Career
+- Target Role
 - Estimated Duration
 - Current Status
 
-Relationships
 
-- Multiple Milestones
-
----
-
-## RoadmapMilestone
-
-Represents one milestone.
-
-Fields
-
-- Title
-- Description
-- Order
-- Status
-- Estimated Time
-
----
 
 ## Resume
 
@@ -389,8 +371,6 @@ User
 ├── Career Guidance Reports
 
 ├── Roadmaps
-
-│      └── Milestones
 
 ├── Resumes
 

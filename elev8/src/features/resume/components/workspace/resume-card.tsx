@@ -55,7 +55,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
             {menuOpen && (
               <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20 text-xs">
                 <Link
-                  href={`/resumes/${resume.id}`}
+                  href={`/dashboard/resumes/${resume.id}`}
                   className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -84,7 +84,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
                   </a>
                 )}
                 <Link
-                  href={`/resumes?role=${encodeURIComponent(resume.role)}`}
+                  href={`/dashboard/resumes?role=${encodeURIComponent(resume.role)}`}
                   className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -94,7 +94,9 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
                   <button
                     onClick={() => {
                       setMenuOpen(false);
-                      onDelete(resume.id);
+                      if (confirm(`Are you sure you want to delete the "${resume.role}" resume assessment?`)) {
+                        onDelete(resume.id);
+                      }
                     }}
                     className="w-full text-left flex items-center px-3 py-2 text-rose-600 hover:bg-rose-50 border-t border-gray-100"
                   >
@@ -130,7 +132,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
         </div>
 
         <Link
-          href={`/resumes/${resume.id}`}
+          href={`/dashboard/resumes/${resume.id}`}
           className="px-3 py-1.5 text-xs font-medium text-black border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
           Details

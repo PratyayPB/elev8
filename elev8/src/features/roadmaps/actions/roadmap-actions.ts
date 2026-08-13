@@ -37,14 +37,14 @@ export async function duplicateRoadmapAction(roadmapId: string) {
     roadmapId,
     user.id
   );
-  revalidatePath("/roadmaps");
+  revalidatePath("/dashboard/roadmaps");
   return result;
 }
 
 export async function deleteRoadmapAction(roadmapId: string) {
   const user = await getOrCreateDbUser();
   const result = await RoadmapActionsService.deleteRoadmap(roadmapId, user.id);
-  revalidatePath("/roadmaps");
+  revalidatePath("/dashboard/roadmaps");
   return result;
 }
 
@@ -59,7 +59,6 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
       userId: user.id,
       title: `${requestPayload.role} Roadmap`,
       description: `AI-generated career roadmap for ${requestPayload.role} (${requestPayload.experienceLevel} level).`,
-      targetCareer: requestPayload.role,
       targetRole: requestPayload.role,
       experienceLevel: parseCareerLevel(requestPayload.experienceLevel),
       estimatedDuration: `${requestPayload.hoursPerWeek === "Flexible" ? "Flexible" : `${requestPayload.hoursPerWeek} hrs/wk`}`,
@@ -126,9 +125,7 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
           data: {
             title: generatedRoadmap.metadata.title,
             status: RoadmapStatus.COMPLETED,
-            contentUrl: blobUrl,
             blobUrl,
-            version: artifact.version,
           },
         });
         await JobService.completeJob(job.id, roadmap.id, "ROADMAP");
@@ -139,7 +136,7 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
     })();
   }
 
-  revalidatePath("/roadmaps");
+  revalidatePath("/dashboard/roadmaps");
   return {
     success: true,
     roadmapId: roadmap.id,

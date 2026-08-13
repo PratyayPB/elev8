@@ -33,7 +33,7 @@ export function CTA() {
                 Get Started Free
               </Link>
               <Link
-                href="/contact"
+                href="/sign-up"
                 className="inline-flex items-center justify-center rounded-full border border-white/20 bg-transparent px-6 py-3 text-xs font-medium text-white hover:bg-white/10 transition-colors"
               >
                 Talk to Sales

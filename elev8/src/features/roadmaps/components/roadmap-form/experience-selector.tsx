@@ -13,10 +13,10 @@ export function ExperienceSelector({ value, onChange, error }: ExperienceSelecto
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-1">
-          Current Experience Level <span className="text-red-500">*</span>
+        <label className="block text-sm font-display font-semibold text-text-primary mb-1">
+          Current Experience Level <span className="text-rose-500">*</span>
         </label>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs font-sans text-text-secondary mb-3">
           Select the level that best reflects your current knowledge in this field.
         </p>
       </div>
@@ -32,19 +32,19 @@ export function ExperienceSelector({ value, onChange, error }: ExperienceSelecto
               onClick={() => onChange(item.id as ExperienceLevel)}
               className={`text-left p-4 rounded-xl border transition-all flex flex-col justify-between ${
                 isSelected
-                  ? "bg-black text-white border-black shadow-md ring-2 ring-black/10"
-                  : "bg-white text-gray-900 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  ? "bg-text-primary text-white border-text-primary shadow-md"
+                  : "bg-surface-muted text-text-primary border-border-subtle hover:border-text-primary/30 hover:bg-border-subtle"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-sm flex items-center gap-1.5">
-                  <Sparkles className={`w-3.5 h-3.5 ${isSelected ? "text-yellow-400" : "text-gray-400"}`} />
+                <span className="font-display font-semibold text-sm flex items-center gap-1.5">
+                  <Sparkles className={`w-4 h-4 ${isSelected ? "text-dashboard-metricHighlight fill-dashboard-metricHighlight" : "text-text-muted"}`} />
                   {item.title}
                 </span>
               </div>
               <p
-                className={`text-xs mt-1 leading-relaxed ${
-                  isSelected ? "text-gray-300" : "text-gray-500"
+                className={`text-xs font-sans mt-1 leading-relaxed ${
+                  isSelected ? "text-slate-300" : "text-text-secondary"
                 }`}
               >
                 {item.description}
@@ -53,7 +53,7 @@ export function ExperienceSelector({ value, onChange, error }: ExperienceSelecto
           );
         })}
       </div>
-      {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
+      {error && <p className="text-xs font-sans text-rose-500 mt-1.5">{error}</p>}
     </div>
   );
 }

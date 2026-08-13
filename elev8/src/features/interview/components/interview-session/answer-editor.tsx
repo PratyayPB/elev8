@@ -34,11 +34,11 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-dashboard-card rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm overflow-hidden flex flex-col">
       {/* Toolbar */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          <Type className="w-4 h-4" />
+      <div className="flex items-center justify-between p-3 border-b border-border-subtle bg-surface-muted">
+        <div className="flex items-center gap-2 text-sm font-display font-semibold text-text-primary">
+          <Type className="w-4 h-4 text-text-primary" />
           <span>Your Answer</span>
         </div>
         
@@ -47,7 +47,7 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
             {!isRecording ? (
               <button
                 onClick={startRecording}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-all active:scale-[0.98]"
                 title="Start Voice Recording"
               >
                 <Mic className="w-4 h-4" />
@@ -56,7 +56,7 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
             ) : (
               <button
                 onClick={stopRecording}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors animate-pulse"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-display font-bold text-white bg-rose-600 hover:bg-rose-750 transition-colors animate-pulse"
                 title="Stop Recording"
               >
                 <Square className="w-4 h-4" />
@@ -65,7 +65,7 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
             )}
           </div>
         ) : (
-          <div className="text-xs text-amber-600 dark:text-amber-400 font-medium px-2 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-md">
+          <div className="text-xs text-text-secondary font-display font-semibold px-2 py-1 bg-surface-muted border border-border-subtle rounded-md">
             Voice input not supported in this browser
           </div>
         )}
@@ -73,9 +73,9 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
 
       {/* Transcript Preview Area */}
       {isSupported && (isRecording || transcript.length > 0) && (
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="p-4 bg-dashboard-metricHighlight/20 border-b border-dashboard-metricHighlight/40">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center">
+            <span className="text-xs font-display font-bold text-text-primary uppercase tracking-wider flex items-center">
               {isRecording ? (
                 <><Mic className="w-3 h-3 mr-1 animate-pulse" /> Listening...</>
               ) : (
@@ -87,22 +87,22 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
               <div className="flex gap-2">
                 <button
                   onClick={clearTranscript}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1 text-text-secondary hover:text-rose-600 transition-colors"
                   title="Discard transcript"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleInsertTranscript}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-display font-semibold bg-text-primary text-white rounded hover:bg-black/85 transition-colors"
                 >
-                  <CornerDownLeft className="w-3 h-3" />
+                  <CornerDownLeft className="w-3 h-3 text-dashboard-metricHighlight" />
                   Insert
                 </button>
               </div>
             )}
           </div>
-          <p className="text-gray-700 dark:text-gray-300 text-sm italic min-h-[1.5rem]">
+          <p className="text-text-primary font-sans text-sm italic min-h-[1.5rem] leading-relaxed">
             {transcript || (isRecording ? "Speak clearly into your microphone..." : "")}
           </p>
         </div>
@@ -114,7 +114,7 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
         onChange={handleChange}
         onBlur={onBlur}
         placeholder="Type your answer here..."
-        className="w-full min-h-[300px] p-4 bg-transparent border-0 focus:ring-0 text-gray-900 dark:text-gray-100 resize-y outline-none"
+        className="w-full min-h-[300px] p-4 bg-transparent border-0 focus:ring-0 text-text-primary placeholder-text-muted resize-y outline-none font-sans"
       />
     </div>
   );

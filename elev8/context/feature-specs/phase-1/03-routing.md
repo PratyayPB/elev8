@@ -141,20 +141,13 @@ Create placeholder pages for:
 
 ```
 /dashboard
-
-/career-assessment
-
-/career-guidance
-
-/roadmaps
-
-/resume
-
-/interview
-
-/progress
-
-/settings
+/dashboard/career-assessment
+/dashboard/career-guidance
+/dashboard/roadmaps
+/dashboard/resume
+/dashboard/interview
+/dashboard/progress
+/dashboard/settings
 ```
 
 These pages should use the Dashboard Layout.
@@ -256,13 +249,13 @@ Example
 export const ROUTES = {
   HOME: "/",
   DASHBOARD: "/dashboard",
-  CAREER_ASSESSMENT: "/career-assessment",
-  CAREER_GUIDANCE: "/career-guidance",
-  ROADMAPS: "/roadmaps",
-  RESUME: "/resume",
-  INTERVIEW: "/interview",
-  PROGRESS: "/progress",
-  SETTINGS: "/settings",
+  CAREER_ASSESSMENT: "/dashboard/career-assessment",
+  CAREER_GUIDANCE: "/dashboard/career-guidance",
+  ROADMAPS: "/dashboard/roadmaps",
+  RESUME: "/dashboard/resume",
+  INTERVIEW: "/dashboard/interview",
+  PROGRESS: "/dashboard/progress",
+  SETTINGS: "/dashboard/settings",
 };
 ```
 
@@ -431,3 +424,9 @@ Do NOT implement:
 - [ ] Verify placeholder pages render
 - [ ] Verify metadata exists for every page
 - [ ] Verify project builds successfully
+
+
+> **UPDATE (Dashboard UI Overhaul & Route Cleanup):**
+> 1. All dashboard feature routes are now strictly nested under /dashboard/* (e.g., /dashboard/roadmaps, /dashboard/career-guidance, /dashboard/resume).
+> 2. The legacy landing pages (/about, /pricing, /contact, /faq, /forgot-password) have been completely removed to streamline the platform.
+> 3. The DashboardShell layout replaces the previous DashboardLayout placeholder.

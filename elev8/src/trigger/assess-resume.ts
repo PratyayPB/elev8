@@ -13,6 +13,7 @@ export const AssessResumeTaskSchema = z.object({
   jobId: z.string(),
   userId: z.string(),
   role: z.string(),
+  roleDescription: z.string().optional(),
   experienceLevel: z.string(),
   originalPdfBlobUrl: z.string(),
   personalization: z.object({
@@ -36,7 +37,7 @@ export const assessResumeTask = schemaTask({
     maxTimeoutInMs: 10000,
   },
   run: async (payload, { ctx }) => {
-    const { resumeId, jobId, userId, role, experienceLevel, originalPdfBlobUrl, personalization } =
+    const { resumeId, jobId, userId, role, roleDescription, experienceLevel, originalPdfBlobUrl, personalization } =
       payload;
 
     try {

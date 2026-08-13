@@ -1,6 +1,6 @@
 export const BUILDER_ROUTES = {
-  HOME: "/resume-builder",
-  NEW: "/resume-builder/new",
-  EDITOR: (resumeId: string) => `/resume-builder/${resumeId}`,
-  TEMPLATES: "/resume-builder/templates",
+  HOME: "/dashboard/resume-builder",
+  NEW: "/dashboard/resume-builder/new",
+  EDITOR: (resumeId: string) => `/dashboard/resume-builder/${resumeId}`,
+  TEMPLATES: "/dashboard/resume-builder/templates",
 };

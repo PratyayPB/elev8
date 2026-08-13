@@ -81,7 +81,7 @@ Existing roadmaps remain unchanged.
 Create
 
 ```
-/roadmaps
+/dashboard/roadmaps
 ```
 
 Roadmap Library
@@ -91,7 +91,7 @@ Roadmap Library
 Create
 
 ```
-/roadmaps/[roadmapId]
+/dashboard/roadmaps/[roadmapId]
 ```
 
 Roadmap Viewer
@@ -641,7 +641,7 @@ Do NOT implement
 
 - [ ] Load metadata
 - [ ] Retrieve Blob artifact
-- [ ] Validate version
+- [ ] Validate retrieved artifact schema
 - [ ] Render React Flow
 - [ ] Display resources
 - [ ] Enable read-only controls

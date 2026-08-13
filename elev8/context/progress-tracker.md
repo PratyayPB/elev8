@@ -34,6 +34,8 @@ Implement Phase 4.4 - Resume Workspace (Central resume management hub, library, 
 - [x] **Phase 4.2: Resume Scoring & Parsing Engine** (PDF text extraction, Gemini normalization & scoring, Trigger.dev background task)
 - [x] **Phase 4.3: Resume Improvement Hub** (Read-only artifact visualization dashboard, 7-section breakdown, ATS analysis, cross-module navigation)
 - [x] **Phase 4.5: Resume Builder Foundation** (Routing, types, schema, API endpoints, empty placeholders)
+- [x] **Dashboard UI Overhaul** (Implemented shared `DashboardShell`, Sidebar, MobileNav, MetricCards, and redesigned Dashboard Home, Career Guidance, Career Assessment, and Progress pages according to `dashboard-ui-spec.md`)
+- [x] **Route Cleanup** (Nested all dashboard feature routes strictly under `/dashboard/*` and removed legacy landing pages `/about`, `/pricing`, `/contact`, `/faq`, `/forgot-password`)
 
 ## In Progress
 - **Phase 4.4: Resume Workspace** (Central resume management hub, search, filters, trends, re-scoring, PDF downloads)
@@ -47,6 +49,6 @@ Implement Phase 4.4 - Resume Workspace (Central resume management hub, library, 
 ## Architecture Decisions
 - Central `User` model anchors all feature entities with `clerkId` mapping.
 - All 15 installed agent skills in `.agents/skills/` are formally linked and required for subagents during build and execution.
-- Large AI-generated artifacts store `contentUrl` references to Blob Storage rather than large JSON strings in PostgreSQL.
+- Large AI-generated artifacts store `blobUrl` references to Blob Storage rather than large JSON strings in PostgreSQL.
 - Full type-safety across Zod schemas, Prisma models, Server Actions, and UI components.
 - Phase 3.1 uses strictly mocked AI personalization to avoid Gemini usage before Phase 3.2.

@@ -20,6 +20,7 @@ const initialState = {
   currentStep: 1,
   requestData: {
     role: "",
+    roleDescription: "",
     experienceLevel: "Intermediate" as const,
     uploadedFile: null,
     personalization: {

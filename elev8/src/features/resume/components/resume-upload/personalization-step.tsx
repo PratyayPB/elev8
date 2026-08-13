@@ -14,39 +14,39 @@ export function PersonalizationStep() {
   if (!hasOptedIn) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
-        <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+        <div className="w-16 h-16 bg-dashboard-metricHighlight text-text-primary rounded-2xl flex items-center justify-center mx-auto mb-6 border border-dashboard-metricHighlight/60">
+          <Sparkles className="w-8 h-8" />
         </div>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-3xl font-display font-bold text-text-primary mb-4">
           Personalize Your Resume Audit
         </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-lg mx-auto">
+        <p className="text-base font-sans text-text-secondary mb-8 max-w-lg mx-auto">
           Would you like to answer a few quick questions to help us tailor our scoring, ATS recommendations, and feedback to your target company profile?
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={optIn}
-            className="flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+            className="flex items-center justify-center px-6 py-3 rounded-xl font-display font-semibold text-white bg-text-primary hover:bg-black/85 transition-all shadow-sm active:scale-[0.98]"
           >
-            <Sparkles className="w-5 h-5 mr-2" />
+            <Sparkles className="w-5 h-5 mr-2 text-dashboard-metricHighlight" />
             Yes, Personalize It
           </button>
 
           <button
             onClick={handleSkip}
-            className="flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center justify-center px-6 py-3 rounded-xl font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle"
           >
             <SkipForward className="w-5 h-5 mr-2" />
             Skip & Proceed
           </button>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-start">
+        <div className="mt-12 pt-6 border-t border-border-subtle flex justify-start">
           <button
             type="button"
             onClick={prevStep}
-            className="px-5 py-2.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+            className="px-5 py-2.5 rounded-xl font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle"
           >
             Back
           </button>
@@ -57,9 +57,9 @@ export function PersonalizationStep() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
-        <p className="text-lg font-medium">Generating personalization questions...</p>
+      <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
+        <Loader2 className="w-10 h-10 animate-spin text-text-primary mb-4" />
+        <p className="text-lg font-display font-medium">Generating personalization questions...</p>
       </div>
     );
   }
@@ -72,17 +72,17 @@ export function PersonalizationStep() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-2xl font-display font-bold text-text-primary">
           Personalize Your Resume Audit
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
+        <p className="text-text-secondary mt-2 font-sans text-sm">
           Answer these optional questions to fine-tune your score. You can skip this step at any time.
         </p>
       </div>
 
       <div className="space-y-6">
         {questions.length === 0 ? (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="bg-surface-muted rounded-xl p-8 text-center text-text-muted border border-border-subtle font-sans text-sm">
             No additional personalization questions needed at this time.
           </div>
         ) : (

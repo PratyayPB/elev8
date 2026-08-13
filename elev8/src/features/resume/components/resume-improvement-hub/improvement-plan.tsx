@@ -13,23 +13,23 @@ export function ImprovementPlanComponent({ report }: ImprovementPlanProps) {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "High":
-        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800";
+        return "bg-accent-coral/20 text-text-primary border-accent-coral";
       case "Medium":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+        return "bg-accent-cream text-text-primary border-border-subtle";
       default:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+        return "bg-surface-muted text-text-secondary border-border-subtle";
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm space-y-6">
+    <div className="bg-dashboard-card rounded-3xl p-6 sm:p-8 border border-dashboard-cardBorder shadow-sm space-y-6">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center">
-          <ListTodo className="w-5 h-5" />
+        <div className="w-10 h-10 rounded-2xl bg-dashboard-metricHighlight/20 border border-dashboard-metricHighlight/30 text-text-primary flex items-center justify-center">
+          <ListTodo className="w-5 h-5 text-text-primary" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Actionable Improvement Plan</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">Actionable Improvement Plan</h3>
+          <p className="text-xs text-text-secondary">
             Prioritized tasks to increase your resume score and land interviews.
           </p>
         </div>
@@ -39,20 +39,20 @@ export function ImprovementPlanComponent({ report }: ImprovementPlanProps) {
         {recommendations.map((rec) => (
           <div
             key={rec.id}
-            className="p-4 rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 transition-colors flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50 dark:bg-gray-700/30"
+            className="p-4 rounded-2xl border border-dashboard-cardBorder hover:border-border-strong transition-colors flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-muted"
           >
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${getPriorityBadge(rec.priority)}`}>
+                <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase border tracking-wider ${getPriorityBadge(rec.priority)}`}>
                   {rec.priority} Priority
                 </span>
-                <span className="text-xs font-semibold text-gray-400">Section: {rec.section}</span>
+                <span className="text-[10px] font-black text-text-muted uppercase tracking-wider">Section: {rec.section}</span>
               </div>
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white">{rec.title}</h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400">{rec.description}</p>
+              <h4 className="text-sm font-display font-black text-text-primary uppercase tracking-wide">{rec.title}</h4>
+              <p className="text-xs text-text-secondary font-medium leading-relaxed">{rec.description}</p>
             </div>
 
-            <div className="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-extrabold text-blue-600 dark:text-blue-400 shrink-0">
+            <div className="px-3 py-1.5 rounded-2xl bg-dashboard-card border border-dashboard-cardBorder text-[10px] font-black uppercase tracking-wider text-text-primary shrink-0">
               Impact: {rec.expectedImpact}
             </div>
           </div>

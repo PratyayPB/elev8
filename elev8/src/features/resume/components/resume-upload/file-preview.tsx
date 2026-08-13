@@ -15,19 +15,19 @@ export function FilePreview({ file, onRemove }: FilePreviewProps) {
   };
 
   return (
-    <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between gap-4">
+    <div className="p-4 bg-surface-muted rounded-2xl border border-border-subtle shadow-sm flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 overflow-hidden">
-        <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-white border border-border-subtle text-rose-600 flex items-center justify-center shrink-0">
           <FileText className="w-6 h-6" />
         </div>
         <div className="overflow-hidden">
           <div className="flex items-center gap-2">
-            <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">
+            <h4 className="font-display font-bold text-sm text-text-primary truncate">
               {file.name}
             </h4>
-            <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs font-sans text-text-secondary mt-0.5">
             {formatSize(file.size)} • PDF Document
           </p>
         </div>
@@ -36,7 +36,7 @@ export function FilePreview({ file, onRemove }: FilePreviewProps) {
       <button
         type="button"
         onClick={onRemove}
-        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors shrink-0"
+        className="p-2 text-text-muted hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0 border border-transparent hover:border-rose-100"
         title="Remove file"
       >
         <Trash2 className="w-5 h-5" />

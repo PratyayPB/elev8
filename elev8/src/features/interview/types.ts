@@ -6,7 +6,10 @@ export type InterviewType =
   | "Quick Practice"
   | "Standard Interview"
   | "Comprehensive Interview"
-  | "Mock Final Round";
+  | "Mock Final Round"
+  | "TECHNICAL"
+  | "NON_TECHNICAL"
+  | "BEHAVIORAL";
 
 export interface Question {
   id: string;
@@ -66,6 +69,9 @@ export interface InterviewMetadata {
   estimatedDuration: string;
   generatedAt: string;
   generatorVersion: string;
+  source?: "PREDEFINED" | "AI_GENERATED" | "ROADMAP" | "CUSTOM";
+  templateId?: string;
+  predefinedInterviewId?: string;
 }
 
 // ====================================================

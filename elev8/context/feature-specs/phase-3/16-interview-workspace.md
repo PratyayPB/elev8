@@ -67,7 +67,7 @@ Do NOT implement
 Create
 
 ```
-/interviews
+/dashboard/interviews
 ```
 
 This page becomes the Interview Workspace.

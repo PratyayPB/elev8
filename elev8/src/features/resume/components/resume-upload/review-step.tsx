@@ -29,6 +29,9 @@ export function ReviewStep() {
       const formData = new FormData();
       formData.append("file", finalRequest.uploadedFile);
       formData.append("role", finalRequest.role);
+      if (finalRequest.roleDescription) {
+        formData.append("roleDescription", finalRequest.roleDescription);
+      }
       formData.append("experienceLevel", finalRequest.experienceLevel);
       formData.append("personalization", JSON.stringify(finalRequest.personalization));
 
@@ -37,7 +40,7 @@ export function ReviewStep() {
 
       if (response.success) {
         reset();
-        router.push(`/resumes?jobId=${response.jobId}`);
+        router.push(`/dashboard/resumes?jobId=${response.jobId}`);
       }
     } catch (err: any) {
       console.error(err);
@@ -53,84 +56,92 @@ export function ReviewStep() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-2xl font-display font-bold text-text-primary">
           Review Resume Request
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+        <p className="text-text-secondary mt-1 text-sm font-sans">
           Please confirm your uploaded file and target details before starting the AI assessment.
         </p>
       </div>
 
       {/* Uploaded File Details */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Uploaded File</h3>
+          <h3 className="text-lg font-display font-bold text-text-primary">Uploaded File</h3>
           <button
             onClick={() => setStep(1)}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-xs font-display font-bold text-text-primary hover:underline"
           >
             Edit
           </button>
         </div>
 
         {file ? (
-          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-            <FileText className="w-6 h-6 text-red-500 shrink-0" />
+          <div className="flex items-center gap-3 p-3 bg-surface-muted rounded-xl border border-border-subtle">
+            <FileText className="w-6 h-6 text-rose-600 shrink-0" />
             <div className="overflow-hidden">
-              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{file.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-sans font-bold text-text-primary truncate">{file.name}</p>
+              <p className="text-xs font-sans text-text-secondary">
                 {(file.size / (1024 * 1024)).toFixed(2)} MB • PDF
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-red-500">No file uploaded.</p>
+          <p className="text-sm font-sans font-semibold text-rose-600">No file uploaded.</p>
         )}
       </div>
 
       {/* Target Details */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-bold">
+          <h3 className="text-lg font-display font-bold text-text-primary">
             Target & Experience
           </h3>
           <button
             onClick={() => setStep(1)}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-xs font-display font-bold text-text-primary hover:underline"
           >
             Edit
           </button>
         </div>
 
-        <dl className="grid grid-cols-2 gap-y-4 text-sm">
+        <dl className="grid grid-cols-2 gap-y-4 text-sm font-sans">
           <div>
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Target Role</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">
+            <dt className="text-text-secondary text-xs font-medium">Target Role</dt>
+            <dd className="font-semibold text-text-primary mt-1">
               {requestData.role}
             </dd>
           </div>
           <div>
-            <dt className="text-gray-500 dark:text-gray-400 text-xs">Experience Level</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">
+            <dt className="text-text-secondary text-xs font-medium">Experience Level</dt>
+            <dd className="font-semibold text-text-primary mt-1">
               {requestData.experienceLevel}
             </dd>
           </div>
+          {requestData.roleDescription && (
+            <div className="col-span-2 pt-3 border-t border-border-subtle">
+              <dt className="text-text-secondary text-xs font-medium">Job Description</dt>
+              <dd className="font-normal text-text-primary mt-1 text-xs whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
+                {requestData.roleDescription}
+              </dd>
+            </div>
+          )}
         </dl>
       </div>
 
       {/* Personalization Summary */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Personalization</h3>
+          <h3 className="text-lg font-display font-bold text-text-primary">Personalization</h3>
           <button
             onClick={() => setStep(2)}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-xs font-display font-bold text-text-primary hover:underline"
           >
             Edit
           </button>
         </div>
 
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <p className="text-sm font-sans font-semibold text-text-primary">
           {requestData.personalization?.skipped
             ? "Skipped Personalization"
             : `${answeredCount} Personalization Questions Answered`}
@@ -138,18 +149,18 @@ export function ReviewStep() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl text-sm font-medium border border-red-200 dark:border-red-900/50">
+        <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-sm font-sans font-semibold border border-rose-100">
           {error}
         </div>
       )}
 
       {/* Footer Actions */}
-      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center">
+      <div className="mt-8 pt-6 border-t border-border-subtle flex justify-between items-center">
         <button
           type="button"
           onClick={prevStep}
           disabled={isSubmitting}
-          className="px-5 py-2.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          className="px-5 py-2.5 rounded-xl font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle disabled:opacity-50"
         >
           Back
         </button>
@@ -158,7 +169,7 @@ export function ReviewStep() {
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="flex items-center px-6 py-2.5 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-900 transition-colors shadow-sm"
+          className="flex items-center px-6 py-2.5 rounded-xl font-display font-semibold text-white bg-text-primary hover:bg-black/85 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
         >
           {isSubmitting ? (
             <>

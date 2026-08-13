@@ -15,22 +15,22 @@ export function SectionCard({ title, scoreData, isExpanded, onToggle, children }
   const score = scoreData?.score || 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-all">
+    <div className="bg-dashboard-card rounded-3xl border border-dashboard-cardBorder shadow-sm overflow-hidden transition-all">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full p-5 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors text-left"
+        className="w-full p-5 flex items-center justify-between hover:bg-surface-muted transition-colors text-left"
       >
         <div className="flex items-center gap-4">
-          <h4 className="text-base font-bold text-gray-900 dark:text-white">{title}</h4>
+          <h4 className="text-base font-display font-black text-text-primary uppercase tracking-wide">{title}</h4>
           {scoreData && (
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${
                 score >= 80
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                  ? "bg-dashboard-metricHighlight text-text-primary border-border-strong"
                   : score >= 65
-                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                  ? "bg-accent-cream text-text-primary border-border-subtle"
+                  : "bg-surface-muted text-text-secondary border-border-subtle"
               }`}
             >
               Score: {score}/100
@@ -38,25 +38,28 @@ export function SectionCard({ title, scoreData, isExpanded, onToggle, children }
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-gray-400">
-          <span className="text-xs font-semibold text-gray-400">{isExpanded ? "Collapse" : "Expand"}</span>
-          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        <div className="flex items-center gap-2 text-text-secondary">
+          <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">{isExpanded ? "Collapse" : "Expand"}</span>
+          {isExpanded ? <ChevronUp className="w-4 h-4 text-text-primary" /> : <ChevronDown className="w-4 h-4 text-text-primary" />}
         </div>
       </button>
 
       {isExpanded && (
-        <div className="p-5 pt-0 border-t border-gray-100 dark:border-gray-700/50 space-y-4">
+        <div className="p-5 pt-0 border-t border-border-subtle/50 space-y-4">
           {scoreData && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               {/* Strengths */}
               {scoreData.strengths.length > 0 && (
-                <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                  <h5 className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 mb-2">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Section Strengths
+                <div className="bg-surface-muted p-3.5 rounded-2xl border border-border-subtle">
+                  <h5 className="text-[10px] font-black text-text-primary flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+                    <CheckCircle className="w-3.5 h-3.5 text-text-primary" /> Section Strengths
                   </h5>
-                  <ul className="space-y-1 text-xs text-emerald-700 dark:text-emerald-400">
+                  <ul className="space-y-1.5 text-xs text-text-secondary font-medium leading-relaxed">
                     {scoreData.strengths.map((s, i) => (
-                      <li key={i}>• {s}</li>
+                      <li key={i} className="flex items-start gap-1">
+                        <span className="shrink-0 font-bold">•</span>
+                        <span>{s}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -64,13 +67,16 @@ export function SectionCard({ title, scoreData, isExpanded, onToggle, children }
 
               {/* Weaknesses */}
               {scoreData.weaknesses.length > 0 && (
-                <div className="bg-amber-50/50 dark:bg-amber-950/20 p-3.5 rounded-xl border border-amber-100 dark:border-amber-900/30">
-                  <h5 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 mb-2">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Needs Attention
+                <div className="bg-accent-coral/10 p-3.5 rounded-2xl border border-accent-coral/30">
+                  <h5 className="text-[10px] font-black text-text-primary flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+                    <AlertCircle className="w-3.5 h-3.5 text-text-primary" /> Needs Attention
                   </h5>
-                  <ul className="space-y-1 text-xs text-amber-700 dark:text-amber-400">
+                  <ul className="space-y-1.5 text-xs text-text-secondary font-medium leading-relaxed">
                     {scoreData.weaknesses.map((w, i) => (
-                      <li key={i}>• {w}</li>
+                      <li key={i} className="flex items-start gap-1">
+                        <span className="shrink-0 font-bold text-text-primary">•</span>
+                        <span>{w}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -80,13 +86,16 @@ export function SectionCard({ title, scoreData, isExpanded, onToggle, children }
 
           {/* Recommendations */}
           {scoreData?.recommendations && scoreData.recommendations.length > 0 && (
-            <div className="bg-blue-50/50 dark:bg-blue-950/20 p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/30">
-              <h5 className="text-xs font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1.5 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" /> Actionable Recommendations
+            <div className="bg-dashboard-metricHighlight/10 p-3.5 rounded-2xl border border-dashboard-metricHighlight/20">
+              <h5 className="text-[10px] font-black text-text-primary flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-text-primary" /> Actionable Recommendations
               </h5>
-              <ul className="space-y-1 text-xs text-blue-700 dark:text-blue-400">
+              <ul className="space-y-1.5 text-xs text-text-secondary font-medium leading-relaxed">
                 {scoreData.recommendations.map((r, i) => (
-                  <li key={i}>• {r}</li>
+                  <li key={i} className="flex items-start gap-1">
+                    <span className="shrink-0 font-bold text-text-primary">•</span>
+                    <span>{r}</span>
+                  </li>
                 ))}
               </ul>
             </div>

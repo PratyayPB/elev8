@@ -288,16 +288,14 @@ target
 
 ---
 
-# Versioned Roadmap Artifact
+# Roadmap Artifact
 
-Every generated roadmap stored in Blob must include a schema version.
+Every generated roadmap stored in Blob must adhere to the schema.
 
 Example
 
 ```json
 {
-  "version": "1.0.0",
-
   "metadata": {},
 
   "logicalGraph": {},
@@ -309,8 +307,6 @@ Example
   "resources": {}
 }
 ```
-
-Future versions must remain backward compatible.
 
 ---
 
@@ -691,7 +687,6 @@ Do NOT implement
 ## Storage
 
 - [ ] Create artifact schema
-- [ ] Add version metadata
 - [ ] Upload artifact to Blob
 - [ ] Store Blob URL in Prisma
 - [ ] Retrieve artifact
@@ -711,7 +706,6 @@ Do NOT implement
 ## Validation
 
 - [ ] Validate artifact schema
-- [ ] Validate version
 - [ ] Validate React Flow graph
 - [ ] Validate Blob upload
 

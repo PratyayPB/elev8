@@ -11,8 +11,8 @@ interface RoleSelectorProps {
 export function RoleSelector({ value, onChange }: RoleSelectorProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-        <Briefcase className="w-4 h-4 text-blue-600" />
+      <label className="block text-sm font-display font-bold text-text-primary flex items-center gap-2">
+        <Briefcase className="w-4 h-4 text-text-primary" />
         Target Role
       </label>
       <div className="relative">
@@ -22,7 +22,7 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
           onChange={(e) => onChange(e.target.value)}
           placeholder="e.g. Frontend Developer, Senior Fullstack Engineer..."
           list="popular-roles-list"
-          className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+          className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20 focus:border-text-primary transition-all shadow-sm font-sans"
         />
         <datalist id="popular-roles-list">
           {POPULAR_RESUME_ROLES.map((role) => (
@@ -30,7 +30,7 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
           ))}
         </datalist>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-xs font-sans text-text-secondary">
         Type a custom role or choose from popular suggestions.
       </p>
     </div>

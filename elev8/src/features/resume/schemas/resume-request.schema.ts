@@ -8,6 +8,7 @@ export const ResumeAnswerSchema = z.object({
 
 export const ResumeStage1Schema = z.object({
   role: z.string().min(2, "Target role must be at least 2 characters"),
+  roleDescription: z.string().optional(),
   experienceLevel: z.enum(RESUME_EXPERIENCE_LEVELS, {
     required_error: "Please select an experience level",
   }),

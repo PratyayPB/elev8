@@ -34,7 +34,7 @@ export function OnboardingPrompt({ profile }: OnboardingPromptProps) {
   const isResuming = profile?.onboardingStatus === "IN_PROGRESS";
 
   return (
-    <div className="relative bg-gradient-to-r from-accent-cyan/10 via-surface to-accent-gold/10 border border-accent-cyan/30 rounded-2xl p-5 shadow-sm space-y-3">
+    <div className="relative bg-dashboard-card border border-dashboard-metricHighlight/30 rounded-2xl p-5 shadow-sm space-y-3">
       <button
         type="button"
         onClick={handleDismiss}
@@ -45,7 +45,7 @@ export function OnboardingPrompt({ profile }: OnboardingPromptProps) {
       </button>
 
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-accent-cyan/20 flex items-center justify-center text-accent-cyan flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-dashboard-metricHighlight/20 flex items-center justify-center text-text-primary flex-shrink-0">
           <Sparkles className="w-5 h-5" />
         </div>
         <div>
@@ -59,16 +59,16 @@ export function OnboardingPrompt({ profile }: OnboardingPromptProps) {
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <div className="w-1/2 h-2 bg-surface-muted rounded-full overflow-hidden border border-border">
+        <div className="w-1/2 h-2 bg-surface-muted rounded-full overflow-hidden border border-border-subtle">
           <div
-            className="h-full bg-accent-cyan transition-all duration-300"
+            className="h-full bg-dashboard-metricHighlight transition-all duration-300"
             style={{ width: `${percentage}%` }}
           />
         </div>
 
         <Link
           href={ROUTES.ONBOARDING}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-accent-cyan text-black text-xs font-semibold hover:brightness-105 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-text-primary text-white text-xs font-semibold hover:bg-black/80 transition-all shadow-sm"
         >
           {isResuming ? "Resume Onboarding" : "Complete Profile"}
           <ArrowRight className="w-3.5 h-3.5" />

@@ -22,14 +22,11 @@ export class RoadmapActionsService {
         userId,
         title: `${existing.title} (Copy)`,
         description: existing.description,
-        targetCareer: existing.targetCareer,
         targetRole: existing.targetRole,
         experienceLevel: existing.experienceLevel,
         estimatedDuration: existing.estimatedDuration,
         status: existing.status,
-        contentUrl: existing.contentUrl,
         blobUrl: existing.blobUrl,
-        version: existing.version,
       },
     });
 
@@ -51,7 +48,7 @@ export class RoadmapActionsService {
       throw new Error("Roadmap not found or access denied.");
     }
 
-    const blobUrl = existing.blobUrl || existing.contentUrl;
+    const blobUrl = existing.blobUrl;
 
     // Delete Prisma Roadmap model
     await prisma.roadmap.delete({
@@ -67,7 +64,7 @@ export class RoadmapActionsService {
     if (blobUrl) {
       const otherReferences = await prisma.roadmap.count({
         where: {
-          OR: [{ blobUrl }, { contentUrl: blobUrl }],
+          blobUrl,
         },
       });
 

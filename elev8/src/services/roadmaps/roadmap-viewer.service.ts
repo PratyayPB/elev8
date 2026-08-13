@@ -37,15 +37,15 @@ export class RoadmapViewerService {
       orderBy: { createdAt: "desc" },
     });
 
-    if (roadmap.status === RoadmapStatus.COMPLETED && (roadmap.blobUrl || roadmap.contentUrl)) {
-      const url = roadmap.blobUrl || roadmap.contentUrl;
+    if (roadmap.status === RoadmapStatus.COMPLETED && roadmap.blobUrl) {
+      const url = roadmap.blobUrl;
       if (url) {
         try {
           const rawArtifact = await BlobStorageService.fetchJson<unknown>(url);
           if (RoadmapArtifactService.validateArtifact(rawArtifact)) {
             artifact = rawArtifact;
           } else {
-            error = "Invalid or corrupted roadmap artifact version.";
+            error = "Invalid or corrupted roadmap artifact.";
           }
         } catch (err) {
           console.error("Failed to load roadmap artifact from Blob:", err);

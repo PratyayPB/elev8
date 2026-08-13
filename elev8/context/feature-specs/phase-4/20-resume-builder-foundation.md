@@ -64,7 +64,7 @@ Do NOT implement
 Create
 
 ```
-/resume-builder
+/dashboard/resume-builder
 ```
 
 Builder Home
@@ -74,7 +74,7 @@ Builder Home
 Create
 
 ```
-/resume-builder/new
+/dashboard/resume-builder/new
 ```
 
 New Resume
@@ -84,7 +84,7 @@ New Resume
 Create
 
 ```
-/resume-builder/[resumeId]
+/dashboard/resume-builder/[resumeId]
 ```
 
 Resume Editor (Placeholder)
@@ -94,7 +94,7 @@ Resume Editor (Placeholder)
 Create
 
 ```
-/resume-builder/templates
+/dashboard/resume-builder/templates
 ```
 
 Template Gallery (Placeholder)

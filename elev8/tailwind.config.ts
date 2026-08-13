@@ -21,6 +21,15 @@ const config: Config = {
           wrapper: "var(--color-neutral)",
           DEFAULT: "var(--color-neutral)",
         },
+        dashboard: {
+          sidebar: "var(--sidebar-bg)",
+          navActive: "var(--nav-active-bg)",
+          navActiveText: "var(--nav-active-text)",
+          card: "var(--card-bg)",
+          cardBorder: "var(--card-border)",
+          pageBg: "var(--page-bg)",
+          metricHighlight: "var(--metric-highlight)",
+        },
         text: {
           primary: "var(--text-primary)",
           secondary: "var(--text-secondary)",

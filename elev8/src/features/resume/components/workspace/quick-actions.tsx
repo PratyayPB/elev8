@@ -12,7 +12,7 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <Link
-        href="/resumes"
+        href="/dashboard/resumes/new"
         className="p-5 bg-black text-white rounded-xl shadow hover:bg-gray-800 transition-colors flex flex-col justify-between group"
       >
         <div className="flex items-center justify-between mb-4">
@@ -26,7 +26,7 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
       </Link>
 
       <Link
-        href="/resume-builder"
+        href="/dashboard/resume-builder"
         className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-black transition-colors flex flex-col justify-between group"
       >
         <div className="flex items-center justify-between mb-4">
@@ -43,7 +43,7 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
 
       {latestResumeId ? (
         <Link
-          href={`/resumes/${latestResumeId}`}
+          href={`/dashboard/resumes/${latestResumeId}`}
           className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-black transition-colors flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between mb-4">
@@ -66,7 +66,7 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
       )}
 
       <Link
-        href="/resume-builder/templates"
+        href="/dashboard/resume-builder/templates"
         className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-black transition-colors flex flex-col justify-between group"
       >
         <div className="flex items-center justify-between mb-4">

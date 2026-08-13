@@ -176,22 +176,13 @@ Initialize the following pages only.
 /(sign-up)
 
 /dashboard
-
-/career-assessment
-
-/career-guidance
-
-/roadmaps
-
-/resume
-
-/interview
-
-/progress
-
-/pricing
-
-/settings
+/dashboard/career-assessment
+/dashboard/career-guidance
+/dashboard/roadmaps
+/dashboard/resume
+/dashboard/interview
+/dashboard/progress
+/dashboard/settings
 ```
 
 Each page should export a minimal placeholder component.

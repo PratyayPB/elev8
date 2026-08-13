@@ -10,7 +10,8 @@
     "trigger:dev": "npx @trigger.dev/cli@latest dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "seed:interviews": "npx tsx scripts/seed-interview-templates.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
@@ -18,7 +19,7 @@
     "@hookform/resolvers": "^5.5.7",
     "@prisma/client": "^6.0.0",
     "@tanstack/react-query": "^5.0.0",
-    "@trigger.dev/sdk": "4.5.9",
+    "@trigger.dev/sdk": "4.5.10",
     "@types/dagre": "^0.7.54",
     "@types/pdf-parse": "^1.1.5",
     "@vercel/blob": "^2.6.1",

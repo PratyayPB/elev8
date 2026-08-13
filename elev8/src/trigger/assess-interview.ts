@@ -1,6 +1,6 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { prisma } from "@/lib/prisma";
-import { JobStatus, JobType } from "@prisma/client";
+import { JobStatus, JobType, InterviewStatus } from "@prisma/client";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { InterviewArtifact, AssessmentReport } from "@/features/interview/types";
 import { QuestionAssessmentService } from "@/features/interview/services/question-assessment.service";
@@ -89,14 +89,29 @@ export const assessInterviewJob = task({
     } catch (error: any) {
       console.error("Assessment Job Failed:", error);
 
-      await prisma.job.update({
-        where: { id: jobId },
-        data: {
-          status: JobStatus.FAILED,
-          error: error.message,
-          completedAt: new Date(),
-        },
-      });
+      try {
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            status: JobStatus.FAILED,
+            error: error.message,
+            completedAt: new Date(),
+          },
+        });
+      } catch (jobErr) {
+        console.error("Failed to update job status on error:", jobErr);
+      }
+
+      try {
+        await prisma.interview.update({
+          where: { id: interviewId },
+          data: {
+            status: InterviewStatus.FAILED,
+          },
+        });
+      } catch (interviewErr) {
+        console.error("Failed to update interview status on error:", interviewErr);
+      }
 
       // Rethrow to trigger automatic retries in Trigger.dev
       throw error;

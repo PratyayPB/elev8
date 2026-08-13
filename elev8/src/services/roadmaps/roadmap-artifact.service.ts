@@ -2,10 +2,8 @@ import { GeneratedRoadmap, RoadmapMetadata, Milestone, Project, LearningResource
 import { ReactFlowGraph, RoadmapRenderService } from "./roadmap-render.service";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 
-export const ROADMAP_SCHEMA_VERSION = "1.0.0";
 
 export interface RoadmapArtifact {
-  version: string;
   metadata: RoadmapMetadata;
   summary: string;
   milestones: Milestone[];
@@ -30,7 +28,6 @@ export class RoadmapArtifactService {
     );
 
     return {
-      version: ROADMAP_SCHEMA_VERSION,
       metadata: generated.metadata,
       summary: generated.summary,
       milestones: generated.milestones,
@@ -61,7 +58,6 @@ export class RoadmapArtifactService {
     const a = artifact as Partial<RoadmapArtifact>;
 
     return Boolean(
-      a.version &&
       a.metadata &&
       a.logicalGraph &&
       a.reactFlow &&

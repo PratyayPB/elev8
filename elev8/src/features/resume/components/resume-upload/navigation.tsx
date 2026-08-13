@@ -18,12 +18,12 @@ export function Navigation({
   nextLabel = "Continue",
 }: NavigationProps) {
   return (
-    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+    <div className="mt-8 pt-6 border-t border-border-subtle flex items-center justify-between">
       {onBack ? (
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -37,7 +37,7 @@ export function Navigation({
           <button
             type="button"
             onClick={onSkip}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-display font-semibold text-text-muted hover:text-text-primary transition-colors"
           >
             <SkipForward className="w-4 h-4" />
             Skip
@@ -49,7 +49,7 @@ export function Navigation({
             type="button"
             onClick={onNext}
             disabled={isNextDisabled}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-display font-semibold text-white bg-text-primary hover:bg-black/85 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
           >
             {nextLabel}
             <ArrowRight className="w-4 h-4" />

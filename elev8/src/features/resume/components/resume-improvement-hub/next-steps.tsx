@@ -26,9 +26,9 @@ export function NextStepsComponent({ report }: NextStepsProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recommended Elev8 Actions</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Bridge your resume gaps by leveraging Elev8's AI learning roadmaps and mock interview simulator.
+        <h3 className="text-xl font-display font-black text-text-primary uppercase tracking-wide">Recommended Elev8 Actions</h3>
+        <p className="text-xs text-text-secondary mt-0.5">
+          Bridge your resume gaps by leveraging Elev8&apos;s AI learning roadmaps and mock interview simulator.
         </p>
       </div>
 
@@ -39,9 +39,9 @@ export function NextStepsComponent({ report }: NextStepsProps) {
           description={`Create a personalized learning roadmap pre-filled with missing skills like ${keywords.missingKeywords.slice(0, 2).join(", ") || "target tech"}.`}
           badge="Learning Path"
           icon={Map}
-          href={`/roadmaps/new?${roadmapQuery}`}
+          href={`/dashboard/roadmaps/new?${roadmapQuery}`}
           ctaText="Build Roadmap"
-          accentBg="bg-blue-600"
+          accentBg="bg-accent-cyan/20 border border-accent-cyan/30 text-text-primary"
         />
 
         {/* Practice Interview */}
@@ -50,9 +50,9 @@ export function NextStepsComponent({ report }: NextStepsProps) {
           description={`Simulate technical interview questions tailored to ${role} level.`}
           badge="Interview Sim"
           icon={MessageSquareCode}
-          href={`/interviews/new?${interviewQuery}`}
+          href={`/dashboard/interviews/new?${interviewQuery}`}
           ctaText="Start Interview"
-          accentBg="bg-indigo-600"
+          accentBg="bg-accent-cream border border-border-subtle text-text-primary"
         />
 
         {/* Career Guidance */}
@@ -61,9 +61,9 @@ export function NextStepsComponent({ report }: NextStepsProps) {
           description="Explore market readiness, salary ranges, and career progression paths."
           badge="Career Advice"
           icon={Compass}
-          href="/career-guidance"
+          href="/dashboard/career-guidance"
           ctaText="View Guidance"
-          accentBg="bg-emerald-600"
+          accentBg="bg-surface-muted border border-border-subtle text-text-primary"
         />
 
         {/* Resume Builder Placeholder */}
@@ -74,7 +74,7 @@ export function NextStepsComponent({ report }: NextStepsProps) {
           icon={FileText}
           href="#"
           ctaText="Open Builder"
-          accentBg="bg-purple-600"
+          accentBg="bg-accent-coral/20 border border-accent-coral/30 text-text-primary"
         />
       </div>
     </div>

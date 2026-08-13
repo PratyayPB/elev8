@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
-  AlertCircle,
   XCircle,
 } from "lucide-react";
 
@@ -27,37 +26,36 @@ export function QuestionCard({
 
   const getScoreBadge = (score?: number) => {
     if (score === undefined) return null;
-    let color = "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+    let color = "bg-surface-muted text-text-secondary border border-border-subtle";
     if (score >= 80)
-      color =
-        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+      color = "bg-emerald-50 text-emerald-700 border border-emerald-200";
     else if (score >= 60)
-      color =
-        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300";
-    else color = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+      color = "bg-dashboard-metricHighlight text-black border border-dashboard-metricHighlight/50";
+    else 
+      color = "bg-rose-50 text-rose-800 border border-rose-200";
 
     return (
-      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${color}`}>
+      <span className={`px-2.5 py-1 rounded-full text-xs font-display font-bold ${color}`}>
         {score} / 100
       </span>
     );
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div className="bg-dashboard-card rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-5 text-left flex items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        className="w-full p-5 text-left flex items-center justify-between gap-4 hover:bg-surface-muted transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-sm flex items-center justify-center shrink-0">
+          <span className="w-8 h-8 rounded-full bg-surface-muted border border-border-subtle text-text-secondary font-display font-bold text-sm flex items-center justify-center shrink-0">
             Q{index + 1}
           </span>
           <div>
-            <h4 className="font-bold text-gray-900 dark:text-white text-base">
+            <h4 className="font-display font-bold text-text-primary text-base">
               {question.question}
             </h4>
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-xs font-sans text-text-muted">
               Category: {question.category}
             </span>
           </div>
@@ -66,25 +64,25 @@ export function QuestionCard({
         <div className="flex items-center gap-3 shrink-0">
           {getScoreBadge(feedback?.score)}
           {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
+            <ChevronUp className="w-5 h-5 text-text-muted" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-text-muted" />
           )}
         </div>
       </button>
 
       {isOpen && (
-        <div className="p-5 border-t border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/20 flex flex-col gap-5">
+        <div className="p-5 border-t border-border-subtle bg-surface-muted/30 flex flex-col gap-5">
           {/* User Answer */}
           <div>
-            <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <h5 className="text-xs font-display font-bold text-text-muted uppercase tracking-wider mb-2">
               Your Answer
             </h5>
-            <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+            <div className="p-4 bg-dashboard-card rounded-xl border border-border-subtle text-sm font-sans text-text-secondary leading-relaxed whitespace-pre-wrap">
               {answerText.trim().length > 0 ? (
                 answerText
               ) : (
-                <em className="text-gray-400">No answer provided.</em>
+                <em className="text-text-muted">No answer provided.</em>
               )}
             </div>
           </div>
@@ -92,18 +90,18 @@ export function QuestionCard({
           {/* AI Feedback */}
           {feedback && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                <h5 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2">
+              <div className="p-4 bg-dashboard-metricHighlight/10 rounded-xl border border-dashboard-metricHighlight/30">
+                <h5 className="text-xs font-display font-bold text-text-primary uppercase tracking-wider mb-2">
                   AI Feedback
                 </h5>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <p className="text-sm font-sans text-text-secondary leading-relaxed">
                   {feedback.feedback}
                 </p>
               </div>
 
               {/* Expected / Missed Topics */}
-              <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/30">
-                <h5 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2">
+              <div className="p-4 bg-surface-muted rounded-xl border border-border-subtle">
+                <h5 className="text-xs font-display font-bold text-text-primary uppercase tracking-wider mb-2">
                   Missed Concepts
                 </h5>
                 {feedback.missedTopics.length > 0 ? (
@@ -111,16 +109,16 @@ export function QuestionCard({
                     {feedback.missedTopics.map((topic, i) => (
                       <li
                         key={i}
-                        className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
+                        className="text-sm font-sans text-text-secondary flex items-center gap-1.5"
                       >
-                        <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                        <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                         {topic}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4" /> Covered all expected
+                  <p className="text-sm text-emerald-700 font-display font-bold flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" /> Covered all expected
                     topics!
                   </p>
                 )}

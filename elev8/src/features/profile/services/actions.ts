@@ -24,8 +24,8 @@ export async function updateProfileAction(
     const userId = await requireAuth();
     const updated = await ProfileService.updateProfile(userId, data);
     revalidatePath("/dashboard");
-    revalidatePath("/settings");
-    revalidatePath("/onboarding");
+    revalidatePath("/dashboard/settings");
+    revalidatePath("/dashboard/onboarding");
     return { success: true, profile: updated };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "An error occurred";
@@ -46,7 +46,7 @@ export async function saveOnboardingStepAction(
       onboardingStatus: status,
     });
     revalidatePath("/dashboard");
-    revalidatePath("/onboarding");
+    revalidatePath("/dashboard/onboarding");
     return { success: true, profile: updated };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "An error occurred";
@@ -59,7 +59,7 @@ export async function skipOnboardingAction(): Promise<{ success: boolean; error?
     const userId = await requireAuth();
     await ProfileService.setOnboardingStatus(userId, "SKIPPED");
     revalidatePath("/dashboard");
-    revalidatePath("/onboarding");
+    revalidatePath("/dashboard/onboarding");
     return { success: true };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "An error occurred";
@@ -72,7 +72,7 @@ export async function completeOnboardingAction(): Promise<{ success: boolean; er
     const userId = await requireAuth();
     await ProfileService.setOnboardingStatus(userId, "COMPLETED", 9);
     revalidatePath("/dashboard");
-    revalidatePath("/onboarding");
+    revalidatePath("/dashboard/onboarding");
     return { success: true };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to complete onboarding";

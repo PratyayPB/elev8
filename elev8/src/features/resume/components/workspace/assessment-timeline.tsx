@@ -47,7 +47,7 @@ export function AssessmentTimeline({ resumes }: AssessmentTimelineProps) {
                   </span>
                 )}
                 <Link
-                  href={`/resumes/${item.id}`}
+                  href={`/dashboard/resumes/${item.id}`}
                   className="text-xs font-medium text-black underline hover:text-gray-600"
                 >
                   View Assessment

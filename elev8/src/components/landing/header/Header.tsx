@@ -20,17 +20,19 @@ export function Header() {
     <header className="fixed top-4 left-0 right-0 z-50 px-4 sm:px-6 flex justify-center">
       <div className="w-full max-w-[900px] glass-pill rounded-full px-6 py-3 flex items-center justify-between shadow-sm transition-all duration-300">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-medium tracking-tight text-black">Elev8</span>
+          <span className="text-lg font-medium tracking-tight text-black">
+            Elev8
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <button
-            onClick={() => scrollToSection("dashboard")}
+          <Link
+            href="/dashboard"
             className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors cursor-pointer"
           >
             Dashboard
-          </button>
+          </Link>
           <button
             onClick={() => scrollToSection("features")}
             className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors cursor-pointer"
@@ -68,12 +70,6 @@ export function Header() {
             </Link>
           </SignedOut>
           <SignedIn>
-            <Link
-              href="/dashboard"
-              className="text-xs font-medium text-[#605F5F] hover:text-black transition-colors"
-            >
-              Dashboard
-            </Link>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
         </div>
@@ -84,19 +80,24 @@ export function Header() {
           className="md:hidden text-[#605F5F] hover:text-black p-1"
           aria-label="Toggle Navigation Menu"
         >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {mobileMenuOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <Menu className="w-6 h-6" />
+          )}
         </button>
       </div>
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="absolute top-20 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-[#E6E6E6] shadow-xl md:hidden flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
-          <button
-            onClick={() => scrollToSection("dashboard")}
+          <Link
+            href="/dashboard"
+            onClick={() => setMobileMenuOpen(false)}
             className="text-left text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"
           >
             Dashboard
-          </button>
+          </Link>
           <button
             onClick={() => scrollToSection("features")}
             className="text-left text-base font-medium text-[#1A1A1A] py-2 border-b border-[#E6E6E6]"

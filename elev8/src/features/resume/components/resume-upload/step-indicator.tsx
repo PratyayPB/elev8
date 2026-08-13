@@ -17,11 +17,11 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
     <div className="w-full max-w-xl mx-auto mb-8 px-4">
       <div className="flex items-center justify-between relative">
         {/* Connecting line background */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-gray-200 dark:bg-gray-700 z-0" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-border-subtle z-0" />
         
         {/* Active progress line */}
         <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-blue-600 transition-all duration-300 z-0"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-text-primary transition-all duration-300 z-0"
           style={{
             width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
           }}
@@ -36,19 +36,19 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 ${
                   isCompleted
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-text-primary text-white shadow-sm"
                     : isCurrent
-                    ? "bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/40 shadow-sm"
-                    : "bg-white dark:bg-gray-800 text-gray-400 border-2 border-gray-300 dark:border-gray-700"
+                    ? "bg-text-primary text-white ring-4 ring-dashboard-metricHighlight/60 shadow-sm font-display"
+                    : "bg-dashboard-card text-text-muted border-2 border-border-subtle"
                 }`}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : step.number}
               </div>
               <span
-                className={`text-xs font-semibold mt-2 transition-colors ${
+                className={`text-xs font-display font-semibold mt-2 transition-colors ${
                   isCurrent || isCompleted
-                    ? "text-gray-900 dark:text-white"
-                    : "text-gray-400 dark:text-gray-500"
+                    ? "text-text-primary"
+                    : "text-text-muted"
                 }`}
               >
                 {step.title}

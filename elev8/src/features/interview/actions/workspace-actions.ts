@@ -40,7 +40,7 @@ export async function deleteInterview(interviewId: string) {
     where: { id: interviewId },
   });
 
-  revalidatePath("/interviews");
+  revalidatePath("/dashboard/interviews");
   return { success: true };
 }
 

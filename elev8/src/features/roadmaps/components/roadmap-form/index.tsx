@@ -50,9 +50,9 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
       }
       const res = await generateRoadmapAction(reqPayload);
       if (res?.roadmapId) {
-        router.push(`/roadmaps/${res.roadmapId}`);
+        router.push(`/dashboard/roadmaps/${res.roadmapId}`);
       } else {
-        router.push("/roadmaps");
+        router.push("/dashboard/roadmaps");
       }
     } catch (err) {
       console.error("Failed to trigger roadmap generation:", err);
@@ -98,13 +98,13 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+    <div className="w-full max-w-3xl mx-auto bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 sm:p-8 shadow-sm">
       {/* Wizard Header */}
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-display font-bold text-text-primary tracking-tight">
           Roadmap Generator Wizard
         </h2>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-sm font-sans text-text-secondary mt-1 max-w-md mx-auto">
           Configure your learning parameters to generate a custom career roadmap.
         </p>
       </div>

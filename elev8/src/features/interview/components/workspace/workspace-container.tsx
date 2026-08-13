@@ -8,8 +8,11 @@ import { FiltersAndSearch } from "./filters-and-search";
 import { InterviewCard } from "./interview-card";
 import { TrendCharts } from "./trend-charts";
 import { RecommendedActions } from "./recommended-actions";
+import { PredefinedLibrary } from "./predefined-library";
+import { PredefinedInterviewSummary } from "../../types/predefined-interview";
 import { PlusCircle, HelpCircle } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/dashboard";
 
 interface WorkspaceContainerProps {
   initialInterviews: Interview[];
@@ -20,9 +23,10 @@ interface WorkspaceContainerProps {
     averageScore: number;
     highestScore: number;
   };
+  predefinedCatalog: PredefinedInterviewSummary[];
 }
 
-export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContainerProps) {
+export function WorkspaceContainer({ initialInterviews, stats, predefinedCatalog }: WorkspaceContainerProps) {
   const {
     search,
     setSearch,
@@ -42,103 +46,101 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
   const latestCompleted = initialInterviews.find((i) => i.status === "COMPLETED");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header & Quick Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-              Interview Workspace
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Practice, track performance, and continuous technical growth.
-            </p>
-          </div>
+    <div className="space-y-8 pb-10 text-text-primary">
+      {/* Header & Quick Actions */}
+      <PageHeader
+        section="Mock Practice"
+        title="Interview Workspace"
+        description="Practice, track performance, and continuous technical growth."
+        action={
           <QuickActions latestInProgress={latestInProgress} latestCompleted={latestCompleted} />
+        }
+      />
+
+      {/* Performance Overview */}
+      <PerformanceOverview stats={stats} />
+
+      {/* Improvement Trends (if completed interviews exist) */}
+      <TrendCharts completedInterviews={completedList} />
+
+      {/* Search & Filters */}
+      <FiltersAndSearch
+        search={search}
+        setSearch={setSearch}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        difficultyFilter={difficultyFilter}
+        setDifficultyFilter={setDifficultyFilter}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+      />
+
+      {/* Empty State */}
+      {filteredInterviews.length === 0 && (
+        <div className="bg-dashboard-card rounded-[var(--card-radius)] p-12 text-center border border-dashboard-cardBorder shadow-sm space-y-4">
+          <div className="p-4 bg-dashboard-metricHighlight/30 text-text-primary rounded-full w-fit mx-auto">
+            <HelpCircle className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-display font-bold text-text-primary">No Interviews Found</h3>
+          <p className="text-sm font-sans text-text-secondary max-w-md mx-auto leading-relaxed">
+            You haven&apos;t generated any interviews matching your search or filters yet. Get started by practicing your first mock session.
+          </p>
+          <Link
+            href="/dashboard/interviews/new"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-text-primary hover:bg-black/85 text-white font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98]"
+          >
+            <PlusCircle className="w-4 h-4 text-dashboard-metricHighlight" />
+            Generate First Interview
+          </Link>
         </div>
+      )}
 
-        {/* Performance Overview */}
-        <PerformanceOverview stats={stats} />
-
-        {/* Improvement Trends (if completed interviews exist) */}
-        <TrendCharts completedInterviews={completedList} />
-
-        {/* Search & Filters */}
-        <FiltersAndSearch
-          search={search}
-          setSearch={setSearch}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          difficultyFilter={difficultyFilter}
-          setDifficultyFilter={setDifficultyFilter}
-          sortOption={sortOption}
-          setSortOption={setSortOption}
-        />
-
-        {/* Empty State */}
-        {filteredInterviews.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full w-fit mx-auto">
-              <HelpCircle className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">No Interviews Found</h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto">
-              You haven&apos;t generated any interviews matching your search or filters yet. Get started by practicing your first mock session.
-            </p>
-            <Link
-              href="/interviews/new"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-sm transition-colors"
-            >
-              <PlusCircle className="w-4 h-4" />
-              Generate First Interview
-            </Link>
+      {/* In Progress Section (Always listed first) */}
+      {inProgressList.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-display font-bold text-text-primary flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+            In Progress Sessions ({inProgressList.length})
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {inProgressList.map((interview) => (
+              <InterviewCard key={interview.id} interview={interview} />
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* In Progress Section (Always listed first) */}
-        {inProgressList.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-              In Progress Sessions ({inProgressList.length})
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {inProgressList.map((interview) => (
-                <InterviewCard key={interview.id} interview={interview} />
-              ))}
-            </div>
+      {/* Completed Library Section */}
+      {completedList.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-display font-bold text-text-primary">
+            Completed Interviews ({completedList.length})
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {completedList.map((interview) => (
+              <InterviewCard key={interview.id} interview={interview} />
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Completed Library Section */}
-        {completedList.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Completed Interviews ({completedList.length})
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {completedList.map((interview) => (
-                <InterviewCard key={interview.id} interview={interview} />
-              ))}
-            </div>
+      {/* Other Statuses (Generating/Failed) */}
+      {otherList.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-display font-bold text-text-primary">Other Sessions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {otherList.map((interview) => (
+              <InterviewCard key={interview.id} interview={interview} />
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Other Statuses (Generating/Failed) */}
-        {otherList.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Other Sessions</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {otherList.map((interview) => (
-                <InterviewCard key={interview.id} interview={interview} />
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Predefined Practice Library */}
+      <PredefinedLibrary catalog={predefinedCatalog} />
 
-        {/* Recommended Actions */}
-        <RecommendedActions />
-      </div>
+      {/* Recommended Actions */}
+      <RecommendedActions />
     </div>
   );
 }

@@ -25,10 +25,10 @@ export function SectionBreakdown({ report }: SectionBreakdownProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-600" /> Section-by-Section Breakdown
+          <h3 className="text-xl font-display font-black text-text-primary flex items-center gap-2 uppercase tracking-wide">
+            <Layers className="w-5 h-5 text-text-primary" /> Section-by-Section Breakdown
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-text-secondary mt-0.5">
             Expand each section to inspect scores, strengths, gaps, and recommendations.
           </p>
         </div>
@@ -37,7 +37,7 @@ export function SectionBreakdown({ report }: SectionBreakdownProps) {
           <button
             type="button"
             onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-dashboard-cardBorder text-xs font-semibold text-text-primary bg-dashboard-card hover:bg-surface-muted transition-colors"
           >
             <Eye className="w-3.5 h-3.5" />
             {showPreview ? "Hide Parsed CV" : "Preview Parsed CV"}
@@ -46,7 +46,7 @@ export function SectionBreakdown({ report }: SectionBreakdownProps) {
           <button
             type="button"
             onClick={expandAll}
-            className="px-3 py-1.5 rounded-xl border text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:border-gray-700"
+            className="px-3 py-1.5 rounded-2xl border border-dashboard-cardBorder text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-muted transition-colors"
           >
             Expand All
           </button>
@@ -54,7 +54,7 @@ export function SectionBreakdown({ report }: SectionBreakdownProps) {
           <button
             type="button"
             onClick={collapseAll}
-            className="px-3 py-1.5 rounded-xl border text-xs font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:border-gray-700"
+            className="px-3 py-1.5 rounded-2xl border border-dashboard-cardBorder text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-muted transition-colors"
           >
             Collapse All
           </button>
@@ -72,8 +72,8 @@ export function SectionBreakdown({ report }: SectionBreakdownProps) {
           onToggle={() => toggleSection("summary")}
         >
           {parsedResume.summary && (
-            <div className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl text-xs text-gray-700 dark:text-gray-300">
-              <p className="font-semibold text-gray-500 mb-1">Parsed Text:</p>
+            <div className="bg-surface-muted border border-border-subtle p-3.5 rounded-2xl text-xs text-text-secondary leading-relaxed font-medium">
+              <p className="font-bold text-text-primary mb-1 uppercase tracking-wide text-[10px]">Parsed Text:</p>
               {parsedResume.summary}
             </div>
           )}
@@ -87,11 +87,11 @@ export function SectionBreakdown({ report }: SectionBreakdownProps) {
           onToggle={() => toggleSection("skills")}
         >
           {parsedResume.skills.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl text-xs space-y-1">
-              <p className="font-semibold text-gray-500">Parsed Skills ({parsedResume.skills.length}):</p>
-              <div className="flex flex-wrap gap-1 pt-1">
+            <div className="bg-surface-muted border border-border-subtle p-3.5 rounded-2xl text-xs space-y-2">
+              <p className="font-bold text-text-primary uppercase tracking-wide text-[10px]">Parsed Skills ({parsedResume.skills.length}):</p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {parsedResume.skills.map((sk, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 font-medium">
+                  <span key={i} className="px-2 py-1 bg-dashboard-card rounded-xl border border-dashboard-cardBorder font-semibold text-text-primary text-[10px]">
                     {sk}
                   </span>
                 ))}

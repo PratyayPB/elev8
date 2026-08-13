@@ -30,10 +30,10 @@ export function ResumeHubContainer({ report: initialReport }: ResumeHubContainer
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-text-primary py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Navigation Tab Bar */}
-        <div className="bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-1 overflow-x-auto">
+        <div className="bg-dashboard-card p-2 rounded-3xl border border-dashboard-cardBorder shadow-sm flex items-center gap-1 overflow-x-auto">
           {tabs.map((t) => {
             const Icon = t.icon;
             const isActive = activeTab === t.id;
@@ -42,10 +42,10 @@ export function ResumeHubContainer({ report: initialReport }: ResumeHubContainer
                 key={t.id}
                 type="button"
                 onClick={() => setActiveTab(t.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    ? "bg-dashboard-metricHighlight text-black shadow-sm"
+                    : "text-text-secondary hover:text-text-primary hover:bg-surface-muted"
                 }`}
               >
                 <Icon className="w-4 h-4" />

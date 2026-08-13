@@ -79,7 +79,7 @@ export class RecommendationService {
         title: "Upload Your First Resume",
         description: "Upload a PDF resume to get instant ATS feedback and AI scores.",
         type: "upload",
-        actionUrl: "/resumes",
+        actionUrl: "/dashboard/resumes/new",
         actionText: "Upload Resume",
         priority: "high",
       });
@@ -96,7 +96,7 @@ export class RecommendationService {
         title: "Improve Low Resume Score",
         description: `Your resume for ${latest.role} scored ${latest.overallScore}/100. Review recommendations in your report.`,
         type: "upload",
-        actionUrl: `/resumes/${latest.id}`,
+        actionUrl: `/dashboard/resumes/${latest.id}`,
         actionText: "View Feedback",
         priority: "high",
       });
@@ -107,7 +107,7 @@ export class RecommendationService {
       title: "Build a Custom Career Roadmap",
       description: "Match your resume skills against industry standards with a personalized learning path.",
       type: "roadmap",
-      actionUrl: "/roadmaps",
+      actionUrl: "/dashboard/roadmaps",
       actionText: "Explore Roadmaps",
       priority: "medium",
     });
@@ -117,7 +117,7 @@ export class RecommendationService {
       title: "Practice Mock Interview",
       description: `Prepare for ${latest?.role || "your target role"} interviews with AI mock questions.`,
       type: "interview",
-      actionUrl: "/interviews",
+      actionUrl: "/dashboard/interviews",
       actionText: "Start Mock Interview",
       priority: "medium",
     });
@@ -127,7 +127,7 @@ export class RecommendationService {
       title: "Build from Scratch",
       description: "Use our Resume Builder foundation to craft an ATS-optimized profile.",
       type: "builder",
-      actionUrl: "/resume-builder",
+      actionUrl: "/dashboard/resume-builder",
       actionText: "Launch Builder",
       priority: "low",
     });

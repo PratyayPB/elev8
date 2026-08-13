@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function SignInPage() {
-  return <SignIn />;
+  return <SignIn forceRedirectUrl="/dashboard" />;
 }

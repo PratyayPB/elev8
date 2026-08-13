@@ -10,15 +10,13 @@ export function ResumeWizardContainer() {
   const { currentStep } = useResumeRequestStore();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <StepIndicator currentStep={currentStep} />
+    <div className="max-w-4xl mx-auto space-y-6">
+      <StepIndicator currentStep={currentStep} />
 
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-10 border border-gray-200 dark:border-gray-700 shadow-sm">
-          {currentStep === 1 && <Stage1Step />}
-          {currentStep === 2 && <PersonalizationStep />}
-          {currentStep === 3 && <ReviewStep />}
-        </div>
+      <div className="bg-dashboard-card rounded-[var(--card-radius-lg)] p-6 sm:p-10 border border-dashboard-cardBorder shadow-sm">
+        {currentStep === 1 && <Stage1Step />}
+        {currentStep === 2 && <PersonalizationStep />}
+        {currentStep === 3 && <ReviewStep />}
       </div>
     </div>
   );

@@ -1,59 +1,83 @@
 import { z } from "zod";
 
+const nullableString = z.preprocess(
+  (val) => (val === null ? undefined : val),
+  z.string().optional()
+);
+
+const nullableStringArray = z.preprocess(
+  (val) => (val === null || val === undefined ? [] : val),
+  z.array(z.string()).default([])
+);
+
 export const ParsedResumeSchema = z.object({
-  personalInformation: z.object({
-    name: z.string().optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    location: z.string().optional(),
-    linkedin: z.string().optional(),
-    github: z.string().optional(),
-    website: z.string().optional(),
-  }),
-  summary: z.string().optional(),
-  skills: z.array(z.string()).default([]),
-  projects: z
-    .array(
+  personalInformation: z
+    .preprocess(
+      (val) => (val === null || val === undefined ? {} : val),
       z.object({
-        title: z.string(),
-        description: z.string(),
-        technologies: z.array(z.string()).default([]),
-        link: z.string().optional(),
+        name: nullableString,
+        email: nullableString,
+        phone: nullableString,
+        location: nullableString,
+        linkedin: nullableString,
+        github: nullableString,
+        website: nullableString,
       })
+    )
+    .default({}),
+  summary: nullableString,
+  skills: nullableStringArray,
+  projects: z
+    .preprocess(
+      (val) => (val === null || val === undefined ? [] : val),
+      z.array(
+        z.object({
+          title: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
+          description: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
+          technologies: nullableStringArray,
+          link: nullableString,
+        })
+      )
     )
     .default([]),
   experience: z
-    .array(
-      z.object({
-        company: z.string(),
-        role: z.string(),
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
-        highlights: z.array(z.string()).default([]),
-      })
+    .preprocess(
+      (val) => (val === null || val === undefined ? [] : val),
+      z.array(
+        z.object({
+          company: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
+          role: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
+          startDate: nullableString,
+          endDate: nullableString,
+          highlights: nullableStringArray,
+        })
+      )
     )
     .default([]),
   education: z
-    .array(
-      z.object({
-        institution: z.string(),
-        degree: z.string(),
-        fieldOfStudy: z.string().optional(),
-        graduationDate: z.string().optional(),
-        gpa: z.string().optional(),
-      })
+    .preprocess(
+      (val) => (val === null || val === undefined ? [] : val),
+      z.array(
+        z.object({
+          institution: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
+          degree: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
+          fieldOfStudy: nullableString,
+          graduationDate: nullableString,
+          gpa: nullableString,
+        })
+      )
     )
     .default([]),
-  certifications: z.array(z.string()).default([]),
-  achievements: z.array(z.string()).default([]),
+  certifications: nullableStringArray,
+  achievements: nullableStringArray,
 });
 
 export const SectionScoreSchema = z.object({
-  score: z.number().min(0).max(100),
-  strengths: z.array(z.string()).default([]),
-  weaknesses: z.array(z.string()).default([]),
-  missingSkills: z.array(z.string()).optional(),
-  recommendations: z.array(z.string()).optional(),
+  score: z.preprocess((val) => (typeof val === "number" ? val : Number(val) || 0), z.number().min(0).max(100)),
+  strengths: nullableStringArray,
+  weaknesses: nullableStringArray,
+  missingSkills: nullableStringArray,
+  recommendations: nullableStringArray,
 });
 
 export const ResumeSectionAssessmentSchema = z.object({
@@ -62,25 +86,25 @@ export const ResumeSectionAssessmentSchema = z.object({
     projects: SectionScoreSchema,
     experience: SectionScoreSchema,
     education: SectionScoreSchema,
-    certifications: SectionScoreSchema.optional(),
-    summary: SectionScoreSchema.optional(),
+    certifications: z.preprocess((val) => (val === null ? undefined : val), SectionScoreSchema.optional()),
+    summary: z.preprocess((val) => (val === null ? undefined : val), SectionScoreSchema.optional()),
   }),
 });
 
 export const ResumeOverallAssessmentSchema = z.object({
-  overallScore: z.number().min(0).max(100),
-  atsScore: z.number().min(0).max(100),
-  technicalStrength: z.number().min(0).max(100),
-  projectQuality: z.number().min(0).max(100),
-  experienceStrength: z.number().min(0).max(100),
-  strengths: z.array(z.string()).default([]),
-  weaknesses: z.array(z.string()).default([]),
-  missingKeywords: z.array(z.string()).default([]),
-  recommendedSkills: z.array(z.string()).default([]),
-  recommendedProjects: z.array(z.string()).default([]),
-  recommendedRoadmap: z.string().optional(),
-  recommendedInterview: z.string().optional(),
-  summary: z.string(),
+  overallScore: z.preprocess((val) => (typeof val === "number" ? val : Number(val) || 0), z.number().min(0).max(100)),
+  atsScore: z.preprocess((val) => (typeof val === "number" ? val : Number(val) || 0), z.number().min(0).max(100)),
+  technicalStrength: z.preprocess((val) => (typeof val === "number" ? val : Number(val) || 0), z.number().min(0).max(100)),
+  projectQuality: z.preprocess((val) => (typeof val === "number" ? val : Number(val) || 0), z.number().min(0).max(100)),
+  experienceStrength: z.preprocess((val) => (typeof val === "number" ? val : Number(val) || 0), z.number().min(0).max(100)),
+  strengths: nullableStringArray,
+  weaknesses: nullableStringArray,
+  missingKeywords: nullableStringArray,
+  recommendedSkills: nullableStringArray,
+  recommendedProjects: nullableStringArray,
+  recommendedRoadmap: nullableString,
+  recommendedInterview: nullableString,
+  summary: z.preprocess((val) => (val === null || val === undefined ? "" : String(val)), z.string().default("")),
 });
 
 export class ResumeValidator {

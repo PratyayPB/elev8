@@ -24,6 +24,7 @@ export async function createResumeAssessmentJob(formData: FormData) {
 
   const file = formData.get("file") as File | null;
   const role = formData.get("role") as string | null;
+  const roleDescription = (formData.get("roleDescription") as string | null) || undefined;
   const experienceLevel = formData.get("experienceLevel") as string | null;
   const personalizationRaw = formData.get("personalization") as string | null;
 
@@ -50,6 +51,7 @@ export async function createResumeAssessmentJob(formData: FormData) {
     data: {
       userId: dbUser.id,
       role,
+      roleDescription,
       experienceLevel,
       originalPdfBlobUrl,
       status: ResumeStatus.DRAFT,
@@ -77,6 +79,7 @@ export async function createResumeAssessmentJob(formData: FormData) {
       jobId: job.id,
       userId: dbUser.id,
       role,
+      roleDescription,
       experienceLevel,
       originalPdfBlobUrl,
       personalization,
@@ -103,4 +106,57 @@ export async function createResumeAssessmentJob(formData: FormData) {
     resumeId: resume.id,
     jobId: job.id,
   };
+}
+
+export async function deleteResume(resumeId: string) {
+  const { userId: clerkId } = await auth();
+
+  if (!clerkId) {
+    throw new Error("Unauthorized: You must be logged in to delete a resume.");
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId },
+  });
+
+  if (!dbUser) {
+    throw new Error("User record not found.");
+  }
+
+  const resume = await prisma.resume.findUnique({
+    where: { id: resumeId },
+  });
+
+  if (!resume || resume.userId !== dbUser.id) {
+    throw new Error("Resume record not found or unauthorized.");
+  }
+
+  // 1. Delete associated jobs
+  await prisma.job.deleteMany({
+    where: { artifactId: resumeId },
+  });
+
+  // 2. Delete the resume entry from database
+  await prisma.resume.delete({
+    where: { id: resumeId },
+  });
+
+  // 3. Clean up Vercel Blob storage files
+  if (resume.originalPdfBlobUrl) {
+    try {
+      await BlobStorageService.delete(resume.originalPdfBlobUrl);
+    } catch (e) {
+      console.warn("Failed to delete original PDF blob:", e);
+    }
+  }
+
+  if (resume.artifactBlobUrl) {
+    try {
+      await BlobStorageService.delete(resume.artifactBlobUrl);
+    } catch (e) {
+      console.warn("Failed to delete artifact JSON blob:", e);
+    }
+  }
+
+  return { success: true };
 }

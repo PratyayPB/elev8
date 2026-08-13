@@ -5,6 +5,7 @@ import { useResumeUpload } from "../../hooks/use-resume-upload";
 import { UploadDropzone } from "./upload-dropzone";
 import { FilePreview } from "./file-preview";
 import { RoleSelector } from "./role-selector";
+import { RoleDescription } from "./role-description";
 import { ExperienceSelector } from "./experience-selector";
 import { Navigation } from "./navigation";
 
@@ -21,10 +22,10 @@ export function Stage1Step() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-2xl font-display font-bold text-text-primary">
           Upload Your Resume
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+        <p className="text-text-secondary mt-1 text-sm font-sans">
           Upload your latest CV/resume in PDF format and specify your target role to get an in-depth AI evaluation.
         </p>
       </div>
@@ -40,6 +41,12 @@ export function Stage1Step() {
       <RoleSelector
         value={requestData.role || ""}
         onChange={(role) => updateRequestData({ role })}
+      />
+
+      {/* Role Description (Optional) */}
+      <RoleDescription
+        value={requestData.roleDescription || ""}
+        onChange={(roleDescription) => updateRequestData({ roleDescription })}
       />
 
       {/* Experience Level Selector */}

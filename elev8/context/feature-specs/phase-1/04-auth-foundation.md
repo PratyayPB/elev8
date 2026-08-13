@@ -111,20 +111,13 @@ The following routes require authentication.
 
 ```
 /dashboard
-
-/career-assessment
-
-/career-guidance
-
-/roadmaps
-
-/resume
-
-/interview
-
-/progress
-
-/settings
+/dashboard/career-assessment
+/dashboard/career-guidance
+/dashboard/roadmaps
+/dashboard/resume
+/dashboard/interview
+/dashboard/progress
+/dashboard/settings
 ```
 
 Unauthenticated users should automatically be redirected to:

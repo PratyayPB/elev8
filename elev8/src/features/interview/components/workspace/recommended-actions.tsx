@@ -4,72 +4,72 @@ import { ArrowRight, Map, FileText, UserCheck, Sparkles } from "lucide-react";
 export function RecommendedActions() {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-purple-600" />
+      <h3 className="text-lg font-display font-bold text-text-primary flex items-center gap-2">
+        <Sparkles className="w-5 h-5 text-text-primary" />
         Recommended Next Actions
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Roadmap */}
         <Link
-          href="/roadmaps"
-          className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-blue-500 transition-all flex flex-col justify-between group"
+          href="/dashboard/roadmaps"
+          className="p-5 bg-dashboard-card rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm hover:border-text-primary/30 transition-all flex flex-col justify-between group"
         >
           <div>
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl w-fit mb-3">
+            <div className="p-3 bg-surface-muted border border-border-subtle text-text-primary rounded-xl w-fit mb-3">
               <Map className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+            <h4 className="font-display font-bold text-text-primary group-hover:text-text-primary transition-colors">
               Learning Roadmaps
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs font-sans text-text-secondary mt-1 leading-relaxed">
               Bridge your interview skill gaps with structured AI roadmaps.
             </p>
           </div>
-          <div className="flex items-center text-xs font-semibold text-blue-600 mt-4">
-            Create Roadmap <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
+          <div className="flex items-center text-xs font-display font-semibold text-text-primary mt-4">
+            Create Roadmap <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight fill-dashboard-metricHighlight" />
           </div>
         </Link>
 
         {/* Resume */}
         <Link
-          href="/resumes"
-          className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-green-500 transition-all flex flex-col justify-between group"
+          href="/dashboard/resumes"
+          className="p-5 bg-dashboard-card rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm hover:border-text-primary/30 transition-all flex flex-col justify-between group"
         >
           <div>
-            <div className="p-3 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-xl w-fit mb-3">
+            <div className="p-3 bg-surface-muted border border-border-subtle text-text-primary rounded-xl w-fit mb-3">
               <FileText className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-green-600 transition-colors">
+            <h4 className="font-display font-bold text-text-primary group-hover:text-text-primary transition-colors">
               Resume Analysis
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs font-sans text-text-secondary mt-1 leading-relaxed">
               Ensure your resume aligns with the target roles you are practicing.
             </p>
           </div>
-          <div className="flex items-center text-xs font-semibold text-green-600 mt-4">
-            Optimize Resume <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
+          <div className="flex items-center text-xs font-display font-semibold text-text-primary mt-4">
+            Optimize Resume <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight fill-dashboard-metricHighlight" />
           </div>
         </Link>
 
         {/* Career Guidance */}
         <Link
-          href="/career"
-          className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-purple-500 transition-all flex flex-col justify-between group"
+          href="/dashboard/career-guidance"
+          className="p-5 bg-dashboard-card rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm hover:border-text-primary/30 transition-all flex flex-col justify-between group"
         >
           <div>
-            <div className="p-3 bg-purple-50 dark:bg-purple-900/30 text-purple-600 rounded-xl w-fit mb-3">
+            <div className="p-3 bg-surface-muted border border-border-subtle text-text-primary rounded-xl w-fit mb-3">
               <UserCheck className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-purple-600 transition-colors">
-              Career Assessment
+            <h4 className="font-display font-bold text-text-primary group-hover:text-text-primary transition-colors">
+              Career Guidance
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Evaluate your market readiness and target compensation.
+            <p className="text-xs font-sans text-text-secondary mt-1 leading-relaxed">
+              Evaluate your market readiness and target career progression path.
             </p>
           </div>
-          <div className="flex items-center text-xs font-semibold text-purple-600 mt-4">
-            Assess Career <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
+          <div className="flex items-center text-xs font-display font-semibold text-text-primary mt-4">
+            View Analytics <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight fill-dashboard-metricHighlight" />
           </div>
         </Link>
       </div>

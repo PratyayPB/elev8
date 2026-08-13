@@ -10,22 +10,22 @@ interface LoadingOverlayProps {
 
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ status, progress }) => {
   return (
-    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl space-y-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-cyan-500/10 text-cyan-400">
-          <Loader2 className="w-6 h-6 animate-spin" />
+    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 max-w-md w-full shadow-xl space-y-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-muted text-text-primary border border-border-subtle">
+          <Loader2 className="w-6 h-6 animate-spin text-text-primary" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-slate-100">Generating Your Roadmap</h3>
-          <p className="text-sm text-slate-400 mt-1">{status || "Processing..."}</p>
+          <h3 className="text-xl font-display font-bold text-text-primary">Generating Your Roadmap</h3>
+          <p className="text-sm font-sans text-text-secondary mt-1">{status || "Processing..."}</p>
         </div>
-        <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-surface-muted rounded-full h-2.5 overflow-hidden border border-border-subtle">
           <div
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 h-full transition-all duration-300 ease-out"
+            className="bg-text-primary h-full transition-all duration-300 ease-out rounded-full"
             style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
           />
         </div>
-        <div className="text-xs text-slate-500">{progress}% complete</div>
+        <div className="text-xs font-sans text-text-muted">{progress}% complete</div>
       </div>
     </div>
   );

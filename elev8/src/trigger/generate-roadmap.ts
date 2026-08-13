@@ -72,23 +72,17 @@ export const generateRoadmapTask = schemaTask({
             id: targetId,
             userId,
             title: generatedRoadmap.metadata.title,
-            targetCareer: payload.role,
             targetRole: payload.role,
             estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
             status: RoadmapStatus.COMPLETED,
-            contentUrl: blobUrl,
             blobUrl,
-            version: artifact.version,
           },
           update: {
             title: generatedRoadmap.metadata.title,
-            targetCareer: payload.role,
             targetRole: payload.role,
             estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
             status: RoadmapStatus.COMPLETED,
-            contentUrl: blobUrl,
             blobUrl,
-            version: artifact.version,
           },
         });
       }

@@ -1,28 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Fragment+Mono&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #F4F2EE;
-  --foreground: #1A1A1A;
-  --surface-primary: #FFFFFF;
-  --surface-muted: #EDE9E6;
+  --background: #f4f2ee;
+  --foreground: #1a1a1a;
+  --surface-primary: #ffffff;
+  --surface-muted: #ede9e6;
   --text-primary: #000000;
-  --text-secondary: #605F5F;
+  --text-secondary: #605f5f;
   --text-muted: #999999;
-  --border-subtle: #E6E6E6;
-  --border-strong: #1A1A1A;
-  
-  --color-secondary: #F4F2EE;
-  --color-neutral: #F0ECE6;
-  
-  --accent-cyan: #84E6F6;
-  --accent-coral: #F7A49E;
-  --accent-gold: #FECD1A;
-  --accent-cream: #FEF7AF;
-  --accent-red: #E83043;
+  --border-subtle: #e6e6e6;
+  --border-strong: #1a1a1a;
+
+  --color-secondary: #f4f2ee;
+  --color-neutral: #f0ece6;
+
+  --accent-cyan: #84e6f6;
+  --accent-coral: #f7a49e;
+  --accent-gold: #fecd1a;
+  --accent-cream: #fef7af;
+  --accent-red: #e83043;
+
+  /* Dashboard Tokens */
+  --sidebar-bg: #ffffff;
+  --sidebar-width: 260px;
+  --nav-active-bg: #000000;
+  --nav-active-text: #ffffff;
+  --card-bg: #ffffff;
+  --card-border: #e6e6e6;
+  --card-radius: 16px;
+  --card-radius-lg: 20px;
+  --page-bg: #f4f2ee;
+  --metric-highlight: #ffeb18;
 }
 
 html {
@@ -36,7 +48,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-albert-sans), sans-serif;
 }
 
@@ -47,4 +64,3 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid var(--border-subtle);
   }
 }
-

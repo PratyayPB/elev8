@@ -74,7 +74,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     await save();
     setIsProcessingAction(false);
     setIsPauseOpen(false);
-    router.push("/interviews"); // Return to library/dashboard
+    router.push("/dashboard/interviews"); // Return to library/dashboard
   };
 
   const handleSubmitConfirm = async () => {
@@ -89,7 +89,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
         setIsSubmitOpen(false);
         // Redirect to assessment progress page (Phase 3.4 will handle this view, for now library)
         alert("Interview submitted successfully! Redirecting...");
-        router.push("/interviews");
+        router.push("/dashboard/interviews");
       }
     } catch (error) {
       console.error("Submission failed:", error);
@@ -100,7 +100,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="flex flex-col space-y-6 pb-10 text-text-primary">
       <SessionToolbar 
         autosaveStatus={autosaveStatus}
         onManualSave={save}
@@ -108,7 +108,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
         onSubmit={() => setIsSubmitOpen(true)}
       />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+      <main className="flex-1 w-full mx-auto flex flex-col gap-6">
         <ProgressBar />
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -127,7 +127,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
               <button
                 onClick={handlePrev}
                 disabled={isFirst}
-                className="flex items-center px-5 py-2.5 rounded-xl font-medium text-gray-700 bg-white hover:bg-gray-100 border border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                className="flex items-center px-5 py-2.5 rounded-xl font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors disabled:opacity-50"
               >
                 <ChevronLeft className="w-5 h-5 mr-1" />
                 Previous
@@ -136,7 +136,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
               {!isLast ? (
                 <button
                   onClick={handleNext}
-                  className="flex items-center px-5 py-2.5 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                  className="flex items-center px-5 py-2.5 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-colors active:scale-[0.98]"
                 >
                   Next Question
                   <ChevronRight className="w-5 h-5 ml-1" />
@@ -144,10 +144,10 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
               ) : (
                 <button
                   onClick={() => setIsSubmitOpen(true)}
-                  className="flex items-center px-5 py-2.5 rounded-xl font-medium text-white bg-green-600 hover:bg-green-700 transition-colors"
+                  className="flex items-center px-5 py-2.5 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-colors active:scale-[0.98]"
                 >
                   Review & Submit
-                  <ChevronRight className="w-5 h-5 ml-1" />
+                  <ChevronRight className="w-5 h-5 ml-1 text-dashboard-metricHighlight" />
                 </button>
               )}
             </div>

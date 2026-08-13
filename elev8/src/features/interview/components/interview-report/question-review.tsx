@@ -11,8 +11,8 @@ export function QuestionReview({ artifact }: QuestionReviewProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Question Review & Analysis</h3>
-        <span className="text-sm text-gray-500">{questions.length} Questions</span>
+        <h3 className="text-xl font-display font-bold text-text-primary">Question Review & Analysis</h3>
+        <span className="text-sm font-sans text-text-secondary">{questions.length} Questions</span>
       </div>
 
       <div className="flex flex-col gap-4">

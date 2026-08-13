@@ -40,12 +40,7 @@ enum RoadmapStatus {
   ARCHIVED
 }
 
-enum MilestoneStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  COMPLETED
-  SKIPPED
-}
+
 
 enum ResumeStatus {
   DRAFT
@@ -205,7 +200,7 @@ model CareerGuidance {
 
   title           String
   status          RoadmapStatus? @default(NOT_STARTED)
-  contentUrl      String?        // Reference to large report artifact stored in Blob Storage
+  blobUrl         String?        // Reference to large report artifact stored in Blob Storage
   careerMatch     String?
   marketReadiness Int?
   salaryMin       Int?
@@ -227,16 +222,13 @@ model Roadmap {
 
   title             String
   description       String?
-  targetCareer      String
   targetRole        String?
   experienceLevel   CareerLevel?
   estimatedDuration String?
   status            RoadmapStatus @default(NOT_STARTED)
-  contentUrl        String?       // Reference to large AI-generated JSON roadmap artifact in Blob Storage
   blobUrl           String?
-  version           String        @default("1.0.0")
 
-  milestones RoadmapMilestone[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -272,24 +264,7 @@ model Job {
 }
 
 
-model RoadmapMilestone {
-  id        String   @id @default(cuid())
-  roadmapId String
-  roadmap   Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
 
-  title          String
-  description    String?
-  order          Int
-  status         MilestoneStatus @default(NOT_STARTED)
-  estimatedHours Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([roadmapId])
-  @@index([roadmapId, order])
-  @@map("roadmap_milestones")
-}
 
 model Resume {
   id                 String       @id @default(cuid())
@@ -297,6 +272,7 @@ model Resume {
   user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   role               String
+  roleDescription    String?
   experienceLevel    String
   overallScore       Int?
   atsScore           Int?
@@ -319,10 +295,14 @@ model Interview {
   userId            String
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  templateId        String?
+  template          InterviewTemplate? @relation(fields: [templateId], references: [id])
+
   role              String
   difficulty        String
   experienceLevel   String
   interviewType     String?
+  source            String?
   status            InterviewStatus   @default(GENERATING)
   blobUrl           String?
   questionCount     Int               @default(5)
@@ -338,6 +318,22 @@ model Interview {
   @@index([status])
   @@index([createdAt])
   @@map("interviews")
+}
+
+model InterviewTemplate {
+  id              String   @id
+  role            String
+  type            String
+  difficulty      String
+  questionCount   Int
+  templateBlobUrl String
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  interviews      Interview[]
+
+  @@map("interview_templates")
 }
 
 model Progress {

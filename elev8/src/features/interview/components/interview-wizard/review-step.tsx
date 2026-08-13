@@ -24,7 +24,7 @@ export function ReviewStep() {
 
       // 3. Redirect user (or show progress)
       alert(`Interview generation started successfully! (ID: ${interviewId})`);
-      router.push(`/interviews`);
+      router.push(`/dashboard/interviews`);
     } catch (err: any) {
       console.error(err);
       setError(err?.message || "Failed to start interview generation. Please try again.");

@@ -9,24 +9,32 @@ interface ProfileProgressProps {
   showDetails?: boolean;
 }
 
-export function ProfileProgress({ profile, showDetails = true }: ProfileProgressProps) {
-  const { percentage, completionLabel, missingFields } = useProfileCompletion(profile);
+export function ProfileProgress({
+  profile,
+  showDetails = true,
+}: ProfileProgressProps) {
+  const { percentage, completionLabel, missingFields } =
+    useProfileCompletion(profile);
 
   return (
     <div className="w-full bg-surface p-4 rounded-2xl border border-border space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-xs font-semibold text-accent-cyan uppercase tracking-wider">
+          <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             {completionLabel}
           </span>
-          <h4 className="text-sm font-medium text-text-primary">Profile Strength</h4>
+          <h4 className="text-sm font-medium text-text-primary">
+            Profile Strength
+          </h4>
         </div>
-        <span className="text-lg font-bold text-text-primary font-mono">{percentage}%</span>
+        <span className="text-lg font-bold text-text-primary font-mono">
+          {percentage}%
+        </span>
       </div>
 
-      <div className="w-full h-2.5 bg-surface-muted rounded-full overflow-hidden">
+      <div className="w-full h-2.5 bg-surface-muted rounded-full overflow-hidden border border-border-subtle">
         <div
-          className="h-full bg-gradient-to-r from-accent-cyan via-accent-gold to-accent-coral transition-all duration-500 rounded-full"
+          className="h-full bg-dashboard-metricHighlight transition-all duration-500 rounded-full"
           style={{ width: `${percentage}%` }}
         />
       </div>

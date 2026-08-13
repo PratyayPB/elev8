@@ -23,6 +23,7 @@ export interface ResumePersonalization {
 
 export interface ResumeAssessmentRequest {
   role: string;
+  roleDescription?: string;
   experienceLevel: ResumeExperienceLevel;
   uploadedFile: File | null;
   personalization: ResumePersonalization;

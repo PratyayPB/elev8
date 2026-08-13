@@ -32,7 +32,6 @@ export class RoadmapLibraryService {
       where.OR = [
         { title: { contains: query, mode: "insensitive" } },
         { targetRole: { contains: query, mode: "insensitive" } },
-        { targetCareer: { contains: query, mode: "insensitive" } },
       ];
     }
 

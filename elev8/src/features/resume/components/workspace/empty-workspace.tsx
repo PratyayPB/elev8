@@ -16,14 +16,14 @@ export function EmptyWorkspace() {
       </p>
       <div className="flex flex-wrap items-center justify-center gap-4">
         <Link
-          href="/resumes"
+          href="/dashboard/resumes/new"
           className="px-5 py-2.5 bg-black text-white font-medium text-sm rounded-lg hover:bg-gray-800 transition-colors inline-flex items-center space-x-2"
         >
           <Sparkles className="w-4 h-4" />
           <span>Upload First Resume</span>
         </Link>
         <Link
-          href="/resume-builder"
+          href="/dashboard/resume-builder"
           className="px-5 py-2.5 border border-gray-300 font-medium text-sm rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center space-x-2 text-gray-700"
         >
           <LayoutTemplate className="w-4 h-4" />

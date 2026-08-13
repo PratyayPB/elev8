@@ -29,7 +29,7 @@ export function Footer() {
               <li><a href="#features" className="hover:text-black transition-colors">Features</a></li>
               <li><a href="#dashboard" className="hover:text-black transition-colors">Dashboard UI</a></li>
               <li><a href="#pricing" className="hover:text-black transition-colors">Pricing Plans</a></li>
-              <li><Link href="/roadmaps" className="hover:text-black transition-colors">Roadmaps</Link></li>
+              <li><Link href="/dashboard/roadmaps" className="hover:text-black transition-colors">Roadmaps</Link></li>
             </ul>
           </div>
 

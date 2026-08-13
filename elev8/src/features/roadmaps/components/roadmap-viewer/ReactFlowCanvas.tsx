@@ -20,24 +20,41 @@ interface ReactFlowCanvasProps {
 
 // Custom Node renderer for learning skills
 const CustomSkillNode: React.FC<NodeProps> = ({ data }) => {
+  const nodeType = String(data?.nodeType || "skill");
+  const estimatedHours = data?.estimatedHours;
+  const title = String(data?.title || data?.label || "");
+  const description = String(data?.description || "");
+
   return (
-    <div className="px-4 py-3 rounded-xl border border-slate-800 bg-slate-900/90 text-slate-100 shadow-xl backdrop-blur-md min-w-[220px] hover:border-cyan-500/50 transition-all cursor-pointer">
-      <Handle type="target" position={Position.Top} className="!bg-cyan-500 !w-3 !h-3" />
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">
-          {String(data.nodeType || "skill")}
+    <div className="px-4 py-3.5 rounded-xl border border-zinc-800 bg-zinc-900 text-white shadow-2xl min-w-[240px] hover:border-dashboard-metricHighlight transition-all cursor-pointer group">
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        className="!bg-dashboard-metricHighlight !w-3.5 !h-3.5 !border-2 !border-zinc-900" 
+      />
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <span className="text-[11px] font-display font-bold uppercase tracking-wider text-dashboard-metricHighlight">
+          {nodeType}
         </span>
-        {Boolean(data.estimatedHours) && (
-          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
-            {String(data.estimatedHours)}h
+        {Boolean(estimatedHours) && (
+          <span className="text-[10px] bg-zinc-800 text-zinc-300 font-display font-medium px-2 py-0.5 rounded-full border border-zinc-700">
+            {String(estimatedHours)}h
           </span>
         )}
       </div>
-      <div className="font-medium text-sm text-slate-100">{String(data.title || data.label || "")}</div>
-      {Boolean(data.description) && (
-        <div className="text-xs text-slate-400 mt-1 line-clamp-2">{String(data.description)}</div>
+      <div className="font-display font-bold text-sm text-white group-hover:text-dashboard-metricHighlight transition-colors">
+        {title}
+      </div>
+      {Boolean(description) && (
+        <div className="text-xs font-sans text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+          {description}
+        </div>
       )}
-      <Handle type="source" position={Position.Bottom} className="!bg-cyan-500 !w-3 !h-3" />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        className="!bg-dashboard-metricHighlight !w-3.5 !h-3.5 !border-2 !border-zinc-900" 
+      />
     </div>
   );
 };
@@ -45,12 +62,22 @@ const CustomSkillNode: React.FC<NodeProps> = ({ data }) => {
 export const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({ graph, onNodeClick }) => {
   const nodeTypes = useMemo(() => ({ customSkillNode: CustomSkillNode }), []);
 
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      style: { stroke: "#3f3f46", strokeWidth: 2 },
+      animated: true,
+    }),
+    []
+  );
+
   return (
-    <div className="w-full h-[700px] border border-slate-800 rounded-2xl bg-slate-950 overflow-hidden relative shadow-2xl">
+    <div className="w-full h-[700px] border border-zinc-800 rounded-[var(--card-radius-lg)] bg-zinc-950 overflow-hidden relative shadow-2xl">
       <ReactFlow
         nodes={graph.nodes}
         edges={graph.edges}
         nodeTypes={nodeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
+        colorMode="dark"
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
@@ -58,12 +85,12 @@ export const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({ graph, onNodeC
         onNodeClick={(_, node) => onNodeClick?.(node.id, node.data)}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#334155" gap={20} size={1} />
-        <Controls className="!bg-slate-900 !border-slate-800 !text-slate-200 fill-slate-200" />
+        <Background color="#27272a" gap={20} size={1} />
+        <Controls className="!bg-zinc-900 !border-zinc-800 !text-white fill-white shadow-xl" />
         <MiniMap
-          nodeColor="#0284c7"
-          maskColor="rgba(15, 23, 42, 0.7)"
-          className="!bg-slate-900 !border-slate-800"
+          nodeColor="#FEF7AF"
+          maskColor="rgba(0, 0, 0, 0.6)"
+          className="!bg-zinc-900 !border-zinc-800"
         />
       </ReactFlow>
     </div>

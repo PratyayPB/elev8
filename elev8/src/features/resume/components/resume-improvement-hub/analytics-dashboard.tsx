@@ -21,14 +21,14 @@ export function AnalyticsDashboard({ report }: AnalyticsDashboardProps) {
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm space-y-6">
+    <div className="bg-dashboard-card rounded-3xl p-6 sm:p-8 border border-dashboard-cardBorder shadow-sm space-y-6">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/40 text-teal-600 flex items-center justify-center">
-          <BarChart3 className="w-5 h-5" />
+        <div className="w-10 h-10 rounded-2xl bg-dashboard-metricHighlight/20 border border-dashboard-metricHighlight/30 text-text-primary flex items-center justify-center">
+          <BarChart3 className="w-5 h-5 text-text-primary" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Deterministic Analytics</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">Deterministic Analytics</h3>
+          <p className="text-xs text-text-secondary">
             Rule-based structural breakdown computed directly from parsed resume content.
           </p>
         </div>
@@ -40,11 +40,11 @@ export function AnalyticsDashboard({ report }: AnalyticsDashboardProps) {
           return (
             <div
               key={i}
-              className="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-100 dark:border-gray-700 text-center space-y-1"
+              className="p-4 bg-surface-muted rounded-2xl border border-border-subtle text-center space-y-1"
             >
-              <Icon className="w-4 h-4 mx-auto text-gray-400" />
-              <p className="text-xl font-extrabold text-gray-900 dark:text-white">{st.value}</p>
-              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight">{st.label}</p>
+              <Icon className="w-4 h-4 mx-auto text-text-muted" />
+              <p className="text-xl font-display font-black text-text-primary">{st.value}</p>
+              <p className="text-[9px] font-black text-text-secondary uppercase tracking-tight leading-tight">{st.label}</p>
             </div>
           );
         })}

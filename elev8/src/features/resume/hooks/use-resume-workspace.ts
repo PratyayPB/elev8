@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { ResumeSummary } from "../types/workspace";
 import { useResumeFilters } from "./use-resume-filters";
 import { WorkspaceService } from "../services/workspace.service";
+import { deleteResume as deleteResumeAction } from "../actions/resume-actions";
 
 export function useResumeWorkspace(initialResumes: ResumeSummary[]) {
   const [resumes, setResumes] = useState<ResumeSummary[]>(initialResumes);
@@ -15,8 +16,16 @@ export function useResumeWorkspace(initialResumes: ResumeSummary[]) {
     return WorkspaceService.groupResumesByStatus(filteredResumes);
   }, [filteredResumes]);
 
-  const deleteResume = (id: string) => {
+  const deleteResume = async (id: string) => {
+    const backup = [...resumes];
     setResumes((prev) => prev.filter((r) => r.id !== id));
+    try {
+      await deleteResumeAction(id);
+    } catch (error) {
+      console.error("Failed to delete resume:", error);
+      setResumes(backup);
+      alert("Failed to delete resume from server.");
+    }
   };
 
   return {

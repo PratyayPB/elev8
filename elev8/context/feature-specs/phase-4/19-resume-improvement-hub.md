@@ -72,7 +72,7 @@ Do NOT implement
 Create
 
 ```
-/resumes/[resumeId]
+/dashboard/resumes/[resumeId]
 ```
 
 Loading workflow

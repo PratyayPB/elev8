@@ -69,7 +69,7 @@ Do NOT implement
 Create
 
 ```
-/interviews/[interviewId]
+/dashboard/interviews/[interviewId]
 ```
 
 Opening the page should

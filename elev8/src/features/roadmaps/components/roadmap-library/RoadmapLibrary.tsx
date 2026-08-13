@@ -14,6 +14,7 @@ import {
 } from "@/features/roadmaps/actions/roadmap-actions";
 import { Compass, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/dashboard";
 
 export const RoadmapLibrary: React.FC = () => {
   const router = useRouter();
@@ -86,35 +87,30 @@ export const RoadmapLibrary: React.FC = () => {
   };
 
   const handleRegenerate = (roadmap: Roadmap) => {
-    const role = encodeURIComponent(roadmap.targetRole || roadmap.targetCareer || "");
+    const role = encodeURIComponent(roadmap.targetRole || "");
     const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
-    router.push(`/roadmaps/new?role=${role}&experienceLevel=${level}`);
+    router.push(`/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`);
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-100 flex items-center gap-2">
-            <Compass className="w-6 h-6 text-cyan-400" />
-            Roadmap Library
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Browse, manage, and explore your AI-generated career roadmaps.
-          </p>
-        </div>
-
-        <Link
-          href="/roadmaps/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl transition-colors shadow-lg shadow-cyan-500/20"
-        >
-          <Plus className="w-4 h-4" /> Create New Roadmap
-        </Link>
-      </div>
+      <PageHeader
+        title="Roadmap Library"
+        description="Browse, manage, and explore your AI-generated career roadmaps."
+        section="Learning Paths"
+        action={
+          <Link
+            href="/dashboard/roadmaps/new"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-text-primary hover:bg-black/80 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4" /> Create New Roadmap
+          </Link>
+        }
+      />
 
       {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius)] p-4 shadow-sm">
         <SearchBar value={search} onChange={(val) => { setSearch(val); setPage(1); }} />
         <FilterPanel
           experienceLevel={experienceLevel}
@@ -128,24 +124,24 @@ export const RoadmapLibrary: React.FC = () => {
 
       {/* Roadmap Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mb-3" />
-          <p className="text-sm">Loading your roadmaps...</p>
+        <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+          <Loader2 className="w-8 h-8 animate-spin text-text-primary mb-3" />
+          <p className="text-sm font-sans">Loading your roadmaps...</p>
         </div>
       ) : roadmaps.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-slate-900/40 border border-slate-800/80 rounded-2xl text-center">
-          <div className="w-16 h-16 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-4">
+        <div className="flex flex-col items-center justify-center py-16 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] text-center p-8">
+          <div className="w-16 h-16 rounded-full bg-surface-muted text-text-primary flex items-center justify-center mb-4 shadow-sm">
             <Compass className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-bold text-slate-100">No Roadmaps Found</h3>
-          <p className="text-xs text-slate-400 max-w-sm mt-1 mb-6">
+          <h3 className="text-xl font-display font-bold text-text-primary">No Roadmaps Found</h3>
+          <p className="text-sm font-sans text-text-secondary max-w-sm mt-2 mb-6">
             {search || experienceLevel !== "ALL" || status !== "ALL"
               ? "No roadmaps matched your filters. Try clearing your search parameters."
               : "Generate your first personalized AI career roadmap to get started."}
           </p>
           <Link
-            href="/roadmaps/new"
-            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-xl transition-colors"
+            href="/dashboard/roadmaps/new"
+            className="px-6 py-2.5 bg-text-primary hover:bg-black/80 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
           >
             Generate Roadmap
           </Link>
@@ -166,7 +162,7 @@ export const RoadmapLibrary: React.FC = () => {
 
       {/* Pagination Controls */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
+        <div className="flex items-center justify-between pt-4 border-t border-border-subtle text-xs font-sans text-text-secondary">
           <div>
             Showing Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
           </div>
@@ -174,14 +170,14 @@ export const RoadmapLibrary: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              className="px-3.5 py-2 bg-surface-muted border border-border-subtle rounded-xl hover:bg-border-subtle text-text-primary font-display font-medium disabled:opacity-40 transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={page === pagination.totalPages}
-              className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              className="px-3.5 py-2 bg-surface-muted border border-border-subtle rounded-xl hover:bg-border-subtle text-text-primary font-display font-medium disabled:opacity-40 transition-colors"
             >
               Next
             </button>

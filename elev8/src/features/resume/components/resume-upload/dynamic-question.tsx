@@ -22,12 +22,12 @@ export function DynamicQuestion({ question, initialAnswers, onChange }: DynamicQ
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
+    <div className="bg-white p-5 rounded-2xl border border-border-subtle shadow-sm space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-bold text-gray-900 dark:text-white text-base">
+        <h4 className="font-display font-bold text-text-primary text-base">
           {question.question}
         </h4>
-        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-dashboard-metricHighlight/50 border border-dashboard-metricHighlight/60 text-text-primary font-display">
           {question.type === "single" ? "Single Choice" : "Multiple Choice"}
         </span>
       </div>
@@ -40,21 +40,21 @@ export function DynamicQuestion({ question, initialAnswers, onChange }: DynamicQ
               key={option}
               type="button"
               onClick={() => handleOptionClick(option)}
-              className={`p-3.5 rounded-xl border text-left text-sm font-semibold transition-all flex items-center justify-between ${
+              className={`p-3.5 rounded-xl border text-left text-sm font-sans font-semibold transition-all flex items-center justify-between ${
                 isSelected
-                  ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500 text-blue-900 dark:text-blue-200"
-                  : "bg-gray-50/50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-dashboard-metricHighlight/15 border-text-primary text-text-primary"
+                  : "bg-surface-muted/50 border-border-subtle text-text-secondary hover:bg-surface-muted"
               }`}
             >
               <span>{option}</span>
               <div
                 className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                   isSelected
-                    ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-gray-300 dark:border-gray-600"
+                    ? "border-text-primary bg-text-primary text-white"
+                    : "border-border-subtle"
                 }`}
               >
-                {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </button>
           );
