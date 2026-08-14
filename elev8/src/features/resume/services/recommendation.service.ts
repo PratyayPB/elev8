@@ -127,7 +127,7 @@ export class RecommendationService {
       title: "Build from Scratch",
       description: "Use our Resume Builder foundation to craft an ATS-optimized profile.",
       type: "builder",
-      actionUrl: "/dashboard/resume-builder",
+      actionUrl: "/dashboard/resumes/builder",
       actionText: "Launch Builder",
       priority: "low",
     });

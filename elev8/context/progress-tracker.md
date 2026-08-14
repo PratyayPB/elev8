@@ -3,10 +3,10 @@
 Update this file whenever the current phase, active feature, or implementation state changes.
 
 ## Current Phase
-Phase 4: AI Resume Builder / Scoring
+Phase 5: Resume Builder MVP
 
 ## Current Goal
-Implement Phase 4.4 - Resume Workspace (Central resume management hub, library, status sections, trends, actions).
+Phase 5 — Resume Builder MVP Completed
 
 ## Completed
 - [x] Initialized production-ready repository directory structure under `src/`.
@@ -34,14 +34,20 @@ Implement Phase 4.4 - Resume Workspace (Central resume management hub, library, 
 - [x] **Phase 4.2: Resume Scoring & Parsing Engine** (PDF text extraction, Gemini normalization & scoring, Trigger.dev background task)
 - [x] **Phase 4.3: Resume Improvement Hub** (Read-only artifact visualization dashboard, 7-section breakdown, ATS analysis, cross-module navigation)
 - [x] **Phase 4.5: Resume Builder Foundation** (Routing, types, schema, API endpoints, empty placeholders)
+- [x] **Phase 5.1: Resume Data Model & Artifact Foundation** (Independent `BuilderResume` model, enums, Zod schemas, empty artifact factory, `upsertJson` Blob storage, `ResumeBuilderService` CRUD & artifact operations, `/api/resumes` REST endpoints, unit tests)
 - [x] **Dashboard UI Overhaul** (Implemented shared `DashboardShell`, Sidebar, MobileNav, MetricCards, and redesigned Dashboard Home, Career Guidance, Career Assessment, and Progress pages according to `dashboard-ui-spec.md`)
 - [x] **Route Cleanup** (Nested all dashboard feature routes strictly under `/dashboard/*` and removed legacy landing pages `/about`, `/pricing`, `/contact`, `/faq`, `/forgot-password`)
+- [x] **Phase 5.2: Profile Prefill & Resume Initialization** (Mapper for Profile -> Resume Artifact, prefilling personal info, education, and skills. Integrates with ResumeBuilderService, adds /dashboard/resumes/builder workspace and creation UI, unit tested, compiles successfully)
+- [x] **Phase 5.3: Resume Editor UI & Autosave** (Isolated editor route /dashboard/resumes/builder/[resumeId], editor-header, editor-sidebar, editor-section wrappers, and 8 individual section editor sub-components. Built debounced autosave state hook with client versioning/409 conflict checks, migrated APIs to /api/builder/resumes/*, unit tested and built successfully)
+- [x] **Phase 5.4: Resume Templates, Live Preview & PDF Export** (Classic, Modern, Minimal template renderers consuming standard ResumeArtifact, live side-by-side preview panel driven by local editor state, template switching with Prisma persistence, server-side PDF generation API using Puppeteer with clean sanitized filename header, unit tested and built successfully)
+- [x] **Phase 5.5: Resume Workspace & Final MVP Integration** (Implemented independent Resume Workspace at /dashboard/resumes/builder, added duplicate functionality with deep cloning and new Blob IDs, implemented rename/delete actions with modals, maintained strict isolation from Resume Scoring module, verified flow from profile to PDF export)
 
 ## In Progress
-- **Phase 4.4: Resume Workspace** (Central resume management hub, search, filters, trends, re-scoring, PDF downloads)
+- None
 
 ## Next Up
-- **Phase 4.6: Resume Builder State & Editing** (Active resume state, editing sections, dynamic preview)
+- None
+
 
 ## Open Questions
 - None at present.
@@ -52,3 +58,5 @@ Implement Phase 4.4 - Resume Workspace (Central resume management hub, library, 
 - Large AI-generated artifacts store `blobUrl` references to Blob Storage rather than large JSON strings in PostgreSQL.
 - Full type-safety across Zod schemas, Prisma models, Server Actions, and UI components.
 - Phase 3.1 uses strictly mocked AI personalization to avoid Gemini usage before Phase 3.2.
+- **Resume Builder & Resume Scoring Separation**: Resume Scoring (Phase 4, `Resume` model) and Resume Builder (Phase 5, `BuilderResume` model) are fully independent modules with separate Prisma models, separate enums (`BuilderResumeStatus`, `BuilderResumeTemplate`), separate artifact schemas, and isolated API endpoints (`/api/resumes/*`).
+

@@ -21,7 +21,7 @@ export function KeywordAnalysisComponent({ report }: KeywordAnalysisProps) {
           <div>
             <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">ATS & Keyword Audit</h3>
             <p className="text-xs text-text-secondary">
-              Applicant Tracking System keyword match density for target role "{artifact.metadata.role}".
+              Applicant Tracking System keyword match density for target role &ldquo;{artifact.metadata.role}&rdquo;.
             </p>
           </div>
         </div>

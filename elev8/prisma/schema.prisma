@@ -48,6 +48,18 @@ enum ResumeStatus {
   ARCHIVED
 }
 
+enum BuilderResumeStatus {
+  DRAFT
+  READY
+  ARCHIVED
+}
+
+enum BuilderResumeTemplate {
+  CLASSIC
+  MODERN
+  MINIMAL
+}
+
 enum InterviewStatus {
   GENERATING
   READY
@@ -108,6 +120,7 @@ model User {
   careerGuidances   CareerGuidance[]
   roadmaps          Roadmap[]
   resumes           Resume[]
+  builderResumes    BuilderResume[]
   interviews        Interview[]
   progress          Progress?
   notifications     Notification[]
@@ -287,6 +300,28 @@ model Resume {
   @@index([status])
   @@index([createdAt])
   @@map("resumes")
+}
+
+
+model BuilderResume {
+  id              String                @id @default(cuid())
+  userId          String
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title           String
+  targetRole      String?
+  template        BuilderResumeTemplate @default(CLASSIC)
+  artifactBlobUrl String?
+  status          BuilderResumeStatus   @default(DRAFT)
+  version         Int                   @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("builder_resumes")
 }
 
 

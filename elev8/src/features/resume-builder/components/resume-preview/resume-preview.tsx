@@ -1,13 +1,21 @@
 import React from "react";
+import { BuilderResumeArtifact, BuilderResumeTemplate } from "../../types";
+import { ResumeTemplateRenderer } from "../templates/resume-template-renderer";
 
-export function ResumePreview() {
+interface ResumePreviewProps {
+  artifact: BuilderResumeArtifact;
+  template?: BuilderResumeTemplate;
+  scale?: number;
+}
+
+export function ResumePreview({
+  artifact,
+  template = "CLASSIC",
+}: ResumePreviewProps) {
   return (
-    <div className="flex flex-col h-full bg-gray-100 p-6">
-      <div className="flex-1 bg-white shadow-lg rounded-md flex items-center justify-center border">
-        <div className="text-center text-gray-500">
-          <p className="text-lg font-medium text-gray-700">Live Preview</p>
-          <p className="text-sm mt-1">Coming Soon</p>
-        </div>
+    <div className="w-full h-full bg-slate-100 p-4 sm:p-6 overflow-y-auto rounded-2xl border border-border shadow-inner flex flex-col items-center">
+      <div className="w-full max-w-[800px] bg-white shadow-xl rounded-sm overflow-hidden transition-all duration-300 transform origin-top">
+        <ResumeTemplateRenderer artifact={artifact} template={template} />
       </div>
     </div>
   );

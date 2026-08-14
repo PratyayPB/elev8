@@ -19,6 +19,24 @@ export class BlobStorageService {
   }
 
   /**
+   * Uploads or overwrites a JSON artifact at a deterministic pathname without random suffix.
+   */
+  public static async upsertJson<T>(
+    pathname: string,
+    data: T
+  ): Promise<string> {
+    const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+
+    const blob = await put(pathname, jsonString, {
+      access: "private",
+      contentType: "application/json",
+      addRandomSuffix: false,
+    });
+
+    return blob.url;
+  }
+
+  /**
    * Fetches JSON content from a Blob URL.
    */
   public static async fetchJson<T>(url: string): Promise<T> {

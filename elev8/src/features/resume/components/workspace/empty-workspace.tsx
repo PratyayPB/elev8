@@ -23,7 +23,7 @@ export function EmptyWorkspace() {
           <span>Upload First Resume</span>
         </Link>
         <Link
-          href="/dashboard/resume-builder"
+          href="/dashboard/resumes/builder"
           className="px-5 py-2.5 border border-gray-300 font-medium text-sm rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center space-x-2 text-gray-700"
         >
           <LayoutTemplate className="w-4 h-4" />

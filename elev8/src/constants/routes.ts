@@ -7,7 +7,7 @@ export const ROUTES = {
   CAREER_GUIDANCE: "/dashboard/career-guidance",
   ROADMAPS: "/dashboard/roadmaps",
   RESUMES: "/dashboard/resumes",
-  RESUME_BUILDER: "/dashboard/resume-builder",
+  RESUME_BUILDER: "/dashboard/resumes/builder",
   INTERVIEWS: "/dashboard/interviews",
   PROGRESS: "/dashboard/progress",
   SETTINGS: "/dashboard/settings",

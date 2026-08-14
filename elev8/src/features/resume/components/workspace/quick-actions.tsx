@@ -26,14 +26,11 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
       </Link>
 
       <Link
-        href="/dashboard/resume-builder"
+        href="/dashboard/resumes/builder"
         className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-black transition-colors flex flex-col justify-between group"
       >
         <div className="flex items-center justify-between mb-4">
           <LayoutTemplate className="w-6 h-6 text-gray-700" />
-          <span className="text-[10px] font-semibold uppercase bg-gray-100 px-2 py-0.5 rounded text-gray-600">
-            Coming Soon
-          </span>
         </div>
         <div>
           <h3 className="font-semibold text-lg text-gray-900">Resume Builder</h3>
@@ -66,7 +63,7 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
       )}
 
       <Link
-        href="/dashboard/resume-builder/templates"
+        href="/dashboard/resumes/builder/templates"
         className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-black transition-colors flex flex-col justify-between group"
       >
         <div className="flex items-center justify-between mb-4">

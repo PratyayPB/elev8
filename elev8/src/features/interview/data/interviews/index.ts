@@ -1,4 +1,4 @@
-import { PredefinedInterview } from "../types/predefined-interview";
+import { PredefinedInterview } from "../../types/predefined-interview";
 
 import { fullstack_developer } from "./fullstack-developer";
 import { frontend_developer } from "./frontend-developer";
