@@ -78,20 +78,21 @@ export const BuilderResumeArtifactSchema = z.object({
   achievements: z.array(AchievementEntrySchema).default([]),
 });
 
-export const BuilderResumeTemplateEnum = z.enum(["CLASSIC", "MODERN", "MINIMAL"]);
-export const BuilderResumeStatusEnum = z.enum(["DRAFT", "READY", "ARCHIVED"]);
+export const ResumeBuilderTemplateEnum = z.enum(["CLASSIC", "MODERN", "MINIMAL"]);
+export const ResumeBuildStatusEnum = z.enum(["DRAFT", "READY", "ARCHIVED"]);
+
+export const BuilderResumeTemplateEnum = ResumeBuilderTemplateEnum;
+export const BuilderResumeStatusEnum = ResumeBuildStatusEnum;
 
 export const CreateResumeInputSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title is too long"),
-  targetRole: z.string().optional(),
-  template: BuilderResumeTemplateEnum.optional().default("CLASSIC"),
+  template: ResumeBuilderTemplateEnum.optional().default("CLASSIC"),
 });
 
 export const UpdateResumeInputSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title is too long").optional(),
-  targetRole: z.string().optional().nullable(),
-  template: BuilderResumeTemplateEnum.optional(),
-  status: BuilderResumeStatusEnum.optional(),
+  template: ResumeBuilderTemplateEnum.optional(),
+  status: ResumeBuildStatusEnum.optional(),
 });
 
 export type CreateResumeInput = z.infer<typeof CreateResumeInputSchema>;

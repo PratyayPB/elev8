@@ -1,0 +1,147 @@
+import { PrimaryGoal } from "@prisma/client";
+
+/**
+ * Normalized weights for composite recommendation candidate scoring (spec §33-34).
+ * Must sum to 1.00.
+ */
+export const SCORING_WEIGHTS = {
+  goalAlignment: 0.25,
+  gapSignal: 0.20,
+  moduleResultSignal: 0.20,
+  recencySignal: 0.10,
+  assessmentSignal: 0.10,
+  profileSignal: 0.10,
+  behavioralSignal: 0.05,
+} as const;
+
+/**
+ * Result score classification thresholds (spec §40).
+ */
+export const RESULT_THRESHOLDS = {
+  POOR_MAX: 49,
+  NEEDS_IMPROVEMENT_MAX: 69,
+  GOOD_MAX: 84,
+  STRONG_MIN: 85,
+} as const;
+
+/**
+ * Gap severity thresholds from Phase 6.4 (spec §43-45).
+ */
+export const GAP_SEVERITY_THRESHOLDS = {
+  HIGH: 0.7,
+  MODERATE: 0.3,
+} as const;
+
+/**
+ * Goal to Default Module Priority mapping (spec §20).
+ */
+export const GOAL_DEFAULT_PRIORITIES: Record<PrimaryGoal, string[]> = {
+  LAND_A_JOB: ["RESUME_SCORE", "RESUME_BUILD", "INTERVIEW_PRACTICE"],
+  GET_AN_INTERNSHIP: ["RESUME_BUILD", "ROADMAP", "INTERVIEW_PRACTICE"],
+  PREPARE_FOR_INTERVIEW: ["INTERVIEW_PRACTICE", "RESUME_SCORE"],
+  BUILD_RESUME: ["RESUME_BUILD", "RESUME_SCORE"],
+  IMPROVE_RESUME: ["RESUME_SCORE", "RESUME_BUILD"],
+  SWITCH_CAREER: ["ROADMAP", "RESUME_SCORE", "INTERVIEW_PRACTICE"],
+  GET_PROMOTED: ["ROADMAP", "RESUME_SCORE", "INTERVIEW_PRACTICE"],
+  LEARN_NEW_SKILLS: ["ROADMAP"],
+  BECOME_JOB_READY: ["ROADMAP", "RESUME_SCORE", "INTERVIEW_PRACTICE"],
+  EXPLORE_CAREERS: ["ROADMAP"],
+  OTHER: ["PROFILE_CLARIFICATION"],
+};
+
+/**
+ * Goal alignment alignment matrix [PrimaryGoal -> RefId -> number (0.0 - 1.0)]
+ */
+export const GOAL_ALIGNMENT_MATRIX: Record<PrimaryGoal, Record<string, number>> = {
+  LAND_A_JOB: {
+    RESUME_SCORE: 1.0,
+    RESUME_BUILD: 0.9,
+    INTERVIEW_PRACTICE: 0.85,
+    ROADMAP: 0.5,
+    TAKE_CAREER_ASSESSMENT: 0.7,
+  },
+  GET_AN_INTERNSHIP: {
+    RESUME_BUILD: 1.0,
+    RESUME_SCORE: 0.85,
+    ROADMAP: 0.8,
+    INTERVIEW_PRACTICE: 0.75,
+    TAKE_CAREER_ASSESSMENT: 0.7,
+  },
+  PREPARE_FOR_INTERVIEW: {
+    INTERVIEW_PRACTICE: 1.0,
+    RESUME_SCORE: 0.7,
+    ROADMAP: 0.6,
+    RESUME_BUILD: 0.5,
+    TAKE_CAREER_ASSESSMENT: 0.65,
+  },
+  BUILD_RESUME: {
+    RESUME_BUILD: 1.0,
+    RESUME_SCORE: 0.8,
+    ROADMAP: 0.4,
+    INTERVIEW_PRACTICE: 0.4,
+    TAKE_CAREER_ASSESSMENT: 0.5,
+  },
+  IMPROVE_RESUME: {
+    RESUME_SCORE: 1.0,
+    RESUME_BUILD: 0.9,
+    ROADMAP: 0.4,
+    INTERVIEW_PRACTICE: 0.5,
+    TAKE_CAREER_ASSESSMENT: 0.6,
+  },
+  SWITCH_CAREER: {
+    ROADMAP: 1.0,
+    RESUME_SCORE: 0.75,
+    RESUME_BUILD: 0.7,
+    INTERVIEW_PRACTICE: 0.6,
+    TAKE_CAREER_ASSESSMENT: 0.85,
+  },
+  GET_PROMOTED: {
+    ROADMAP: 1.0,
+    INTERVIEW_PRACTICE: 0.7,
+    RESUME_SCORE: 0.6,
+    RESUME_BUILD: 0.5,
+    TAKE_CAREER_ASSESSMENT: 0.8,
+  },
+  LEARN_NEW_SKILLS: {
+    ROADMAP: 1.0,
+    INTERVIEW_PRACTICE: 0.5,
+    RESUME_SCORE: 0.3,
+    RESUME_BUILD: 0.3,
+    TAKE_CAREER_ASSESSMENT: 0.6,
+  },
+  BECOME_JOB_READY: {
+    ROADMAP: 1.0,
+    RESUME_SCORE: 0.85,
+    INTERVIEW_PRACTICE: 0.8,
+    RESUME_BUILD: 0.75,
+    TAKE_CAREER_ASSESSMENT: 0.8,
+  },
+  EXPLORE_CAREERS: {
+    ROADMAP: 0.9,
+    TAKE_CAREER_ASSESSMENT: 0.85,
+    RESUME_SCORE: 0.4,
+    INTERVIEW_PRACTICE: 0.4,
+    RESUME_BUILD: 0.3,
+  },
+  OTHER: {
+    PROFILE_CLARIFICATION: 1.0,
+    TAKE_CAREER_ASSESSMENT: 0.7,
+    ROADMAP: 0.5,
+    RESUME_SCORE: 0.5,
+  },
+};
+
+/**
+ * Recommendation Engine Operational Limits & Cooldowns
+ */
+export const RECOMMENDATION_CONFIG = {
+  MAX_RECOMMENDATIONS: 3,
+  MAX_SKILL_CANDIDATES: 3,
+  MINIMUM_CANDIDATE_SCORE: 0.35,
+  DISMISSAL_COOLDOWN_DAYS: 7,
+  DISMISSAL_THRESHOLD_COUNT: 3,
+  FRESHNESS_THRESHOLD_DAYS: 30,
+  COMPLETED_SUPPRESSION_DAYS: 30,
+  RECENCY_FULL_DECAY_DAYS: 30,
+  REFRESH_RATE_LIMIT_SECONDS: 10,
+} as const;

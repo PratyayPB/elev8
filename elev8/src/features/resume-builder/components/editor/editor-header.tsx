@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, Save, CheckCircle2, AlertCircle, Download, LayoutTemplate } from "lucide-react";
 import { SaveStatus } from "../../hooks/use-resume-editor";
 import { BUILDER_ROUTES } from "../../constants/builder-routes";
-import { BuilderResumeTemplate } from "../../types";
+import { ResumeBuilderTemplate } from "../../types";
 
 interface EditorHeaderProps {
   title: string;
@@ -12,8 +12,8 @@ interface EditorHeaderProps {
   lastSavedAt: Date | null;
   onSave: () => void;
   isDirty: boolean;
-  currentTemplate: BuilderResumeTemplate;
-  onTemplateChange: (template: BuilderResumeTemplate) => void;
+  currentTemplate: ResumeBuilderTemplate;
+  onTemplateChange: (template: ResumeBuilderTemplate) => void;
   isTemplateUpdating?: boolean;
   onDownloadPdf: () => void;
   isPdfGenerating?: boolean;
@@ -108,7 +108,7 @@ export function EditorHeader({
             <select
               value={currentTemplate}
               disabled={isTemplateUpdating}
-              onChange={(e) => onTemplateChange(e.target.value as BuilderResumeTemplate)}
+              onChange={(e) => onTemplateChange(e.target.value as ResumeBuilderTemplate)}
               className="pl-8 pr-8 py-2 rounded-xl bg-surface-muted border border-border text-xs font-semibold text-text-primary focus:outline-none focus:border-text-primary transition-all cursor-pointer disabled:opacity-50 appearance-none"
             >
               <option value="CLASSIC">Classic Template</option>

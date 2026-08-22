@@ -11,7 +11,7 @@ export class InterviewTemplateService {
     return prisma.interviewTemplate.findMany({
       orderBy: [
         { role: "asc" },
-        { difficulty: "asc" },
+        { interviewType: "asc" },
       ],
     });
   }
@@ -26,18 +26,17 @@ export class InterviewTemplateService {
   }
 
   /**
-   * Finds a template by role, type, and difficulty.
+   * Finds a template by role and type.
    */
   public static async findTemplate(
     role: string,
     type: string,
-    difficulty: string
+    experienceLevel?: any
   ): Promise<InterviewTemplate | null> {
     return prisma.interviewTemplate.findFirst({
       where: {
         role,
-        type,
-        difficulty,
+        ...(experienceLevel && { experienceLevel }),
       },
     });
   }

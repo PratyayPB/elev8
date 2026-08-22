@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Interview, InterviewStatus } from "@prisma/client";
+import { InterviewSession, InterviewStatus } from "@prisma/client";
 import { PlayCircle, Eye, RefreshCw, Trash2, Calendar, HelpCircle, Loader2 } from "lucide-react";
 import { deleteInterview } from "../../actions/workspace-actions";
 
 interface InterviewCardProps {
-  interview: Interview;
+  interview: InterviewSession;
   onDeleted?: () => void;
 }
 
@@ -64,7 +64,7 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-sans text-text-secondary mb-4">
           <span>{interview.experienceLevel}</span>
           <span>•</span>
-          <span>{interview.difficulty}</span>
+          <span>{interview.interviewType}</span>
           <span>•</span>
           <span className="flex items-center gap-1">
             <HelpCircle className="w-3 h-3 text-text-muted" />
@@ -117,7 +117,7 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         <div className="flex items-center gap-1">
           {/* Generate Similar / Retake */}
           <Link
-            href={`/dashboard/interviews/new?role=${encodeURIComponent(interview.role)}&difficulty=${interview.difficulty}&experience=${interview.experienceLevel}`}
+            href={`/dashboard/interviews/new?role=${encodeURIComponent(interview.role)}&experience=${interview.experienceLevel}`}
             className="p-2 text-text-secondary hover:bg-surface-muted rounded-xl transition-colors border border-border-subtle"
             title="Generate Similar Interview"
           >

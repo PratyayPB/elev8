@@ -13,6 +13,7 @@ import {
   Target,
   FileText,
   TrendingUp,
+  User,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,11 +21,11 @@ import { cn } from "@/lib/utils";
 const ICONS: Record<string, React.ElementType> = {
   [ROUTES.DASHBOARD]: LayoutDashboard,
   [ROUTES.ROADMAPS]: Map,
-  [ROUTES.CAREER_GUIDANCE]: Compass,
   [ROUTES.INTERVIEWS]: Mic,
   [ROUTES.CAREER_ASSESSMENT]: Target,
   [ROUTES.RESUMES]: FileText,
   [ROUTES.PROGRESS]: TrendingUp,
+  [ROUTES.PROFILE]: User,
   [ROUTES.SETTINGS]: Settings,
 };
 

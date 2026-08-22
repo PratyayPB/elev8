@@ -1,0 +1,1634 @@
+# Phase 6.3 — Career Assessment
+
+## Objective
+
+Implement the Career Assessment module that analyzes the user's completed Profile and produces a structured career assessment using an LLM.
+
+The Career Assessment is an **analysis layer**, not the Recommendation Engine.
+
+Its job is to transform:
+
+```text
+Profile
++
+Deterministic Profile Signals
++
+Skill Gap Information (when available)
++
+Relevant Module Activity
+        ↓
+      LLM
+        ↓
+Structured Career Assessment
+```
+
+The assessment may provide:
+
+- Career readiness score
+- Strengths
+- Career gaps
+- Focus areas
+- Narrative insights
+- Areas requiring attention
+
+The Recommendation Engine in Phase 6.5 will use these outputs as an additional signal.
+
+The LLM must NOT directly decide which Elev8 module the user should use.
+
+---
+
+# 1. Architectural Principle
+
+Use the previously established hybrid architecture:
+
+```text
+                       Profile
+                          │
+                          ▼
+                 Assessment Context
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+        ▼                 ▼                 ▼
+   Profile Data       Skill Gaps       Module Activity
+        │                 │                 │
+        └─────────────────┼─────────────────┘
+                          ▼
+                         LLM
+                          │
+                          ▼
+                Structured Assessment
+                          │
+                          ▼
+                    Assessment DB
+                          │
+                          ▼
+                Recommendation Engine
+```
+
+The LLM performs:
+
+```text
+unstructured analysis
+        ↓
+structured career insights
+```
+
+The deterministic Recommendation Engine performs:
+
+```text
+career context
++
+assessment signals
+        ↓
+module/action recommendations
+```
+
+Do not merge these responsibilities.
+
+---
+
+# 2. Career Assessment Is Optional
+
+A user does not need to complete the Career Assessment to use Elev8.
+
+Valid states include:
+
+```text
+Profile complete
+Assessment not completed
+```
+
+and:
+
+```text
+Profile complete
+Assessment completed
+```
+
+The Recommendation Engine must later support both.
+
+Assessment provides additional personalization rather than being a mandatory prerequisite.
+
+---
+
+# 3. Assessment Availability
+
+Career Assessment should become available after the Profile has reached the required completion state.
+
+For the MVP:
+
+```text
+Profile state = COMPLETED
+        ↓
+Career Assessment available
+```
+
+Do not automatically launch the assessment.
+
+Instead, present a clear CTA such as:
+
+```text
+Take Career Assessment
+```
+
+The exact UI integration can be completed in Phase 6.6.
+
+---
+
+# 4. Profile Version Snapshot
+
+Every Assessment must record which Profile version it was generated from.
+
+Example:
+
+```text
+Profile
+profileVersion = 4
+        ↓
+Career Assessment
+profileVersion = 4
+```
+
+If the Profile later changes:
+
+```text
+Profile
+profileVersion = 5
+```
+
+the old Assessment becomes stale.
+
+Do not overwrite the previous Assessment.
+
+---
+
+# 5. Assessment Immutability
+
+Treat every Career Assessment as an immutable snapshot.
+
+Do not update an old Assessment when the Profile changes.
+
+Instead:
+
+```text
+Assessment #1
+Profile Version 3
+
+        ↓ Profile changes
+
+Assessment #2
+Profile Version 4
+```
+
+This preserves historical assessment results.
+
+---
+
+# 6. Assessment Status
+
+Recommended states:
+
+```text
+PROCESSING
+COMPLETED
+FAILED
+STALE
+```
+
+For an MVP synchronous implementation, `PROCESSING` may be transient.
+
+The final stored record should normally be:
+
+```text
+COMPLETED
+```
+
+or:
+
+```text
+FAILED
+```
+
+`STALE` is a derived/logical state when the Assessment's stored Profile version no longer matches the current Profile version.
+
+Do not automatically mutate historical records to `STALE` merely because Profile changed unless the architecture requires it.
+
+---
+
+# 7. Assessment Schema
+
+Recommended conceptual model:
+
+```prisma
+model CareerAssessment {
+  id              String   @id @default(cuid())
+  userId          String
+
+  profileVersion  Int
+
+  readinessScore  Int
+
+  strengths       Json
+  gaps            Json
+  suggestedFocusAreas Json
+
+  narrative       String
+
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+```
+
+Adapt this to the existing Prisma conventions.
+
+Do not blindly copy the schema.
+
+---
+
+# 8. Assessment Data Structure
+
+The structured assessment should conceptually contain:
+
+```json
+{
+  "readinessScore": 72,
+  "strengths": [
+    "Strong JavaScript fundamentals",
+    "Good frontend development experience"
+  ],
+  "gaps": [
+    "Limited backend experience",
+    "Limited system design exposure"
+  ],
+  "suggestedFocusAreas": [
+    "Node.js",
+    "Databases",
+    "System Design"
+  ],
+  "narrative": "You have a solid frontend foundation..."
+}
+```
+
+The exact wording is generated by the LLM.
+
+The structure must remain predictable.
+
+---
+
+# 9. Readiness Score
+
+Use:
+
+```text
+0–100
+```
+
+The LLM may estimate the user's overall career readiness based on the provided context.
+
+Important:
+
+> This is an assessment signal, not a scientifically validated employability score.
+
+The UI should avoid presenting it as an objective probability of getting hired.
+
+Prefer language such as:
+
+```text
+Career Readiness
+72/100
+```
+
+rather than:
+
+```text
+72% chance of getting hired
+```
+
+---
+
+# 10. Structured Output Is Mandatory
+
+The LLM must return structured JSON.
+
+Do NOT rely on free-form text parsing.
+
+Expected structure:
+
+```json
+{
+  "readinessScore": 0,
+  "strengths": [],
+  "gaps": [],
+  "suggestedFocusAreas": [],
+  "narrative": ""
+}
+```
+
+Use the Google GenAI structured output capabilities already used elsewhere in the application where appropriate.
+
+---
+
+# 11. LLM Responsibility
+
+The LLM should answer:
+
+```text
+Given this user's career context:
+
+- What are their major strengths?
+- What are their major gaps?
+- How prepared are they for their stated career direction?
+- What areas should they focus on?
+- What career-level observations are useful?
+```
+
+The LLM should NOT answer:
+
+```text
+Which Elev8 module should the user use next?
+```
+
+Do not ask it to produce:
+
+```text
+ROADMAP
+RESUME_BUILD
+RESUME_SCORE
+INTERVIEW_PRACTICE
+```
+
+as recommendation decisions.
+
+---
+
+# 12. Assessment Prompt
+
+Create a dedicated prompt/template.
+
+The prompt should contain:
+
+```text
+SYSTEM CONTEXT
+USER PROFILE
+SKILL INFORMATION
+TARGET ROLE
+TARGET INDUSTRY
+CAREER LEVEL
+GOALS
+LEARNING CAPACITY
+RELEVANT MODULE ACTIVITY
+SKILL GAP INFORMATION
+OUTPUT REQUIREMENTS
+```
+
+Do not build the prompt directly inside the API route.
+
+Create a dedicated prompt builder/service.
+
+---
+
+# 13. Prompt Builder
+
+Recommended structure:
+
+```text
+CareerAssessmentPromptBuilder
+├── buildSystemPrompt()
+├── buildProfileContext()
+├── buildSkillContext()
+├── buildActivityContext()
+└── buildAssessmentPrompt()
+```
+
+This makes the prompt testable and easier to modify.
+
+---
+
+# 14. Profile Context
+
+The LLM should receive relevant Profile information.
+
+Include:
+
+```text
+currentStatus
+currentRole
+currentCompany
+yearsOfExperience
+
+education
+
+primaryGoal
+goalDescription
+targetRole
+targetIndustry
+
+skills
+desiredSkills
+
+careerExperienceLevel
+targetCompanyType
+
+weeklyLearningHours
+```
+
+Do not send unrelated database fields.
+
+---
+
+# 15. Skill Representation
+
+Send skills with proficiency.
+
+Example:
+
+```json
+[
+  {
+    "name": "JavaScript",
+    "proficiency": "INTERMEDIATE"
+  },
+  {
+    "name": "React",
+    "proficiency": "ADVANCED"
+  }
+]
+```
+
+Do not convert proficiency to numerical values inside the prompt unless useful.
+
+The structured semantic values are easier for the model to interpret.
+
+---
+
+# 16. Desired Skills
+
+Send desired skills separately:
+
+```json
+[
+  "Node.js",
+  "Docker",
+  "System Design"
+]
+```
+
+Make the distinction explicit:
+
+```text
+Current Skills
+vs
+Desired Skills
+```
+
+The LLM should not assume desired skills are already possessed.
+
+---
+
+# 17. Skill Gap Context
+
+If the deterministic Skill Gap Engine from Phase 6.4 is available, provide its output to the Assessment.
+
+Example:
+
+```json
+{
+  "targetRole": "Full Stack Developer",
+  "severity": 0.42,
+  "missingSkills": [
+    "Docker",
+    "System Design"
+  ],
+  "underqualifiedSkills": [
+    "Node.js"
+  ]
+}
+```
+
+The LLM should interpret this information.
+
+It should not independently reconstruct the role-skill requirements.
+
+---
+
+# 18. Missing Skill Gap Data
+
+If no target role exists:
+
+```text
+targetRole = null
+```
+
+do not fabricate a role-specific gap analysis.
+
+The prompt should explicitly state:
+
+```text
+No target role is currently defined.
+Do not invent one.
+Provide broader career observations based on the user's stated goal and profile.
+```
+
+This is especially important for:
+
+```text
+EXPLORE_CAREERS
+```
+
+---
+
+# 19. Module Activity Context
+
+When available, include relevant historical activity.
+
+Examples:
+
+```text
+Resume Score: 42/100
+Interview Practice: 61/100
+Roadmap Phase 1: completed
+```
+
+The LLM can use these as supporting evidence.
+
+Do not allow the LLM to treat module scores as absolute measures of career ability.
+
+The prompt should frame them as:
+
+```text
+signals
+```
+
+rather than definitive truth.
+
+---
+
+# 20. Module Activity Data
+
+Use the standardized ModuleActivity architecture planned for the Recommendation Engine.
+
+Conceptually:
+
+```text
+ModuleActivity
+├── module
+├── action
+├── status
+├── score?
+├── metadata?
+└── completedAt
+```
+
+Only include information relevant to the assessment.
+
+Avoid dumping the entire user's activity history into the prompt.
+
+---
+
+# 21. Activity Window
+
+For MVP, use a reasonable recent activity window.
+
+Recommended:
+
+```text
+Recent module activity:
+last 90 days
+```
+
+Older activity may be less representative.
+
+If the existing application's activity service already defines a standard window, reuse it.
+
+---
+
+# 22. Assessment Input Snapshot
+
+For reproducibility, the assessment should retain enough information to understand what the LLM evaluated.
+
+Recommended:
+
+```text
+profileVersion
+assessment inputs
+```
+
+The application does not need to duplicate the entire Profile row if it can reliably reconstruct the relevant version.
+
+However, because Profile is mutable, storing a compact assessment input snapshot is recommended.
+
+Conceptually:
+
+```json
+{
+  "profileVersion": 4,
+  "targetRole": "Full Stack Developer",
+  "primaryGoal": "LAND_A_JOB",
+  "careerExperienceLevel": "ENTRY",
+  "skills": [...],
+  "desiredSkills": [...]
+}
+```
+
+Store only the fields necessary to explain the assessment.
+
+---
+
+# 23. Assessment Snapshot
+
+Recommended fields:
+
+```text
+inputSnapshot
+```
+
+as JSON.
+
+This provides:
+
+```text
+Assessment
+├── Profile version
+├── Input snapshot
+├── LLM output
+└── timestamps
+```
+
+This makes historical assessments auditable.
+
+---
+
+# 24. Assessment Creation API
+
+Recommended:
+
+```text
+POST /api/career-assessment
+```
+
+Behavior:
+
+```text
+Authenticate
+    ↓
+Get Profile
+    ↓
+Verify Profile completion
+    ↓
+Build assessment context
+    ↓
+Call LLM
+    ↓
+Validate structured response
+    ↓
+Persist Assessment
+    ↓
+Return Assessment
+```
+
+Do not create a Recommendation from this endpoint.
+
+---
+
+# 25. Assessment Retrieval API
+
+Recommended:
+
+```text
+GET /api/career-assessment
+```
+
+Return the user's most recent completed Assessment.
+
+The server must use the authenticated user's ID.
+
+Do not accept an arbitrary user ID.
+
+---
+
+# 26. Assessment History
+
+The database should preserve historical assessments.
+
+For MVP, the UI does not need to display the entire history.
+
+The service should nevertheless support retrieving:
+
+```text
+latest
+```
+
+and potentially:
+
+```text
+history
+```
+
+later.
+
+Do not delete old assessments when creating a new one.
+
+---
+
+# 27. Latest Assessment
+
+Recommended query:
+
+```text
+ORDER BY createdAt DESC
+```
+
+for the authenticated user.
+
+The latest Assessment should be the default one displayed in the UI.
+
+---
+
+# 28. Stale Assessment Detection
+
+An Assessment is stale when:
+
+```text
+assessment.profileVersion !== profile.profileVersion
+```
+
+Example:
+
+```text
+Assessment:
+profileVersion = 4
+
+Current Profile:
+profileVersion = 5
+
+→ STALE
+```
+
+This check should be deterministic.
+
+Do not ask the LLM whether an Assessment is stale.
+
+---
+
+# 29. Relevant Profile Changes
+
+For MVP, any meaningful Profile version change may mark the Assessment as stale.
+
+Later optimization may compare only relevant fields.
+
+Do not build field-level dependency tracking in this phase unless already available.
+
+---
+
+# 30. Stale Assessment UX
+
+When the latest Assessment is stale, show:
+
+```text
+Your Profile has changed since this assessment.
+
+Retake your Career Assessment to get updated insights.
+
+[Retake Assessment]
+```
+
+Do not delete the old Assessment.
+
+---
+
+# 31. Assessment Regeneration
+
+When a user chooses:
+
+```text
+Retake Assessment
+```
+
+create a NEW Assessment.
+
+Do not overwrite the old record.
+
+Flow:
+
+```text
+Old Assessment
+      │
+      └── preserved
+
+New Profile
+      ↓
+New Assessment
+```
+
+---
+
+# 32. Duplicate Assessment Prevention
+
+Avoid multiple simultaneous Assessment requests.
+
+For example:
+
+```text
+User clicks twice
+```
+
+should not create two unnecessary LLM calls.
+
+Use one or more of:
+
+- UI button disabling
+- request state
+- server-side idempotency
+- processing lock
+
+Use the simplest robust mechanism compatible with the existing application.
+
+---
+
+# 33. LLM Failure Handling
+
+Possible failures:
+
+```text
+API unavailable
+rate limit
+timeout
+invalid structured response
+model failure
+network error
+```
+
+The API should return a controlled error.
+
+Do not save a partially valid Assessment.
+
+---
+
+# 34. Structured Output Validation
+
+Even when using structured output, validate the result server-side.
+
+Validate:
+
+```text
+readinessScore
+strengths
+gaps
+suggestedFocusAreas
+narrative
+```
+
+Rules:
+
+```text
+readinessScore: integer 0–100
+strengths: array of strings
+gaps: array of strings
+suggestedFocusAreas: array of strings
+narrative: non-empty string
+```
+
+Reject malformed output.
+
+---
+
+# 35. Array Limits
+
+Prevent unnecessarily large LLM output.
+
+Recommended limits:
+
+```text
+strengths: max 5
+gaps: max 5
+suggestedFocusAreas: max 5
+```
+
+This keeps the Assessment concise and useful.
+
+If the model returns more items, either reject or normalize according to the project's validation strategy.
+
+Prefer strict structured output limits.
+
+---
+
+# 36. Narrative Length
+
+Set a reasonable maximum length for the narrative.
+
+Recommended:
+
+```text
+2000 characters
+```
+
+The narrative should be concise enough for dashboard display.
+
+---
+
+# 37. Assessment Prompt Safety
+
+The prompt should instruct the model:
+
+```text
+Do not invent facts.
+Do not claim certainty about employment outcomes.
+Do not fabricate skills.
+Do not assume experience that is not provided.
+Do not recommend Elev8 modules directly.
+Do not treat module scores as objective career measurements.
+```
+
+The model should distinguish:
+
+```text
+known information
+vs
+reasonable interpretation
+```
+
+---
+
+# 38. Career Advice Boundaries
+
+The Assessment is intended to provide career guidance.
+
+Avoid:
+
+```text
+"You will definitely get hired."
+"You are guaranteed to succeed."
+"You have a 72% chance of getting a job."
+```
+
+Prefer:
+
+```text
+"Your current profile suggests..."
+"Your strongest areas are..."
+"Your main development gaps appear to be..."
+```
+
+---
+
+# 39. Assessment Output Example
+
+A valid result may look like:
+
+```json
+{
+  "readinessScore": 72,
+  "strengths": [
+    "Strong JavaScript foundation",
+    "Good frontend development experience",
+    "Clear target role"
+  ],
+  "gaps": [
+    "Limited backend experience",
+    "Limited database experience",
+    "Limited system design exposure"
+  ],
+  "suggestedFocusAreas": [
+    "Node.js",
+    "Databases",
+    "System Design"
+  ],
+  "narrative": "You have a strong frontend foundation and a clear direction toward full stack development. Your main gaps are backend, database, and system design exposure. A structured learning path combined with practical backend projects would strengthen your profile."
+}
+```
+
+This is an example structure, not a hardcoded output.
+
+---
+
+# 40. Assessment UI
+
+The UI should be simple and insight-focused.
+
+Recommended route:
+
+```text
+/dashboard/career-assessment
+```
+
+If an equivalent route already exists, reuse it.
+
+The page should show:
+
+```text
+Career Assessment
+      │
+      ├── Readiness Score
+      ├── Strengths
+      ├── Career Gaps
+      ├── Suggested Focus Areas
+      └── Narrative
+```
+
+---
+
+# 41. Readiness Score UI
+
+Display:
+
+```text
+Career Readiness
+72 / 100
+```
+
+Avoid overly dramatic visualizations.
+
+The score should be presented as one signal among several.
+
+---
+
+# 42. Strengths UI
+
+Display a concise list:
+
+```text
+Your Strengths
+
+✓ Strong JavaScript foundation
+✓ Good frontend experience
+✓ Clear career direction
+```
+
+---
+
+# 43. Gaps UI
+
+Display:
+
+```text
+Areas to Improve
+
+• Backend development
+• Database fundamentals
+• System design
+```
+
+Do not frame gaps negatively.
+
+---
+
+# 44. Suggested Focus Areas UI
+
+Display:
+
+```text
+Suggested Focus Areas
+
+1. Node.js
+2. Databases
+3. System Design
+```
+
+These are assessment insights.
+
+They are not yet Recommendation Engine actions.
+
+---
+
+# 45. Narrative UI
+
+Display the LLM narrative in a readable section.
+
+Avoid displaying raw JSON.
+
+---
+
+# 46. Assessment CTA
+
+If no Assessment exists:
+
+```text
+Get a personalized career assessment.
+
+[Start Assessment]
+```
+
+If the Assessment is stale:
+
+```text
+Your Profile has changed.
+
+[Retake Assessment]
+```
+
+If current:
+
+```text
+Your latest assessment
+Profile version 5
+```
+
+---
+
+# 47. Assessment Completion Flow
+
+Recommended:
+
+```text
+User completes Profile
+        ↓
+Dashboard
+        ↓
+Career Assessment CTA
+        ↓
+POST /api/career-assessment
+        ↓
+Build Context
+        ↓
+Gemini
+        ↓
+Validate JSON
+        ↓
+Save Assessment
+        ↓
+Display Insights
+```
+
+---
+
+# 48. Trigger.dev Decision
+
+Do NOT introduce Trigger.dev automatically for this phase.
+
+The Career Assessment is a single LLM analysis request.
+
+For MVP:
+
+```text
+POST request
+    ↓
+LLM
+    ↓
+DB
+    ↓
+response
+```
+
+is sufficient if the existing application's request timeouts and LLM latency are acceptable.
+
+If later testing shows that the assessment takes too long, it can be moved to a background job without changing the Assessment data model.
+
+---
+
+# 49. Why Not Trigger.dev Yet
+
+Trigger.dev is useful when:
+
+- processing is long-running
+- multiple LLM calls are required
+- retries are complex
+- work should continue after the HTTP request ends
+- users should see asynchronous processing
+
+This Assessment requires one structured LLM call.
+
+Keep the architecture simple unless measured latency requires otherwise.
+
+---
+
+# 50. LLM Provider
+
+Use the Gemini/Google GenAI integration already established by the application.
+
+Do not create a second AI provider abstraction unless the current codebase already uses one.
+
+Use existing:
+
+- API key handling
+- environment variables
+- model configuration
+- structured output patterns
+- error handling conventions
+
+---
+
+# 51. Model Configuration
+
+Do not hardcode a model name inside the assessment business logic.
+
+Use the application's existing AI configuration mechanism.
+
+Conceptually:
+
+```text
+AI_MODEL
+```
+
+or the existing project-specific configuration.
+
+This allows the model to be changed without rewriting the Assessment module.
+
+---
+
+# 52. Prompt Versioning
+
+Store a prompt version with the Assessment.
+
+Example:
+
+```text
+promptVersion = "1.0"
+```
+
+This is useful because future assessments may use a different prompt.
+
+Historical records should remain interpretable.
+
+Recommended Assessment metadata:
+
+```text
+model
+promptVersion
+```
+
+Do not expose internal model configuration unnecessarily in the UI.
+
+---
+
+# 53. Assessment Metadata
+
+Recommended fields:
+
+```text
+model
+promptVersion
+profileVersion
+createdAt
+```
+
+Optionally:
+
+```text
+processingDurationMs
+```
+
+for internal performance monitoring.
+
+Do not store sensitive provider credentials or raw request headers.
+
+---
+
+# 54. LLM Response Storage
+
+Store only the validated structured result.
+
+Do not depend on raw model text for future application logic.
+
+Preferred:
+
+```text
+validated JSON
+```
+
+rather than:
+
+```text
+rawText
+```
+
+If debugging requires raw output, use the application's existing observability/logging strategy and avoid storing unnecessary user data.
+
+---
+
+# 55. Recommendation Engine Integration Contract
+
+Phase 6.3 should expose an assessment object that Phase 6.5 can consume.
+
+Conceptually:
+
+```ts
+type CareerAssessmentSignal = {
+  readinessScore: number;
+  strengths: string[];
+  gaps: string[];
+  suggestedFocusAreas: string[];
+  narrative: string;
+  profileVersion: number;
+  createdAt: Date;
+};
+```
+
+The Recommendation Engine can later use:
+
+```text
+readinessScore
+gaps
+suggestedFocusAreas
+```
+
+as signals.
+
+It must not treat:
+
+```text
+narrative
+```
+
+as executable instructions.
+
+---
+
+# 56. Assessment Does Not Create Recommendations
+
+This is a hard architectural boundary.
+
+Incorrect:
+
+```text
+Career Assessment
+       ↓
+"Recommend ROADMAP"
+       ↓
+Recommendation DB
+```
+
+Correct:
+
+```text
+Career Assessment
+       ↓
+Assessment Signals
+       ↓
+Recommendation Engine
+       ↑
+Profile + ModuleActivity + SkillGap
+```
+
+---
+
+# 57. Assessment Does Not Create ModuleActivity
+
+Completing a Career Assessment is not equivalent to completing:
+
+```text
+ROADMAP
+RESUME
+INTERVIEW
+```
+
+Do not record:
+
+```text
+module = ROADMAP
+```
+
+because an Assessment was completed.
+
+A separate Career Assessment record is sufficient.
+
+---
+
+# 58. Authentication
+
+All Assessment endpoints require authentication.
+
+The server derives:
+
+```text
+userId = authenticated session user
+```
+
+Never trust:
+
+```text
+request.body.userId
+```
+
+---
+
+# 59. Profile Ownership
+
+The Assessment service must retrieve the Profile using the authenticated user.
+
+Do not allow:
+
+```text
+POST /api/career-assessment
+{
+  "profileId": "another-user-profile"
+}
+```
+
+to select another user's Profile.
+
+The Profile lookup must be server-owned.
+
+---
+
+# 60. Rate Limiting
+
+Because each Assessment triggers an LLM call, add reasonable protection against accidental repeated requests.
+
+At minimum:
+
+- Disable the CTA while processing.
+- Prevent duplicate in-flight requests.
+- Consider server-side rate limiting using the application's existing infrastructure.
+
+Do not create a complex distributed rate limiter if one does not already exist.
+
+---
+
+# 61. Logging
+
+Log useful operational information:
+
+```text
+Assessment requested
+Assessment completed
+Assessment failed
+```
+
+Include:
+
+```text
+userId
+assessmentId
+model
+duration
+```
+
+where compatible with the application's privacy/logging practices.
+
+Do not log the complete Profile or sensitive user content unnecessarily.
+
+---
+
+# 62. Testing
+
+## Assessment Creation
+
+- [ ] Authenticated user can create an Assessment.
+- [ ] Unauthenticated user cannot.
+- [ ] Incomplete Profile cannot start Assessment if completion is required.
+- [ ] Correct Profile is loaded from authenticated user.
+- [ ] Profile version is captured.
+- [ ] Assessment is persisted.
+- [ ] Assessment does not overwrite previous records.
+
+## LLM
+
+- [ ] Prompt contains required Profile context.
+- [ ] Structured output is requested.
+- [ ] Output is validated.
+- [ ] Invalid output is rejected.
+- [ ] Readiness score is 0–100.
+- [ ] Array limits are enforced.
+- [ ] Narrative length is validated.
+- [ ] Model failure is handled safely.
+
+## Staleness
+
+- [ ] Assessment stores Profile version.
+- [ ] Current Assessment is detected correctly.
+- [ ] Profile changes make the Assessment stale.
+- [ ] Stale Assessment can be regenerated.
+- [ ] Old Assessment remains preserved.
+
+## UI
+
+- [ ] Assessment CTA appears when appropriate.
+- [ ] Assessment page loads.
+- [ ] Readiness score renders.
+- [ ] Strengths render.
+- [ ] Gaps render.
+- [ ] Focus areas render.
+- [ ] Narrative renders.
+- [ ] Stale state renders.
+- [ ] Retake flow works.
+- [ ] Loading state works.
+- [ ] Error state works.
+
+## Security
+
+- [ ] Users can only access their own Assessment.
+- [ ] Users cannot submit another user's Profile ID.
+- [ ] User-specific data is not exposed in logs.
+
+## Integration
+
+- [ ] Recommendation Engine can later consume the Assessment.
+- [ ] Assessment does not directly create Recommendations.
+- [ ] Assessment does not directly choose a module.
+- [ ] Existing Roadmap, Resume, and Interview systems remain unaffected.
+
+---
+
+# 63. Acceptance Criteria
+
+Phase 6.3 is complete when:
+
+- [ ] Career Assessment data model exists.
+- [ ] Profile version is captured.
+- [ ] Assessment input snapshot is stored.
+- [ ] Assessment history is preserved.
+- [ ] Latest Assessment can be retrieved.
+- [ ] Stale Assessments can be detected.
+- [ ] Career Assessment API exists.
+- [ ] Career Assessment UI exists.
+- [ ] Gemini structured output is integrated.
+- [ ] LLM response is validated server-side.
+- [ ] Assessment output contains readiness score.
+- [ ] Assessment output contains strengths.
+- [ ] Assessment output contains gaps.
+- [ ] Assessment output contains suggested focus areas.
+- [ ] Assessment output contains narrative.
+- [ ] LLM does not directly select Elev8 modules.
+- [ ] No Recommendation records are created by Assessment.
+- [ ] No Trigger.dev job is required for the MVP.
+- [ ] Authentication is enforced.
+- [ ] Authorization is enforced.
+- [ ] Rate/repeated-request protection exists.
+- [ ] TypeScript passes.
+- [ ] Lint passes.
+- [ ] Production build succeeds.
+- [ ] Tests pass.
+
+---
+
+# 64. Out of Scope
+
+Do NOT implement:
+
+- Recommendation Engine
+- Recommendation ranking
+- Recommendation persistence
+- RecommendationSet
+- ModuleActivity generation
+- RoleSkillMap
+- Skill Gap Engine implementation
+- Roadmap → Interview recommendation
+- Resume Score → Resume Build recommendation
+- Maintenance mode
+- Recommendation cooldowns
+- Recommendation diversity
+- LLM-generated module recommendations
+- Complex background-job architecture
+
+These belong to later Phase 6 specifications.
+
+---
+
+# Final Architecture
+
+```text
+                         Profile
+                            │
+                            │ profileVersion
+                            ▼
+                  Assessment Context Builder
+                            │
+            ┌───────────────┼────────────────┐
+            │               │                │
+            ▼               ▼                ▼
+       Profile Data     Skill Gap        Module Activity
+                            │
+                            └───────┬────────┘
+                                    ▼
+                              Gemini / LLM
+                                    │
+                            Structured JSON
+                                    │
+                                    ▼
+                         Output Validation
+                                    │
+                                    ▼
+                         CareerAssessment
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+             Assessment UI                  Recommendation Engine
+                                                    │
+                                  Profile + Activity + SkillGap
+                                                    │
+                                                    ▼
+                                             Recommendations
+```
+
+## Implementation Principles
+
+1. **Career Assessment analyzes the user's career context; it does not choose the next module.**
+2. **The LLM is responsible for structured career insights, not recommendation decisions.**
+3. **Every Assessment is tied to a Profile version.**
+4. **Assessments are immutable historical snapshots.**
+5. **A changed Profile makes the previous Assessment stale.**
+6. **Retaking an Assessment creates a new record.**
+7. **Structured LLM output is mandatory.**
+8. **All LLM output is validated server-side.**
+9. **The Assessment should remain useful even when no target role exists.**
+10. **No LLM call is made for determining missing Profile fields.**
+11. **Assessment completion does not create ModuleActivity.**
+12. **Assessment completion does not create Recommendations.**
+13. **Trigger.dev is not required for the MVP single-call assessment.**
+14. **The Recommendation Engine will consume Assessment signals in Phase 6.5.**
+15. **The Profile remains the central source of career context.**

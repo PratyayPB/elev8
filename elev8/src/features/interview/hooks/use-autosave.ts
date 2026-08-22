@@ -5,7 +5,7 @@ import { useInterviewSessionStore } from "./use-interview-session";
 export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
 export function useAutosave(interviewId: string) {
-  const { artifact, blobUrl, setBlobUrl } = useInterviewSessionStore();
+  const { artifact, blobUrl, setBlobUrl, durationSeconds } = useInterviewSessionStore();
   const [status, setStatus] = useState<AutosaveStatus>("idle");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -14,7 +14,7 @@ export function useAutosave(interviewId: string) {
 
     setStatus("saving");
     try {
-      const newBlobUrl = await saveSessionProgress(interviewId, blobUrl, artifact);
+      const newBlobUrl = await saveSessionProgress(interviewId, blobUrl, artifact, durationSeconds);
       setBlobUrl(newBlobUrl);
       setStatus("saved");
       

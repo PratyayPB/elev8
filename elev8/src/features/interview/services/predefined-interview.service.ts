@@ -32,8 +32,9 @@ export class PredefinedInterviewService {
       }
 
       const summary = roleMap.get(baseSlug)!;
-      if (!summary.availableLevels.includes(t.difficulty as PredefinedDifficulty)) {
-        summary.availableLevels.push(t.difficulty as PredefinedDifficulty);
+      const level = (t.experienceLevel as any) || "MID";
+      if (!summary.availableLevels.includes(level)) {
+        summary.availableLevels.push(level);
       }
     }
 
@@ -48,7 +49,7 @@ export class PredefinedInterviewService {
       where: {
         OR: [
           { id: templateIdOrRoleSlug },
-          { id: { startsWith: templateIdOrRoleSlug }, difficulty: difficulty.toUpperCase() },
+          { id: { startsWith: templateIdOrRoleSlug } },
         ],
       },
     });
@@ -74,7 +75,6 @@ export class PredefinedInterviewService {
       template = await prisma.interviewTemplate.findFirst({
         where: {
           id: { startsWith: templateIdOrRoleSlug },
-          difficulty: difficulty.toUpperCase(),
         },
       });
     }
@@ -95,29 +95,23 @@ export class PredefinedInterviewService {
       id: q.id,
       category: q.category || "General",
       question: q.question,
-      difficulty: template.difficulty as any,
+      difficulty: difficulty as any,
       expectedTopics: q.expectedTopics || [],
       estimatedAnswerTime: typeof q.estimatedAnswerTime === "number"
         ? `${q.estimatedAnswerTime}-${q.estimatedAnswerTime + 1} mins`
         : q.estimatedAnswerTime || "2-3 mins",
     }));
 
-    const estimatedDuration = template.difficulty === "EASY"
-      ? "20-25 minutes"
-      : template.difficulty === "MEDIUM"
-      ? "25-35 minutes"
-      : "35-45 minutes";
+    const estimatedDuration = template.estimatedDuration || "25-35 minutes";
 
-    // 4. Create Interview DB record referencing templateId
-    const dbInterview = await prisma.interview.create({
+    // 4. Create InterviewSession DB record referencing templateId
+    const dbInterview = await prisma.interviewSession.create({
       data: {
         userId,
         templateId: template.id,
         role: template.role,
-        difficulty: template.difficulty,
-        experienceLevel: "Intermediate",
-        interviewType: template.type,
-        source: "PREDEFINED",
+        experienceLevel: template.experienceLevel,
+        interviewType: template.interviewType,
         questionCount: formattedQuestions.length,
         status: InterviewStatus.GENERATING,
         estimatedDuration,
@@ -131,8 +125,8 @@ export class PredefinedInterviewService {
         interviewId: dbInterview.id,
         role: template.role,
         experienceLevel: "Intermediate",
-        difficulty: template.difficulty as any,
-        interviewType: template.type as any,
+        difficulty: (template as any).difficulty || "Medium",
+        interviewType: template.interviewType,
         questionCount: formattedQuestions.length,
         estimatedDuration,
         generatedAt: new Date().toISOString(),
@@ -151,7 +145,7 @@ export class PredefinedInterviewService {
     const blobUrl = await BlobStorageService.uploadJson(blobPath, artifact);
 
     // 7. Update Interview record to READY with user artifact blobUrl
-    await prisma.interview.update({
+    await prisma.interviewSession.update({
       where: { id: dbInterview.id },
       data: {
         blobUrl,

@@ -55,14 +55,14 @@ export function NextStepsComponent({ report }: NextStepsProps) {
           accentBg="bg-accent-cream border border-border-subtle text-text-primary"
         />
 
-        {/* Career Guidance */}
+        {/* Career Assessment */}
         <ActionCard
-          title="Career Guidance Report"
-          description="Explore market readiness, salary ranges, and career progression paths."
+          title="Career Assessment"
+          description="Explore market readiness, strengths, and career progression paths."
           badge="Career Advice"
           icon={Compass}
-          href="/dashboard/career-guidance"
-          ctaText="View Guidance"
+          href="/dashboard/career-assessment"
+          ctaText="View Assessment"
           accentBg="bg-surface-muted border border-border-subtle text-text-primary"
         />
 

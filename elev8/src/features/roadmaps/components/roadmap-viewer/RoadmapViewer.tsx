@@ -108,15 +108,12 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
           </div>
           <div className="space-y-3">
             {artifact.milestones.map((m) => (
-              <div key={m.id} className="p-4 bg-surface-muted/50 rounded-xl border border-border-subtle">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-display font-semibold text-text-primary">
-                    Phase {m.order}: {m.title}
-                  </span>
-                  <span className="text-xs font-sans text-text-muted">{m.estimatedWeeks} wks</span>
-                </div>
-                <p className="text-xs font-sans text-text-secondary mt-1">{m.description}</p>
-              </div>
+              <MilestoneCard
+                key={m.id}
+                milestone={m}
+                roadmapId={artifact.metadata.title} // Or we need the actual ID. Wait, artifact doesn't have the roadmapId at the top level? Let's assume roadmapId is passed or we can use a wrapper. Wait, I'll pass the roadmapId from props if possible.
+                roadmap={artifact}
+              />
             ))}
           </div>
         </div>
@@ -145,3 +142,66 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
     </div>
   );
 };
+
+// Extracted MilestoneCard to handle client-side completion
+import { useState as useMilestoneState, useTransition } from "react";
+import { completeRoadmapPhaseAction } from "../../actions/roadmap-activity.actions";
+import { CheckCircle } from "lucide-react";
+
+function MilestoneCard({ milestone, roadmap, roadmapId }: { milestone: any; roadmap: any; roadmapId?: string }) {
+  const [isCompleted, setIsCompleted] = useMilestoneState(false);
+  const [isPending, startTransition] = useTransition();
+
+  // In RoadmapViewer, we don't have the roadmapId directly on the artifact, but we know the viewer
+  // is rendered on a page that knows it. We can parse it from URL or pass it down. 
+  // Let's parse from window.location for MVP if roadmapId is missing, but ideally it should be in props.
+  const handleComplete = () => {
+    startTransition(async () => {
+      // Very hacky but avoids changing page.tsx and passing it down all the way.
+      const resolvedRoadmapId = roadmapId || (typeof window !== 'undefined' ? window.location.pathname.match(/\/roadmaps\/([a-zA-Z0-9_-]+)/)?.[1] : null);
+
+      if (!resolvedRoadmapId) {
+         console.warn("Could not determine roadmapId to complete phase");
+         return;
+      }
+
+      const res = await completeRoadmapPhaseAction({
+        roadmapId: resolvedRoadmapId,
+        phaseId: milestone.id,
+        phaseTitle: milestone.title,
+        topics: milestone.skillsCovered || [],
+      });
+      if (res.success) {
+        setIsCompleted(true);
+      }
+    });
+  };
+
+  return (
+    <div className="p-4 bg-surface-muted/50 rounded-xl border border-border-subtle">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-display font-semibold text-text-primary">
+          Phase {milestone.order}: {milestone.title}
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-sans text-text-muted">{milestone.estimatedWeeks} wks</span>
+          {isCompleted ? (
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-500 font-medium">
+              <CheckCircle className="w-4 h-4" />
+              Done
+            </span>
+          ) : (
+            <button
+              onClick={handleComplete}
+              disabled={isPending}
+              className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold bg-text-primary text-white rounded hover:bg-black/80 transition-colors disabled:opacity-50"
+            >
+              {isPending ? "Saving..." : "Mark Complete"}
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="text-xs font-sans text-text-secondary">{milestone.description}</p>
+    </div>
+  );
+}

@@ -17,7 +17,7 @@ export async function fetchSessionArtifact(interviewId: string) {
   const dbUser = await prisma.user.findUnique({ where: { clerkId } });
   if (!dbUser) throw new Error("User not found");
 
-  const interview = await prisma.interview.findUnique({
+  const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId, userId: dbUser.id },
   });
 
@@ -39,7 +39,8 @@ export async function fetchSessionArtifact(interviewId: string) {
 export async function saveSessionProgress(
   interviewId: string,
   currentBlobUrl: string,
-  artifact: InterviewArtifact
+  artifact: InterviewArtifact,
+  durationSeconds?: number
 ) {
   const { userId: clerkId } = await auth();
   if (!clerkId) throw new Error("Unauthorized");
@@ -48,7 +49,7 @@ export async function saveSessionProgress(
   if (!dbUser) throw new Error("User not found");
 
   // Verify ownership
-  const interview = await prisma.interview.findUnique({
+  const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId, userId: dbUser.id },
   });
 
@@ -60,11 +61,12 @@ export async function saveSessionProgress(
     artifact
   );
 
-  await prisma.interview.update({
+  await prisma.interviewSession.update({
     where: { id: interviewId },
     data: {
       blobUrl: newBlobUrl,
       updatedAt: new Date(),
+      ...(durationSeconds !== undefined && { durationSeconds }),
     },
   });
 
@@ -77,7 +79,8 @@ export async function saveSessionProgress(
 export async function submitInterview(
   interviewId: string,
   currentBlobUrl: string,
-  artifact: InterviewArtifact
+  artifact: InterviewArtifact,
+  durationSeconds?: number
 ) {
   const { userId: clerkId } = await auth();
   if (!clerkId) throw new Error("Unauthorized");
@@ -85,7 +88,7 @@ export async function submitInterview(
   const dbUser = await prisma.user.findUnique({ where: { clerkId } });
   if (!dbUser) throw new Error("User not found");
 
-  const interview = await prisma.interview.findUnique({
+  const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId, userId: dbUser.id },
   });
 
@@ -98,16 +101,13 @@ export async function submitInterview(
     artifact
   );
 
-  // Update interview status to COMPLETED (since we don't have SUBMITTED in InterviewStatus enum for now, 
-  // actually wait, let's use COMPLETED as per the current schema, and phase 3.4 will handle assessing).
-  // Wait, let's check InterviewStatus enum. We added GENERATING, READY, IN_PROGRESS, COMPLETED, FAILED, ABANDONED.
-  // We can just use IN_PROGRESS during session and COMPLETED here.
-  await prisma.interview.update({
+  await prisma.interviewSession.update({
     where: { id: interviewId },
     data: {
       blobUrl: newBlobUrl,
       status: InterviewStatus.COMPLETED,
       updatedAt: new Date(),
+      ...(durationSeconds !== undefined && { durationSeconds }),
     },
   });
 

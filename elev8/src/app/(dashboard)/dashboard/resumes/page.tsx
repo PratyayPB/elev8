@@ -13,24 +13,24 @@ export default async function ResumesPage() {
     const user = await prisma.user.findUnique({
       where: { clerkId },
       include: {
-        resumes: {
+        resumeScores: {
           orderBy: { createdAt: "desc" },
         },
       },
     });
 
-    if (user && user.resumes) {
-      initialResumes = user.resumes.map((r) => ({
+    if (user && user.resumeScores) {
+      initialResumes = user.resumeScores.map((r) => ({
         id: r.id,
         role: r.role,
-        experienceLevel: r.experienceLevel,
-        overallScore: r.overallScore,
+        experienceLevel: r.expLevel,
+        overallScore: r.ovrScore,
         atsScore: r.atsScore,
         artifactBlobUrl: r.artifactBlobUrl,
-        originalPdfBlobUrl: r.originalPdfBlobUrl,
+        originalPdfBlobUrl: null,
         status: r.status,
         createdAt: r.createdAt.toISOString(),
-        updatedAt: r.updatedAt.toISOString(),
+        updatedAt: r.createdAt.toISOString(),
       }));
     }
   }

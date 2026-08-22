@@ -24,7 +24,9 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     currentQuestionIndex, 
     updateAnswer, 
     prevQuestion, 
-    nextQuestion 
+    nextQuestion,
+    incrementDuration,
+    durationSeconds
   } = useInterviewSessionStore();
   
   const { status: autosaveStatus, save, debouncedSave } = useAutosave(interviewId);
@@ -32,6 +34,14 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
   const [isPauseOpen, setIsPauseOpen] = useState(false);
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
+
+  // Timer interval
+  useEffect(() => {
+    const timer = setInterval(() => {
+      incrementDuration();
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [incrementDuration]);
 
   // Auto-save on unmount
   useEffect(() => {
@@ -85,7 +95,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
       
       if (blobUrl && artifact) {
         // Trigger final submit action
-        await submitInterview(interviewId, blobUrl, artifact);
+        await submitInterview(interviewId, blobUrl, artifact, durationSeconds);
         setIsSubmitOpen(false);
         // Redirect to assessment progress page (Phase 3.4 will handle this view, for now library)
         alert("Interview submitted successfully! Redirecting...");

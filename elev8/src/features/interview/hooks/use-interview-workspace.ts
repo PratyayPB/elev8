@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { Interview } from "@prisma/client";
+import { InterviewSession } from "@prisma/client";
 
-export function useInterviewWorkspace(initialInterviews: Interview[]) {
+export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
@@ -18,10 +18,7 @@ export function useInterviewWorkspace(initialInterviews: Interview[]) {
       // Status
       const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
 
-      // Difficulty
-      const matchesDifficulty = difficultyFilter === "ALL" || item.difficulty === difficultyFilter;
-
-      return matchesSearch && matchesStatus && matchesDifficulty;
+      return matchesSearch && matchesStatus;
     }).sort((a, b) => {
       if (sortOption === "NEWEST") {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();

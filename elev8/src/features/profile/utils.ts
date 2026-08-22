@@ -1,69 +1,60 @@
-import { UserProfileData, CategorizedSkills } from "./types";
-import {
-  personalInfoSchema,
-  educationSchema,
-  professionalSchema,
-  skillsSchema,
-  interestsSchema,
-  goalsSchema,
-  preferencesSchema,
-} from "./schemas";
+import { SkillProficiency } from "./types";
 
-export function calculateProfileCompletion(profile: Partial<UserProfileData> | null): number {
-  if (!profile) return 0;
+/**
+ * Normalizes a skill name for deduplication and consistent comparison.
+ * e.g. "  React.js  " -> "react.js", "JavaScript" -> "javascript"
+ */
+export function normalizeSkillName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
 
-  const weights = [
-    { field: profile.fullName, weight: 10 },
-    { field: profile.country, weight: 5 },
-    { field: profile.timezone, weight: 5 },
-    { field: profile.currentStatus, weight: 10 },
-    { field: profile.degree || profile.currentRole, weight: 10 },
-    { field: profile.institution || profile.industry, weight: 10 },
-    { field: profile.careerInterests && profile.careerInterests.length > 0 ? true : null, weight: 15 },
-    { field: hasSkills(profile.skills), weight: 15 },
-    { field: profile.careerGoals && profile.careerGoals.length > 0 ? true : null, weight: 10 },
-    { field: profile.learningStyle || profile.weeklyHours, weight: 10 },
-  ];
+/**
+ * Deduplicates an array of skills by their normalized name, keeping the first occurrence.
+ */
+export function deduplicateSkills(
+  skills: { name: string; proficiency: SkillProficiency }[]
+): { name: string; proficiency: SkillProficiency; normalizedName: string }[] {
+  const seen = new Set<string>();
+  const result: { name: string; proficiency: SkillProficiency; normalizedName: string }[] = [];
 
-  let completedWeight = 0;
-  for (const item of weights) {
-    if (item.field) {
-      completedWeight += item.weight;
+  for (const skill of skills) {
+    const trimmed = skill.name.trim();
+    if (!trimmed) continue;
+    const normalized = normalizeSkillName(trimmed);
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      result.push({
+        name: trimmed,
+        proficiency: skill.proficiency,
+        normalizedName: normalized,
+      });
     }
   }
 
-  return Math.min(100, Math.max(0, completedWeight));
+  return result;
 }
 
-function hasSkills(skills?: CategorizedSkills | null): boolean {
-  if (!skills) return false;
-  return (
-    (skills.languages?.length ?? 0) > 0 ||
-    (skills.frameworks?.length ?? 0) > 0 ||
-    (skills.databases?.length ?? 0) > 0 ||
-    (skills.cloud?.length ?? 0) > 0 ||
-    (skills.tools?.length ?? 0) > 0 ||
-    (skills.softSkills?.length ?? 0) > 0
-  );
-}
+/**
+ * Deduplicates an array of desired skill strings by their normalized name.
+ */
+export function deduplicateDesiredSkills(
+  skills: string[]
+): { name: string; normalizedName: string }[] {
+  const seen = new Set<string>();
+  const result: { name: string; normalizedName: string }[] = [];
 
-export function getStepValidationSchema(stepIndex: number) {
-  switch (stepIndex) {
-    case 2:
-      return personalInfoSchema;
-    case 3:
-      return educationSchema;
-    case 4:
-      return professionalSchema;
-    case 5:
-      return skillsSchema;
-    case 6:
-      return interestsSchema;
-    case 7:
-      return goalsSchema;
-    case 8:
-      return preferencesSchema;
-    default:
-      return null;
+  for (const skill of skills) {
+    const trimmed = skill.trim();
+    if (!trimmed) continue;
+    const normalized = normalizeSkillName(trimmed);
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      result.push({
+        name: trimmed,
+        normalizedName: normalized,
+      });
+    }
   }
+
+  return result;
 }

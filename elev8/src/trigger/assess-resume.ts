@@ -7,6 +7,8 @@ import { OverallAssessmentService } from "@/features/resume/services/overall-ass
 import { ResumeArtifactService } from "@/features/resume/services/resume-artifact.service";
 import { JobService } from "@/services/jobs/job.service";
 import { prisma } from "@/lib/prisma";
+import { ModuleActivityService } from "@/features/recommendations/services";
+import { ModuleType, ResumeScoreStatus } from "@prisma/client";
 
 export const AssessResumeTaskSchema = z.object({
   resumeId: z.string(),
@@ -104,6 +106,21 @@ export const assessResumeTask = schemaTask({
       metadata.set("progress", 100);
       await JobService.completeJob(jobId, resumeId, "RESUME");
 
+      try {
+        await ModuleActivityService.recordActivity(
+          userId,
+          ModuleType.RESUME_SCORE,
+          "COMPLETED",
+          {
+            role,
+            experienceLevel,
+            atsScore: overallAssessment.atsScore,
+          }
+        );
+      } catch (err) {
+        console.error("[AssessResumeTask] Failed to record activity:", err);
+      }
+
       return {
         success: true,
         resumeId,
@@ -117,10 +134,10 @@ export const assessResumeTask = schemaTask({
       const errorMessage = error?.message || "Unknown error during resume assessment";
       await JobService.failJob(jobId, errorMessage);
 
-      // Update Resume record status to DRAFT
-      await prisma.resume.update({
+      // Update ResumeScore record status to FAILED
+      await prisma.resumeScore.update({
         where: { id: resumeId },
-        data: { status: "DRAFT" },
+        data: { status: ResumeScoreStatus.FAILED },
       });
 
       throw error;

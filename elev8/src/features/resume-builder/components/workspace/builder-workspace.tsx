@@ -255,9 +255,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                     <h3 className="font-display font-bold text-text-primary text-lg truncate" title={resume.title}>
                       {resume.title}
                     </h3>
-                    <p className="text-xs font-sans text-text-secondary mt-1 truncate">
-                      {resume.targetRole || "No target role set"}
-                    </p>
+
                   </div>
                 </div>
 

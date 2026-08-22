@@ -10,7 +10,7 @@ export class ResumeReportService {
    * Loads a Resume record from Prisma and fetches its associated ResumeArtifact from Blob Storage.
    */
   public static async getResumeReport(resumeId: string): Promise<ResumeReport | null> {
-    const resume = await prisma.resume.findUnique({
+    const resume = await prisma.resumeScore.findUnique({
       where: { id: resumeId },
     });
 

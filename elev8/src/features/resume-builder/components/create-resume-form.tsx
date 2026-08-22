@@ -10,17 +10,14 @@ import {
 } from "../schemas/resume-artifact.schema";
 import { BUILDER_ROUTES, BUILDER_API } from "../constants/builder-routes";
 
-interface CreateResumeFormProps {
-  defaultTargetRole?: string;
-}
+interface CreateResumeFormProps {}
 
 interface CreateResumeFormInput {
   title: string;
-  targetRole?: string;
   template?: "CLASSIC" | "MODERN" | "MINIMAL";
 }
 
-export function CreateResumeForm({ defaultTargetRole = "" }: CreateResumeFormProps) {
+export function CreateResumeForm({}: CreateResumeFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,7 +32,6 @@ export function CreateResumeForm({ defaultTargetRole = "" }: CreateResumeFormPro
     resolver: zodResolver(CreateResumeInputSchema),
     defaultValues: {
       title: "",
-      targetRole: defaultTargetRole,
       template: "MODERN",
     },
   });
@@ -117,22 +113,7 @@ export function CreateResumeForm({ defaultTargetRole = "" }: CreateResumeFormPro
           )}
         </div>
 
-        {/* Target Role */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
-            <Target className="w-3.5 h-3.5 text-text-secondary" />
-            Target Role (Optional)
-          </label>
-          <input
-            {...register("targetRole")}
-            type="text"
-            placeholder="e.g. Senior Software Engineer"
-            className="w-full px-4 py-2.5 rounded-xl bg-surface-muted border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-text-primary transition-colors"
-          />
-          {errors.targetRole && (
-            <p className="text-xs text-red-500 mt-1">{errors.targetRole.message}</p>
-          )}
-        </div>
+
 
         {/* Template Selection */}
         <div className="space-y-3">

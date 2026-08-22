@@ -12,7 +12,7 @@ export async function getWorkspaceInterviews() {
   const dbUser = await prisma.user.findUnique({ where: { clerkId } });
   if (!dbUser) throw new Error("User not found");
 
-  const interviews = await prisma.interview.findMany({
+  const interviews = await prisma.interviewSession.findMany({
     where: { userId: dbUser.id },
     orderBy: { updatedAt: "desc" },
   });
@@ -28,7 +28,7 @@ export async function deleteInterview(interviewId: string) {
   if (!dbUser) throw new Error("User not found");
 
   // Verify ownership before deleting
-  const interview = await prisma.interview.findUnique({
+  const interview = await prisma.interviewSession.findUnique({
     where: { id: interviewId, userId: dbUser.id },
   });
 
@@ -36,7 +36,7 @@ export async function deleteInterview(interviewId: string) {
     throw new Error("Interview not found or unauthorized");
   }
 
-  await prisma.interview.delete({
+  await prisma.interviewSession.delete({
     where: { id: interviewId },
   });
 
@@ -51,7 +51,7 @@ export async function getPerformanceStats() {
   const dbUser = await prisma.user.findUnique({ where: { clerkId } });
   if (!dbUser) throw new Error("User not found");
 
-  const interviews = await prisma.interview.findMany({
+  const interviews = await prisma.interviewSession.findMany({
     where: { userId: dbUser.id },
   });
 

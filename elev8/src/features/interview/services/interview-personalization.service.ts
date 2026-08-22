@@ -1,12 +1,12 @@
 "use server";
 
-import { Question, ExperienceLevel, Difficulty, InterviewType } from "../types";
+import { Question, ExperienceLevel, Difficulty, InterviewType, InterviewTypeOption } from "../types";
 
 export async function fetchInterviewPersonalizationQuestions(
   role: string,
   experienceLevel: ExperienceLevel,
   difficulty: Difficulty,
-  interviewType: InterviewType
+  interviewType: InterviewType | InterviewTypeOption | string
 ): Promise<Question[]> {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 800));

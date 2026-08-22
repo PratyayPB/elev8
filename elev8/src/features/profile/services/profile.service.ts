@@ -1,202 +1,361 @@
 import { prisma } from "@/lib/prisma";
-import { UserProfileData, OnboardingStatus, CategorizedSkills } from "../types";
-import { calculateProfileCompletion } from "../utils";
-import { Prisma, UserProfile } from "@prisma/client";
+import {
+  ProfileData,
+  ProfileCreateInput,
+  ProfileUpdateInput,
+  ProfileSkillData,
+} from "../types";
+import { profileCreateSchema, profileUpdateSchema } from "../schemas";
+import { deduplicateSkills, deduplicateDesiredSkills, normalizeSkillName } from "../utils";
+import {
+  Profile,
+  ProfileSkill,
+  ProfileDesiredSkill,
+  Prisma,
+} from "@prisma/client";
+
+export class ProfileConflictError extends Error {
+  constructor(message = "A profile already exists for this user") {
+    super(message);
+    this.name = "ProfileConflictError";
+  }
+}
+
+export class ProfileNotFoundError extends Error {
+  constructor(message = "Profile not found") {
+    super(message);
+    this.name = "ProfileNotFoundError";
+  }
+}
+
+type ProfileWithRelations = Profile & {
+  skills: ProfileSkill[];
+  desiredSkills: ProfileDesiredSkill[];
+};
 
 export class ProfileService {
-  static async getProfile(clerkId: string): Promise<UserProfileData | null> {
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-      include: { profile: true },
+  /**
+   * Retrieves a Profile by internal DB userId.
+   */
+  static async getProfile(userId: string): Promise<ProfileData | null> {
+    const profile = await prisma.profile.findUnique({
+      where: { userId },
+      include: {
+        skills: {
+          orderBy: { name: "asc" },
+        },
+        desiredSkills: {
+          orderBy: { name: "asc" },
+        },
+      },
     });
-    if (!user || !user.profile) return null;
-    return this.mapProfile(user.profile, user.email, clerkId);
+
+    if (!profile) return null;
+    return this.mapToProfileData(profile);
   }
 
-  static async getOrCreateProfile(
-    clerkId: string,
-    email?: string | null,
-    fullName?: string | null,
-    profilePicture?: string | null
-  ): Promise<UserProfileData> {
-    let user = await prisma.user.findUnique({
+  /**
+   * Retrieves a Profile by Clerk ID.
+   */
+  static async getProfileByClerkId(clerkId: string): Promise<ProfileData | null> {
+    const user = await prisma.user.findUnique({
       where: { clerkId },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          clerkId,
-          email: email ?? null,
-          profile: {
-            create: {
-              email: email ?? null,
-              fullName: fullName ?? null,
-              profilePicture: profilePicture ?? null,
-              onboardingStatus: "NOT_STARTED",
-              onboardingStep: 0,
-              profileCompletion: 0,
-              careerInterests: [],
-              careerGoals: [],
+      include: {
+        profile: {
+          include: {
+            skills: {
+              orderBy: { name: "asc" },
+            },
+            desiredSkills: {
+              orderBy: { name: "asc" },
             },
           },
         },
-        include: { profile: true },
-      });
-    } else if (!user.profile) {
-      const newProfile = await prisma.userProfile.create({
-        data: {
-          userId: user.id,
-          email: email ?? user.email ?? null,
-          fullName: fullName ?? null,
-          profilePicture: profilePicture ?? null,
-          onboardingStatus: "NOT_STARTED",
-          onboardingStep: 0,
-          profileCompletion: 0,
-          careerInterests: [],
-          careerGoals: [],
-        },
-      });
-      user.profile = newProfile;
+      },
+    });
+
+    if (!user || !user.profile) return null;
+    return this.mapToProfileData(user.profile);
+  }
+
+  /**
+   * Creates a new Profile for the user.
+   * Fails with ProfileConflictError if a Profile already exists.
+   */
+  static async createProfile(
+    userId: string,
+    input: ProfileCreateInput
+  ): Promise<ProfileData> {
+    const validated = profileCreateSchema.parse(input);
+
+    const existing = await prisma.profile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new ProfileConflictError();
     }
 
-    if (user.profile) {
-      const completion = calculateProfileCompletion(
-        this.mapProfile(user.profile, user.email, clerkId)
-      );
-      if (user.profile.profileCompletion !== completion) {
-        user.profile = await prisma.userProfile.update({
-          where: { id: user.profile.id },
-          data: { profileCompletion: completion },
+    const cleanSkills = deduplicateSkills(validated.skills);
+    const cleanDesiredSkills = deduplicateDesiredSkills(validated.desiredSkills);
+
+    const created = await prisma.profile.create({
+      data: {
+        userId,
+        name: validated.name,
+        age: validated.age,
+        country: validated.country,
+        phoneNumber: validated.phoneNumber ?? null,
+        currentStatus: validated.currentStatus,
+        currentRole: validated.currentRole,
+        yearsOfExperience: validated.yearsOfExperience,
+        highestQualification: validated.highestQualification,
+        fieldOfStudy: validated.fieldOfStudy,
+        primaryGoal: validated.primaryGoal,
+        targetRole: validated.targetRole ?? null,
+        targetCompanyType: validated.targetCompanyType,
+        weeklyLearningHours: validated.weeklyLearningHours,
+        skills: {
+          create: cleanSkills.map((s) => ({
+            name: s.name,
+            normalizedName: s.normalizedName,
+            proficiency: s.proficiency,
+          })),
+        },
+        desiredSkills: {
+          create: cleanDesiredSkills.map((s) => ({
+            name: s.name,
+            normalizedName: s.normalizedName,
+          })),
+        },
+      },
+      include: {
+        skills: {
+          orderBy: { name: "asc" },
+        },
+        desiredSkills: {
+          orderBy: { name: "asc" },
+        },
+      },
+    });
+
+    return this.mapToProfileData(created);
+  }
+
+  /**
+   * Updates an existing Profile atomically.
+   */
+  static async updateProfile(
+    userId: string,
+    input: ProfileUpdateInput
+  ): Promise<ProfileData> {
+    const validated = profileUpdateSchema.parse(input);
+
+    const existing = await prisma.profile.findUnique({
+      where: { userId },
+      include: {
+        skills: true,
+        desiredSkills: true,
+      },
+    });
+
+    if (!existing) {
+      throw new ProfileNotFoundError();
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update skills if provided
+      if (validated.skills !== undefined) {
+        await tx.profileSkill.deleteMany({
+          where: { profileId: existing.id },
         });
+
+        const cleanSkills = deduplicateSkills(validated.skills);
+        if (cleanSkills.length > 0) {
+          await tx.profileSkill.createMany({
+            data: cleanSkills.map((s) => ({
+              profileId: existing.id,
+              name: s.name,
+              normalizedName: s.normalizedName,
+              proficiency: s.proficiency,
+            })),
+          });
+        }
+      }
+
+      // 2. Update desired skills if provided
+      if (validated.desiredSkills !== undefined) {
+        await tx.profileDesiredSkill.deleteMany({
+          where: { profileId: existing.id },
+        });
+
+        const cleanDesiredSkills = deduplicateDesiredSkills(validated.desiredSkills);
+        if (cleanDesiredSkills.length > 0) {
+          await tx.profileDesiredSkill.createMany({
+            data: cleanDesiredSkills.map((s) => ({
+              profileId: existing.id,
+              name: s.name,
+              normalizedName: s.normalizedName,
+            })),
+          });
+        }
+      }
+
+      // 3. Update main profile fields
+      const updateData: Prisma.ProfileUpdateInput = {};
+
+      if (validated.name !== undefined) updateData.name = validated.name;
+      if (validated.age !== undefined) updateData.age = validated.age;
+      if (validated.country !== undefined) updateData.country = validated.country;
+      if (validated.phoneNumber !== undefined) updateData.phoneNumber = validated.phoneNumber;
+      if (validated.currentStatus !== undefined) updateData.currentStatus = validated.currentStatus;
+      if (validated.currentRole !== undefined) updateData.currentRole = validated.currentRole;
+      if (validated.yearsOfExperience !== undefined)
+        updateData.yearsOfExperience = validated.yearsOfExperience;
+      if (validated.highestQualification !== undefined)
+        updateData.highestQualification = validated.highestQualification;
+      if (validated.fieldOfStudy !== undefined)
+        updateData.fieldOfStudy = validated.fieldOfStudy;
+      if (validated.primaryGoal !== undefined) updateData.primaryGoal = validated.primaryGoal;
+      if (validated.targetRole !== undefined)
+        updateData.targetRole = validated.targetRole ?? null;
+      if (validated.targetCompanyType !== undefined)
+        updateData.targetCompanyType = validated.targetCompanyType;
+      if (validated.weeklyLearningHours !== undefined)
+        updateData.weeklyLearningHours = validated.weeklyLearningHours;
+
+      const updated = await tx.profile.update({
+        where: { id: existing.id },
+        data: updateData,
+        include: {
+          skills: {
+            orderBy: { name: "asc" },
+          },
+          desiredSkills: {
+            orderBy: { name: "asc" },
+          },
+        },
+      });
+
+      return updated;
+    });
+
+    const mapped = this.mapToProfileData(result);
+    return mapped;
+  }
+
+  /**
+   * Deletes a user profile (primarily for account cleanup).
+   */
+  static async deleteProfile(userId: string): Promise<void> {
+    await prisma.profile.deleteMany({
+      where: { userId },
+    });
+  }
+
+  /**
+   * Checks whether any career context data has meaningfully changed.
+   */
+  private static checkCareerContextChanged(
+    existing: ProfileWithRelations,
+    input: ProfileUpdateInput
+  ): boolean {
+    if (input.currentStatus !== undefined && input.currentStatus !== existing.currentStatus)
+      return true;
+    if (input.currentRole !== undefined && input.currentRole !== existing.currentRole)
+      return true;
+    if (
+      input.yearsOfExperience !== undefined &&
+      input.yearsOfExperience !== existing.yearsOfExperience
+    )
+      return true;
+    if (
+      input.highestQualification !== undefined &&
+      input.highestQualification !== existing.highestQualification
+    )
+      return true;
+    if (input.fieldOfStudy !== undefined && input.fieldOfStudy !== existing.fieldOfStudy)
+      return true;
+    if (input.primaryGoal !== undefined && input.primaryGoal !== existing.primaryGoal)
+      return true;
+    if (
+      input.targetRole !== undefined &&
+      (input.targetRole ?? null) !== existing.targetRole
+    )
+      return true;
+    if (
+      input.targetCompanyType !== undefined &&
+      input.targetCompanyType !== existing.targetCompanyType
+    )
+      return true;
+    if (
+      input.weeklyLearningHours !== undefined &&
+      input.weeklyLearningHours !== existing.weeklyLearningHours
+    )
+      return true;
+
+    // Check skills change
+    if (input.skills !== undefined) {
+      const cleanSkills = deduplicateSkills(input.skills);
+      if (cleanSkills.length !== existing.skills.length) return true;
+
+      const existingSkillMap = new Map(
+        existing.skills.map((s) => [s.normalizedName, s.proficiency])
+      );
+      for (const s of cleanSkills) {
+        const existingProficiency = existingSkillMap.get(s.normalizedName);
+        if (existingProficiency !== s.proficiency) return true;
       }
     }
 
-    return this.mapProfile(user.profile!, user.email, clerkId);
-  }
+    // Check desired skills change
+    if (input.desiredSkills !== undefined) {
+      const cleanDesired = deduplicateDesiredSkills(input.desiredSkills);
+      if (cleanDesired.length !== existing.desiredSkills.length) return true;
 
-  static async updateProfile(
-    clerkId: string,
-    data: Partial<UserProfileData>
-  ): Promise<UserProfileData> {
-    const existing = await this.getOrCreateProfile(clerkId);
-
-    const updateData: Prisma.UserProfileUpdateInput = {};
-
-    if (data.fullName !== undefined) updateData.fullName = data.fullName;
-    if (data.email !== undefined) updateData.email = data.email;
-    if (data.profilePicture !== undefined) updateData.profilePicture = data.profilePicture;
-    if (data.country !== undefined) updateData.country = data.country;
-    if (data.timezone !== undefined) updateData.timezone = data.timezone;
-    if (data.currentStatus !== undefined) updateData.currentStatus = data.currentStatus || null;
-    if (data.degree !== undefined) updateData.degree = data.degree;
-    if (data.major !== undefined) updateData.major = data.major;
-    if (data.institution !== undefined) updateData.institution = data.institution;
-    if (data.graduationYear !== undefined) updateData.graduationYear = data.graduationYear;
-    if (data.currentRole !== undefined) updateData.currentRole = data.currentRole;
-    if (data.yearsOfExperience !== undefined) updateData.yearsOfExperience = data.yearsOfExperience;
-    if (data.industry !== undefined) updateData.industry = data.industry;
-    if (data.employmentStatus !== undefined) updateData.employmentStatus = data.employmentStatus;
-    if (data.careerInterests !== undefined) updateData.careerInterests = data.careerInterests;
-    if (data.skills !== undefined) updateData.skills = data.skills as unknown as Prisma.InputJsonValue;
-    if (data.careerGoals !== undefined) updateData.careerGoals = data.careerGoals;
-    if (data.learningStyle !== undefined) updateData.learningStyle = data.learningStyle;
-    if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
-    if (data.weeklyHours !== undefined) updateData.weeklyHours = data.weeklyHours;
-    if (data.onboardingStatus !== undefined) updateData.onboardingStatus = data.onboardingStatus;
-    if (data.onboardingStep !== undefined) updateData.onboardingStep = data.onboardingStep;
-
-    const mergedForCalc = { ...existing, ...data };
-    const completion = calculateProfileCompletion(mergedForCalc);
-    updateData.profileCompletion = completion;
-
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
+      const existingSet = new Set(existing.desiredSkills.map((s) => s.normalizedName));
+      for (const s of cleanDesired) {
+        if (!existingSet.has(s.normalizedName)) return true;
+      }
     }
 
-    const updated = await prisma.userProfile.update({
-      where: { userId: user.id },
-      data: updateData,
-    });
-
-    return this.mapProfile(updated, user.email, clerkId);
+    return false;
   }
 
-  static async setOnboardingStatus(
-    clerkId: string,
-    status: OnboardingStatus,
-    step?: number
-  ): Promise<UserProfileData> {
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const updateData: Prisma.UserProfileUpdateInput = { onboardingStatus: status };
-    if (step !== undefined) {
-      updateData.onboardingStep = step;
-    }
-    const updated = await prisma.userProfile.update({
-      where: { userId: user.id },
-      data: updateData,
-    });
-    return this.mapProfile(updated, user.email, clerkId);
-  }
-
-  static async deleteProfile(clerkId: string): Promise<void> {
-    await prisma.user.deleteMany({
-      where: { clerkId },
-    });
-  }
-
-  private static mapProfile(
-    raw: UserProfile,
-    userEmail?: string | null,
-    clerkId?: string
-  ): UserProfileData {
+  /**
+   * Maps internal Prisma model with relations to the canonical ProfileData DTO.
+   */
+  private static mapToProfileData(profile: ProfileWithRelations): ProfileData {
     return {
-      id: raw.id,
-      clerkId: clerkId || "",
-      fullName: raw.fullName,
-      profilePicture: raw.profilePicture,
-      email: raw.email || userEmail || null,
-      country: raw.country,
-      timezone: raw.timezone,
-      currentStatus: raw.currentStatus,
-      degree: raw.degree,
-      major: raw.major,
-      institution: raw.institution,
-      graduationYear: raw.graduationYear,
-      currentRole: raw.currentRole,
-      yearsOfExperience: raw.yearsOfExperience,
-      industry: raw.industry,
-      employmentStatus: raw.employmentStatus,
-      careerInterests: raw.careerInterests || [],
-      skills: (raw.skills as unknown as CategorizedSkills) || {
-        languages: [],
-        frameworks: [],
-        databases: [],
-        cloud: [],
-        tools: [],
-        softSkills: [],
+      id: profile.id,
+      userId: profile.userId,
+      name: profile.name || "",
+      age: profile.age || 0,
+      country: profile.country || "",
+      phoneNumber: profile.phoneNumber || null,
+      currentStatus: profile.currentStatus,
+      currentRole: profile.currentRole || "",
+      yearsOfExperience: profile.yearsOfExperience || 0,
+      education: {
+        highestQualification: profile.highestQualification || "",
+        fieldOfStudy: profile.fieldOfStudy || "",
       },
-      careerGoals: raw.careerGoals || [],
-      learningStyle: raw.learningStyle,
-      difficulty: raw.difficulty,
-      weeklyHours: raw.weeklyHours,
-      onboardingStatus: raw.onboardingStatus,
-      onboardingStep: raw.onboardingStep,
-      profileCompletion: raw.profileCompletion,
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
+      careerGoals: {
+        primaryGoal: (profile.primaryGoal as any) || "OTHER",
+        targetRole: profile.targetRole,
+      },
+      skills: profile.skills.map((s) => ({
+        id: s.id,
+        name: s.name,
+        proficiency: s.proficiency,
+      })),
+      desiredSkills: profile.desiredSkills.map((s) => s.name),
+      targetCompanyType: (profile.targetCompanyType as any) || "NO_PREFERENCE",
+      weeklyLearningHours: profile.weeklyLearningHours || 0,
+      profileVersion: 1,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
     };
   }
 }

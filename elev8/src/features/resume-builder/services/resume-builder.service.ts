@@ -4,13 +4,16 @@ import { profileToResumeArtifact } from "./profile-to-resume.mapper";
 import {
   BuilderResumeArtifact,
   BuilderResumeRecord,
-  BuilderResumeTemplate,
+  ResumeBuilderTemplate,
+  ResumeBuildStatus,
 } from "../types";
 import {
   BuilderResumeArtifactSchema,
   CreateResumeInput,
   UpdateResumeInput,
 } from "../schemas/resume-artifact.schema";
+import { ModuleActivityService } from "@/features/recommendations/services";
+import { ModuleType, ModuleCompletionStatus } from "@prisma/client";
 
 export class ResumeBuilderError extends Error {
   constructor(message: string, public code: string, public statusCode: number = 400) {
@@ -30,39 +33,46 @@ export class ResumeBuilderService {
     // Generate deterministic artifact path using standard cuid or timestamp ID
     // We create Prisma record first with empty blob URL, or create ID then upload blob then create Prisma record
     // Creating Prisma record first with transaction or pre-allocating ID
-    const dummyRecord = await prisma.builderResume.create({
+    const dummyRecord = await prisma.resumeBuild.create({
       data: {
         userId,
         title: input.title,
-        targetRole: input.targetRole || null,
-        template: (input.template as BuilderResumeTemplate) || "CLASSIC",
-        status: "DRAFT",
-        version: 1,
+        template: (input.template as ResumeBuilderTemplate) || "CLASSIC",
+        status: ResumeBuildStatus.DRAFT,
       },
     });
 
     const resumeId = dummyRecord.id;
 
     // Fetch user profile to prefill the resume
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: {
+          include: { skills: true },
+        },
+      },
     });
 
-    const initialArtifact = profileToResumeArtifact(resumeId, profile);
+    const initialArtifact = profileToResumeArtifact(
+      resumeId,
+      user?.profile || null,
+      user?.email
+    );
     const pathname = `resumes/${userId}/${resumeId}/artifact.json`;
 
     try {
       const artifactBlobUrl = await BlobStorageService.upsertJson(pathname, initialArtifact);
 
-      const updatedRecord = await prisma.builderResume.update({
+      const updatedRecord = await prisma.resumeBuild.update({
         where: { id: resumeId },
         data: { artifactBlobUrl },
       });
 
-      return updatedRecord as BuilderResumeRecord;
+      return updatedRecord as unknown as BuilderResumeRecord;
     } catch (error) {
       // Cleanup Prisma record if Blob upload fails
-      await prisma.builderResume.delete({ where: { id: resumeId } }).catch(() => {});
+      await prisma.resumeBuild.delete({ where: { id: resumeId } }).catch(() => {});
       throw new ResumeBuilderError(
         `Failed to create resume storage artifact: ${(error as Error).message}`,
         "BLOB_UPLOAD_FAILED",
@@ -78,7 +88,7 @@ export class ResumeBuilderService {
     userId: string,
     resumeId: string
   ): Promise<BuilderResumeRecord> {
-    const resume = await prisma.builderResume.findUnique({
+    const resume = await prisma.resumeBuild.findUnique({
       where: { id: resumeId },
     });
 
@@ -94,19 +104,19 @@ export class ResumeBuilderService {
       );
     }
 
-    return resume as BuilderResumeRecord;
+    return resume as unknown as BuilderResumeRecord;
   }
 
   /**
    * Lists all resumes belonging to a user.
    */
   public static async listUserResumes(userId: string): Promise<BuilderResumeRecord[]> {
-    const resumes = await prisma.builderResume.findMany({
+    const resumes = await prisma.resumeBuild.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
     });
 
-    return resumes as BuilderResumeRecord[];
+    return resumes as unknown as BuilderResumeRecord[];
   }
 
   /**
@@ -117,19 +127,33 @@ export class ResumeBuilderService {
     resumeId: string,
     input: UpdateResumeInput
   ): Promise<BuilderResumeRecord> {
-    await this.getResume(userId, resumeId);
+    const existingResume = await this.getResume(userId, resumeId);
 
-    const updated = await prisma.builderResume.update({
+    const updated = await prisma.resumeBuild.update({
       where: { id: resumeId },
       data: {
         ...(input.title !== undefined && { title: input.title }),
-        ...(input.targetRole !== undefined && { targetRole: input.targetRole }),
-        ...(input.template !== undefined && { template: input.template as BuilderResumeTemplate }),
-        ...(input.status !== undefined && { status: input.status }),
+        ...(input.template !== undefined && { template: input.template as ResumeBuilderTemplate }),
+        ...(input.status !== undefined && { status: input.status as ResumeBuildStatus }),
       },
     });
 
-    return updated as BuilderResumeRecord;
+    if (input.status === "READY" && existingResume.status !== "READY") {
+      try {
+        await ModuleActivityService.recordActivity(
+          userId,
+          ModuleType.RESUME_BUILD,
+          ModuleCompletionStatus.COMPLETED,
+          {
+            template: updated.template,
+          }
+        );
+      } catch (err) {
+        console.error("[ResumeBuilderService] Failed to record activity:", err);
+      }
+    }
+
+    return updated as unknown as BuilderResumeRecord;
   }
 
   /**
@@ -139,7 +163,7 @@ export class ResumeBuilderService {
     const resume = await this.getResume(userId, resumeId);
 
     // Delete Prisma record first
-    await prisma.builderResume.delete({
+    await prisma.resumeBuild.delete({
       where: { id: resumeId },
     });
 
@@ -193,10 +217,21 @@ export class ResumeBuilderService {
   ): Promise<{ artifact: BuilderResumeArtifact; version: number; savedAt: Date }> {
     const resume = await this.getResume(userId, resumeId);
 
+    // Fetch the current artifact to get the true version
+    let currentVersion = 0;
+    if (resume.artifactBlobUrl) {
+      try {
+        const currentArtifact = await this.getResumeArtifact(userId, resumeId);
+        currentVersion = currentArtifact.version;
+      } catch (err) {
+        console.warn("Could not fetch current artifact for version check, assuming 0");
+      }
+    }
+
     // Concurrency check
-    if (clientVersion !== undefined && clientVersion < resume.version) {
+    if (clientVersion !== undefined && clientVersion < currentVersion) {
       throw new ResumeBuilderError(
-        `Version conflict: client version (${clientVersion}) is older than server version (${resume.version})`,
+        `Version conflict: client version (${clientVersion}) is older than server version (${currentVersion})`,
         "VERSION_CONFLICT",
         409
       );
@@ -222,7 +257,7 @@ export class ResumeBuilderService {
       );
     }
 
-    const newVersion = resume.version + 1;
+    const newVersion = currentVersion + 1;
     validArtifact.version = newVersion;
 
     const pathname = `resumes/${userId}/${resumeId}/artifact.json`;
@@ -230,10 +265,9 @@ export class ResumeBuilderService {
     try {
       const updatedBlobUrl = await BlobStorageService.upsertJson(pathname, validArtifact);
 
-      const updatedRecord = await prisma.builderResume.update({
+      const updatedRecord = await prisma.resumeBuild.update({
         where: { id: resumeId },
         data: {
-          version: newVersion,
           artifactBlobUrl: updatedBlobUrl,
         },
       });
@@ -265,16 +299,14 @@ export class ResumeBuilderService {
     // 2. Fetch the original artifact
     const originalArtifact = await this.getResumeArtifact(userId, originalResumeId);
 
-    // 3. Create a new Prisma record (DRAFT, version 1)
+    // 3. Create a new Prisma record (DRAFT)
     const duplicateTitle = `${originalResume.title} - Copy`;
-    const newRecord = await prisma.builderResume.create({
+    const newRecord = await prisma.resumeBuild.create({
       data: {
         userId,
         title: duplicateTitle.substring(0, 100), // Enforce MVP maximum length
-        targetRole: originalResume.targetRole,
         template: originalResume.template,
         status: "DRAFT",
-        version: 1,
       },
     });
 
@@ -293,15 +325,15 @@ export class ResumeBuilderService {
       const newArtifactBlobUrl = await BlobStorageService.upsertJson(pathname, newArtifact);
 
       // 6. Update the new Prisma record with the new Blob URL
-      const updatedNewRecord = await prisma.builderResume.update({
+      const updatedNewRecord = await prisma.resumeBuild.update({
         where: { id: newResumeId },
         data: { artifactBlobUrl: newArtifactBlobUrl },
       });
 
-      return updatedNewRecord as BuilderResumeRecord;
+      return updatedNewRecord as unknown as BuilderResumeRecord;
     } catch (error) {
       // Cleanup if blob upload fails
-      await prisma.builderResume.delete({ where: { id: newResumeId } }).catch(() => {});
+      await prisma.resumeBuild.delete({ where: { id: newResumeId } }).catch(() => {});
       throw new ResumeBuilderError(
         `Failed to duplicate resume storage artifact: ${(error as Error).message}`,
         "BLOB_UPLOAD_FAILED",

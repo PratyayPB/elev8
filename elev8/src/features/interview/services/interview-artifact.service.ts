@@ -36,7 +36,7 @@ export class InterviewArtifactService {
     const blobUrl = await BlobStorageService.uploadJson(blobPath, artifact);
 
     // 2. Persist metadata in Prisma
-    await prisma.interview.update({
+    await prisma.interviewSession.update({
       where: { id: interviewId },
       data: {
         blobUrl,

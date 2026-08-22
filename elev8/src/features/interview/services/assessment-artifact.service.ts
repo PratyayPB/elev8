@@ -1,7 +1,8 @@
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { InterviewArtifact, AssessmentReport } from "../types";
 import { prisma } from "@/lib/prisma";
-import { InterviewStatus } from "@prisma/client";
+import { InterviewStatus, ModuleType } from "@prisma/client";
+import { ModuleActivityService } from "@/features/recommendations/services/module-activity.service";
 
 export class AssessmentArtifactService {
   /**
@@ -30,7 +31,7 @@ export class AssessmentArtifactService {
     );
 
     // 3. Update Prisma
-    await prisma.interview.update({
+    const interview = await prisma.interviewSession.update({
       where: { id: interviewId },
       data: {
         blobUrl: newBlobUrl,
@@ -39,6 +40,22 @@ export class AssessmentArtifactService {
         updatedAt: new Date(),
       },
     });
+
+    // 4. Record ModuleActivity
+    try {
+      await ModuleActivityService.recordActivity(
+        interview.userId,
+        ModuleType.INTERVIEW_PRACTICE,
+        "COMPLETED",
+        {
+          role: interview.role,
+          experienceLevel: interview.experienceLevel,
+        }
+      );
+    } catch (err) {
+      console.error("[AssessmentArtifactService] Failed to record activity:", err);
+      // Do not fail the overall assessment completion if this fails
+    }
 
     return newBlobUrl;
   }

@@ -1,10 +1,10 @@
 import React from "react";
-import { BuilderResumeArtifact, BuilderResumeTemplate } from "../../types";
+import { BuilderResumeArtifact, ResumeBuilderTemplate } from "../../types";
 import { ResumeTemplateRenderer } from "../templates/resume-template-renderer";
 
 interface ResumePreviewProps {
   artifact: BuilderResumeArtifact;
-  template?: BuilderResumeTemplate;
+  template?: ResumeBuilderTemplate;
   scale?: number;
 }
 

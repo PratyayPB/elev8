@@ -30,7 +30,7 @@ export const assessInterviewJob = task({
 
       await updateJob(10, "Loading Interview Artifact");
 
-      const interview = await prisma.interview.findUnique({
+      const interview = await prisma.interviewSession.findUnique({
         where: { id: interviewId },
       });
 
@@ -103,7 +103,7 @@ export const assessInterviewJob = task({
       }
 
       try {
-        await prisma.interview.update({
+        await prisma.interviewSession.update({
           where: { id: interviewId },
           data: {
             status: InterviewStatus.FAILED,

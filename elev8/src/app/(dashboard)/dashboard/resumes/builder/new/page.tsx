@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function NewResumePage() {
   const dbUser = await getOrCreateDbUser();
 
-  const profile = await prisma.userProfile.findUnique({
+  const profile = await prisma.profile.findUnique({
     where: { userId: dbUser.id },
     select: { currentRole: true },
   });
@@ -40,7 +40,7 @@ export default async function NewResumePage() {
       </div>
 
       <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 shadow-sm">
-        <CreateResumeForm defaultTargetRole={defaultTargetRole} />
+        <CreateResumeForm />
       </div>
     </div>
   );

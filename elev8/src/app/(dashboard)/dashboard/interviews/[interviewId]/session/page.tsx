@@ -22,6 +22,7 @@ export default async function InterviewSessionPage({ params }: InterviewSessionP
         interviewId={interviewId}
         artifact={artifact}
         blobUrl={interview.blobUrl!}
+        durationSeconds={interview.durationSeconds ?? 0}
       />
     );
   } catch (error) {

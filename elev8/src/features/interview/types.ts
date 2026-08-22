@@ -1,15 +1,34 @@
+import {
+  InterviewType,
+  InterviewStatus,
+  InterviewTemplateType,
+  InterviewTemplateStatus,
+  CareerExperienceLevel,
+} from "@prisma/client";
+
+export {
+  InterviewType,
+  InterviewStatus,
+  InterviewTemplateType,
+  InterviewTemplateStatus,
+  CareerExperienceLevel,
+};
+
 export type ExperienceLevel = "Beginner" | "Basic" | "Intermediate" | "Advanced";
 
 export type Difficulty = "Easy" | "Medium" | "Hard";
 
-export type InterviewType =
+export type InterviewTypeOption =
   | "Quick Practice"
   | "Standard Interview"
   | "Comprehensive Interview"
   | "Mock Final Round"
   | "TECHNICAL"
   | "NON_TECHNICAL"
-  | "BEHAVIORAL";
+  | "BEHAVIORAL"
+  | "SYSTEM_DESIGN"
+  | "ROLE_SPECIFIC"
+  | "GENERAL";
 
 export interface Question {
   id: string;
@@ -27,7 +46,7 @@ export interface InterviewRequest {
   role: string;
   experienceLevel: ExperienceLevel;
   difficulty: Difficulty;
-  interviewType: InterviewType;
+  interviewType: InterviewType | InterviewTypeOption | string;
   questionCount: number;
   personalization: {
     skipped: boolean;
@@ -64,7 +83,7 @@ export interface InterviewMetadata {
   role: string;
   experienceLevel: ExperienceLevel;
   difficulty: Difficulty;
-  interviewType: InterviewType;
+  interviewType: InterviewType | string;
   questionCount: number;
   estimatedDuration: string;
   generatedAt: string;

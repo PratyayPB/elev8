@@ -9,19 +9,20 @@ interface SessionClientWrapperProps {
   interviewId: string;
   artifact: InterviewArtifact;
   blobUrl: string;
+  durationSeconds: number;
 }
 
-export function SessionClientWrapper({ interviewId, artifact, blobUrl }: SessionClientWrapperProps) {
+export function SessionClientWrapper({ interviewId, artifact, blobUrl, durationSeconds }: SessionClientWrapperProps) {
   const initializeSession = useInterviewSessionStore((state: any) => state.initializeSession);
   const status = useInterviewSessionStore((state: any) => state.status);
   const initialized = useRef(false);
 
   useEffect(() => {
     if (!initialized.current) {
-      initializeSession(artifact, blobUrl);
+      initializeSession(artifact, blobUrl, durationSeconds);
       initialized.current = true;
     }
-  }, [artifact, blobUrl, initializeSession]);
+  }, [artifact, blobUrl, durationSeconds, initializeSession]);
 
   if (status === "NOT_STARTED" || !initialized.current) {
     return (

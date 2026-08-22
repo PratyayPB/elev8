@@ -1,4 +1,4 @@
-import { ResumeStatus } from "@prisma/client";
+import { ResumeScoreStatus } from "@prisma/client";
 
 export interface ResumeSummary {
   id: string;
@@ -7,8 +7,7 @@ export interface ResumeSummary {
   overallScore: number | null;
   atsScore: number | null;
   artifactBlobUrl: string | null;
-  originalPdfBlobUrl: string | null;
-  status: ResumeStatus;
+  status: ResumeScoreStatus;
   filename?: string;
   createdAt: Date | string;
   updatedAt: Date | string;

@@ -4,12 +4,12 @@ export const ROUTES = {
   SIGN_UP: "/sign-up",
   DASHBOARD: "/dashboard",
   CAREER_ASSESSMENT: "/dashboard/career-assessment",
-  CAREER_GUIDANCE: "/dashboard/career-guidance",
   ROADMAPS: "/dashboard/roadmaps",
   RESUMES: "/dashboard/resumes",
   RESUME_BUILDER: "/dashboard/resumes/builder",
   INTERVIEWS: "/dashboard/interviews",
   PROGRESS: "/dashboard/progress",
+  PROFILE: "/dashboard/profile",
   SETTINGS: "/dashboard/settings",
   ONBOARDING: "/dashboard/onboarding",
 } as const;

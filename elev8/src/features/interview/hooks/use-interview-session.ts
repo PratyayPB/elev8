@@ -8,15 +8,17 @@ export interface InterviewSessionState {
   currentQuestionIndex: number;
   artifact: InterviewArtifact | null;
   blobUrl: string | null;
+  durationSeconds: number;
   
   // Actions
-  initializeSession: (artifact: InterviewArtifact, blobUrl: string) => void;
+  initializeSession: (artifact: InterviewArtifact, blobUrl: string, durationSeconds?: number) => void;
   setStatus: (status: SessionStateStatus) => void;
   nextQuestion: () => void;
   prevQuestion: () => void;
   jumpToQuestion: (index: number) => void;
   updateAnswer: (questionId: string, answerText: string) => void;
   setBlobUrl: (url: string) => void;
+  incrementDuration: () => void;
 }
 
 export const useInterviewSessionStore = create<InterviewSessionState>((set, get) => ({
@@ -24,8 +26,9 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
   currentQuestionIndex: 0,
   artifact: null,
   blobUrl: null,
+  durationSeconds: 0,
 
-  initializeSession: (artifact, blobUrl) => {
+  initializeSession: (artifact, blobUrl, durationSeconds = 0) => {
     // Determine initial index based on what's answered
     let nextUnanswered = 0;
     if (artifact.answers && artifact.questions) {
@@ -41,6 +44,7 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
     set({
       artifact,
       blobUrl,
+      durationSeconds,
       currentQuestionIndex: nextUnanswered,
       status: "IN_PROGRESS"
     });
@@ -92,4 +96,11 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
   },
 
   setBlobUrl: (url) => set({ blobUrl: url }),
+
+  incrementDuration: () => {
+    const { status, durationSeconds } = get();
+    if (status === "IN_PROGRESS") {
+      set({ durationSeconds: durationSeconds + 1 });
+    }
+  },
 }));

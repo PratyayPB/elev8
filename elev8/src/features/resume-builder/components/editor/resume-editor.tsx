@@ -44,7 +44,7 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
   } = useResumeEditor({
     resumeId: resume.id,
     initialArtifact,
-    initialVersion: resume.version,
+    initialVersion: initialArtifact.version,
     initialTemplate: resume.template,
   });
 

@@ -90,12 +90,12 @@ export class ResumeArtifactService {
       artifact
     );
 
-    // 2. Update Prisma Resume metadata
-    await prisma.resume.update({
+    // 2. Update Prisma ResumeScore metadata
+    await prisma.resumeScore.update({
       where: { id: resumeId },
       data: {
         artifactBlobUrl,
-        overallScore: overallAssessment.overallScore,
+        ovrScore: overallAssessment.overallScore,
         atsScore: overallAssessment.atsScore,
         status: "COMPLETED",
       },

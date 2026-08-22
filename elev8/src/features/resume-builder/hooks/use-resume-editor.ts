@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { BuilderResumeArtifact, BuilderResumeTemplate, PersonalInformation } from "../types";
+import { BuilderResumeArtifact, ResumeBuilderTemplate, PersonalInformation } from "../types";
 import { moveUp, moveDown } from "../utils/editor-utils";
 import { BUILDER_API } from "../constants/builder-routes";
 
@@ -9,7 +9,7 @@ interface UseResumeEditorProps {
   resumeId: string;
   initialArtifact: BuilderResumeArtifact;
   initialVersion: number;
-  initialTemplate?: BuilderResumeTemplate;
+  initialTemplate?: ResumeBuilderTemplate;
 }
 
 export function useResumeEditor({
@@ -20,7 +20,7 @@ export function useResumeEditor({
 }: UseResumeEditorProps) {
   const [artifact, setArtifact] = useState<BuilderResumeArtifact>(initialArtifact);
   const [currentVersion, setCurrentVersion] = useState<number>(initialVersion);
-  const [currentTemplate, setCurrentTemplate] = useState<BuilderResumeTemplate>(initialTemplate);
+  const [currentTemplate, setCurrentTemplate] = useState<ResumeBuilderTemplate>(initialTemplate);
   const [isTemplateUpdating, setIsTemplateUpdating] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("clean");
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -203,7 +203,7 @@ export function useResumeEditor({
   );
 
   const updateTemplate = useCallback(
-    async (newTemplate: BuilderResumeTemplate) => {
+    async (newTemplate: ResumeBuilderTemplate) => {
       setIsTemplateUpdating(true);
       try {
         const response = await fetch(BUILDER_API.RESUME(resumeId), {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Interview } from "@prisma/client";
+import { InterviewSession } from "@prisma/client";
 import { useInterviewWorkspace } from "../../hooks/use-interview-workspace";
 import { QuickActions } from "./quick-actions";
 import { PerformanceOverview } from "./performance-overview";
@@ -15,7 +15,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/dashboard";
 
 interface WorkspaceContainerProps {
-  initialInterviews: Interview[];
+  initialInterviews: InterviewSession[];
   stats: {
     total: number;
     completedCount: number;

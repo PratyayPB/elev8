@@ -1,6 +1,5 @@
 // Root features exports
 export * from "./career-assessment";
-export * from "./career-guidance";
 export * from "./roadmaps";
 export type {
   ResumeAssessmentRequest,
@@ -19,3 +18,5 @@ export {
 } from "./resume";
 export * from "./progress";
 export * from "./profile";
+export * from "./skill-gap";
+export * from "./recommendations";

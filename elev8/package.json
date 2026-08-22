@@ -11,6 +11,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
+    "db:seed": "npx tsx prisma/seed.ts",
     "seed:interviews": "npx tsx scripts/seed-interview-templates.ts"
   },
   "dependencies": {

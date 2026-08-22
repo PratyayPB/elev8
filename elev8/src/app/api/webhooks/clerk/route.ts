@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ProfileService } from "@/features/profile/services/profile.service";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,22 +15,25 @@ export async function POST(req: NextRequest) {
 
     if (eventType === "user.created" || eventType === "user.updated") {
       const email = data.email_addresses?.[0]?.email_address ?? null;
-      const fullName = [data.first_name, data.last_name].filter(Boolean).join(" ") || null;
-      const profilePicture = data.image_url ?? null;
 
-      await ProfileService.getOrCreateProfile(clerkId, email, fullName, profilePicture);
-      if (eventType === "user.updated") {
-        await ProfileService.updateProfile(clerkId, {
+      await prisma.user.upsert({
+        where: { clerkId },
+        create: {
+          clerkId,
           email,
-          fullName,
-          profilePicture,
-        });
-      }
+        },
+        update: {
+          email,
+        },
+      });
+
       return NextResponse.json({ message: `Handled ${eventType}` }, { status: 200 });
     }
 
     if (eventType === "user.deleted") {
-      await ProfileService.deleteProfile(clerkId);
+      await prisma.user.deleteMany({
+        where: { clerkId },
+      });
       return NextResponse.json({ message: "Handled user.deleted" }, { status: 200 });
     }
 

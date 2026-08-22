@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { getProfileOrSyncAction } from "@/features/profile/services/actions";
-import { ProfileEditor } from "@/features/profile/components/profile-editor";
+import { getProfileAction } from "@/features/profile/services/actions";
+import { ProfileEditForm, ProfileSetupForm } from "@/features/profile/components";
 
 export const metadata: Metadata = {
   title: "Settings | Elev8",
@@ -8,11 +8,24 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const profile = await getProfileOrSyncAction();
+  const profile = await getProfileAction();
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <ProfileEditor initialProfile={profile} />
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <div>
+        <h1 className="text-3xl font-display font-bold text-text-primary tracking-tight">
+          Profile Settings
+        </h1>
+        <p className="text-sm font-sans text-text-secondary mt-1">
+          Update your career status, educational background, skills, and goals.
+        </p>
+      </div>
+
+      {profile ? (
+        <ProfileEditForm initialProfile={profile} />
+      ) : (
+        <ProfileSetupForm />
+      )}
     </div>
   );
 }

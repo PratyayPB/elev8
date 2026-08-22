@@ -31,13 +31,12 @@ export interface BuilderState {
   validationStatus: ValidationState;
 }
 
-// ==========================================
-// Phase 5.1 Resume Data Model & Artifact Types
-// ==========================================
+import { ResumeBuildStatus, ResumeBuilderTemplate } from "@prisma/client";
 
-export type BuilderResumeStatus = "DRAFT" | "READY" | "ARCHIVED";
+export { ResumeBuildStatus, ResumeBuilderTemplate };
 
-export type BuilderResumeTemplate = "CLASSIC" | "MODERN" | "MINIMAL";
+export type BuilderResumeStatus = ResumeBuildStatus;
+export type BuilderResumeTemplate = ResumeBuilderTemplate;
 
 export interface PersonalInformation {
   fullName: string;
@@ -121,11 +120,9 @@ export interface BuilderResumeRecord {
   id: string;
   userId: string;
   title: string;
-  targetRole?: string | null;
-  template: BuilderResumeTemplate;
+  template: ResumeBuilderTemplate;
   artifactBlobUrl?: string | null;
-  status: BuilderResumeStatus;
-  version: number;
+  status: ResumeBuildStatus;
   createdAt: Date | string;
   updatedAt: Date | string;
 }

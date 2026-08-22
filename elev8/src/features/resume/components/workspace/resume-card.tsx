@@ -72,17 +72,6 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
                     <RefreshCw className="w-3.5 h-3.5 mr-2" /> Re-score Resume
                   </button>
                 )}
-                {resume.originalPdfBlobUrl && (
-                  <a
-                    href={resume.originalPdfBlobUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Download className="w-3.5 h-3.5 mr-2" /> Download Original
-                  </a>
-                )}
                 <Link
                   href={`/dashboard/resumes?role=${encodeURIComponent(resume.role)}`}
                   className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50"

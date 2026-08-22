@@ -1,110 +1,142 @@
-import { OnboardingStepConfig } from "./types";
+import {
+  CareerStatus,
+  PrimaryGoal,
+  SkillProficiency,
+  CareerExperienceLevel,
+  TargetCompanyType,
+} from "./types";
 
-export const ONBOARDING_STEPS: OnboardingStepConfig[] = [
-  {
-    id: 1,
-    title: "Welcome",
-    subtitle: "Let's personalize your Elev8 experience",
-    description: "Welcome to Elev8! You can set up your professional profile now or skip and complete it later.",
-  },
-  {
-    id: 2,
-    title: "Personal Info",
-    subtitle: "Tell us a bit about yourself",
-    description: "Your basic contact details and local timezone.",
-  },
-  {
-    id: 3,
-    title: "Education",
-    subtitle: "Academic background",
-    description: "Information about your degree, major, and current academic status.",
-  },
-  {
-    id: 4,
-    title: "Professional",
-    subtitle: "Work experience & current role",
-    description: "Details regarding your current industry, role, and years of experience.",
-  },
-  {
-    id: 5,
-    title: "Skills",
-    subtitle: "Your technical & soft skill set",
-    description: "Select languages, frameworks, tools, and databases you work with.",
-  },
-  {
-    id: 6,
-    title: "Interests",
-    subtitle: "What domains inspire you?",
-    description: "Select your primary technical and professional areas of interest.",
-  },
-  {
-    id: 7,
-    title: "Career Goals",
-    subtitle: "What are you aiming for?",
-    description: "Choose your primary career objectives for the near future.",
-  },
-  {
-    id: 8,
-    title: "Preferences",
-    subtitle: "Learning style & availability",
-    description: "Tailor how Elev8 provides guidance and roadmap suggestions.",
-  },
-  {
-    id: 9,
-    title: "Completion",
-    subtitle: "All set!",
-    description: "Your profile setup is complete. You can modify these settings anytime.",
-  },
-];
-
-export const CURRENT_STATUS_OPTIONS = [
+export const CAREER_STATUS_OPTIONS: { label: string; value: CareerStatus }[] = [
   { label: "Student", value: "STUDENT" },
-  { label: "Graduate", value: "GRADUATE" },
-  { label: "Working Professional", value: "WORKING_PROFESSIONAL" },
-  { label: "Career Switcher", value: "CAREER_SWITCHER" },
+  { label: "Employed", value: "EMPLOYED" },
+  { label: "Self-Employed", value: "SELF_EMPLOYED" },
+  { label: "Business Owner", value: "BUSINESS_OWNER" },
+  { label: "Freelancer", value: "FREELANCER" },
+  { label: "Job Seeker", value: "JOB_SEEKER" },
+  { label: "Recent Graduate", value: "RECENT_GRADUATE" },
+  { label: "Other", value: "OTHER" },
 ];
 
-export const CAREER_INTEREST_OPTIONS = [
-  "Frontend Development",
-  "Backend Development",
-  "Full Stack Development",
-  "AI / Machine Learning",
-  "Data Science",
-  "Cybersecurity",
-  "DevOps",
-  "Mobile Development",
-  "Cloud Computing",
-  "UI / UX Design",
-  "Product Management",
+export const CURRENT_STATUS_OPTIONS = CAREER_STATUS_OPTIONS;
+
+export const PRIMARY_GOAL_OPTIONS: { label: string; value: PrimaryGoal }[] = [
+  { label: "Land a Job", value: "LAND_A_JOB" },
+  { label: "Get an Internship", value: "GET_AN_INTERNSHIP" },
+  { label: "Switch Career", value: "SWITCH_CAREER" },
+  { label: "Get Promoted", value: "GET_PROMOTED" },
+  { label: "Learn New Skills", value: "LEARN_NEW_SKILLS" },
+  { label: "Prepare for Interview", value: "PREPARE_FOR_INTERVIEW" },
+  { label: "Build Resume", value: "BUILD_RESUME" },
+  { label: "Improve Resume", value: "IMPROVE_RESUME" },
+  { label: "Become Job Ready", value: "BECOME_JOB_READY" },
+  { label: "Explore Careers", value: "EXPLORE_CAREERS" },
+  { label: "Other", value: "OTHER" },
 ];
 
-export const CAREER_GOAL_OPTIONS = [
-  "Get my first internship",
-  "Land my first software job",
-  "Switch careers",
-  "Become a Full Stack Developer",
-  "Learn AI",
-  "Become interview ready",
-  "Build a stronger portfolio",
-];
-
-export const LEARNING_STYLE_OPTIONS = [
-  { label: "Hands-on Projects", value: "PROJECTS" },
-  { label: "Structured Courses", value: "COURSES" },
-  { label: "Documentation & Reading", value: "READING" },
-  { label: "Video Tutorials", value: "VIDEO" },
-];
-
-export const DIFFICULTY_OPTIONS = [
+export const SKILL_PROFICIENCY_OPTIONS: { label: string; value: SkillProficiency }[] = [
   { label: "Beginner", value: "BEGINNER" },
+  { label: "Basic", value: "BASIC" },
   { label: "Intermediate", value: "INTERMEDIATE" },
   { label: "Advanced", value: "ADVANCED" },
+  { label: "Expert", value: "EXPERT" },
 ];
 
-export const EMPLOYMENT_STATUS_OPTIONS = [
-  "Employed Full-time",
-  "Employed Part-time",
-  "Freelancer / Contractor",
-  "Unemployed / Job Seeking",
-  "Student",
+export const CAREER_EXPERIENCE_LEVEL_OPTIONS: { label: string; value: CareerExperienceLevel }[] = [
+  { label: "Entry Level", value: "ENTRY" },
+  { label: "Junior", value: "JUNIOR" },
+  { label: "Mid Level", value: "MID" },
+  { label: "Senior", value: "SENIOR" },
+  { label: "Lead / Principal", value: "LEAD" },
 ];
+
+export const TARGET_COMPANY_TYPE_OPTIONS: { label: string; value: TargetCompanyType }[] = [
+  { label: "Startup", value: "STARTUP" },
+  { label: "Mid-Size Company", value: "MID_SIZE" },
+  { label: "Enterprise", value: "ENTERPRISE" },
+  { label: "Big Tech / FAANG", value: "FAANG" },
+  { label: "Government", value: "GOVERNMENT" },
+  { label: "Non-Profit", value: "NON_PROFIT" },
+  { label: "No Preference", value: "NO_PREFERENCE" },
+];
+
+export const WEEKLY_LEARNING_HOURS_OPTIONS = [5, 10, 15, 20, 25, 30, 40] as const;
+
+export const PROFILE_VALIDATION = {
+  AGE_MIN: 16,
+  AGE_MAX: 100,
+  NAME_MIN: 1,
+  NAME_MAX: 100,
+  ROLE_MAX: 100,
+  QUALIFICATION_MAX: 100,
+  FIELD_OF_STUDY_MAX: 100,
+  TARGET_ROLE_MAX: 100,
+  SKILL_NAME_MAX: 100,
+  DESIRED_SKILL_MAX: 100,
+  MAX_SKILLS: 50,
+  MAX_DESIRED_SKILLS: 30,
+} as const;
+
+export const PROFILE_COMPLETION_WEIGHTS = {
+  primaryGoal: 15,
+  currentStatus: 15,
+  skills: 15,
+  education: 15,
+  targetRole: 10,
+  desiredSkills: 10,
+  currentRole: 10,
+  weeklyLearningHours: 5,
+  targetCompanyType: 5,
+} as const;
+
+export type ProfileCompletenessFieldKey = keyof typeof PROFILE_COMPLETION_WEIGHTS;
+
+export const FIELD_METADATA: Record<
+  ProfileCompletenessFieldKey,
+  { label: string; description: string; priority: number }
+> = {
+  primaryGoal: {
+    label: "Primary Goal",
+    description: "Your primary career objective helps align guidance and roadmaps.",
+    priority: 1,
+  },
+  currentStatus: {
+    label: "Current Status",
+    description: "Your employment/academic status tailors personalized advice.",
+    priority: 2,
+  },
+  skills: {
+    label: "Current Skills",
+    description: "Adding your technical and professional skills enables skill gap analysis.",
+    priority: 3,
+  },
+  targetRole: {
+    label: "Target Role",
+    description: "Your target role improves roadmap, resume, and interview personalization.",
+    priority: 4,
+  },
+  education: {
+    label: "Education",
+    description: "Your academic background helps benchmark career experience.",
+    priority: 5,
+  },
+  desiredSkills: {
+    label: "Desired Skills",
+    description: "Target skills shape learning paths and roadmap milestone recommendations.",
+    priority: 6,
+  },
+  weeklyLearningHours: {
+    label: "Weekly Learning Hours",
+    description: "Your availability ensures roadmap pacing matches your real schedule.",
+    priority: 7,
+  },
+  targetCompanyType: {
+    label: "Target Company Type",
+    description: "Target environment shapes interview questions and resume positioning.",
+    priority: 8,
+  },
+  currentRole: {
+    label: "Current Role",
+    description: "Your current job title or student status establishes your baseline.",
+    priority: 9,
+  },
+};

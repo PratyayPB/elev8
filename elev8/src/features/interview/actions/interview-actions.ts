@@ -4,9 +4,18 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { InterviewRequest } from "../types";
 import { InterviewRequestSchema } from "../schemas/interview-request.schema";
-import { JobType, JobStatus, InterviewStatus } from "@prisma/client";
+import { JobType, JobStatus, InterviewStatus, InterviewType, InterviewTemplateType, InterviewTemplateStatus } from "@prisma/client";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { generateInterviewTask } from "@/trigger/generate-interview";
+
+function mapInterviewType(type: string): InterviewType {
+  const norm = type.toUpperCase().replace(/[\s-]+/g, "_");
+  if (norm.includes("BEHAVIORAL")) return InterviewType.BEHAVIORAL;
+  if (norm.includes("SYSTEM_DESIGN")) return InterviewType.SYSTEM_DESIGN;
+  if (norm.includes("ROLE_SPECIFIC")) return InterviewType.ROLE_SPECIFIC;
+  if (norm.includes("GENERAL")) return InterviewType.GENERAL;
+  return InterviewType.TECHNICAL;
+}
 
 export async function createInterviewJob(request: InterviewRequest) {
   const { userId: clerkId } = await auth();
@@ -26,21 +35,57 @@ export async function createInterviewJob(request: InterviewRequest) {
 
   // Validate incoming request
   const validatedRequest = InterviewRequestSchema.parse(request);
+  const mappedInterviewType = mapInterviewType(validatedRequest.interviewType);
 
-  // 1. Create Interview Metadata record
-  const interview = await prisma.interview.create({
+  const profile = await prisma.profile.findUnique({
+    where: { userId: dbUser.id },
+    include: { skills: true, desiredSkills: true },
+  });
+
+  const isPersonalized = !validatedRequest.personalization.skipped;
+  let profileSnapshot = null;
+  if (isPersonalized && profile) {
+    profileSnapshot = {
+      name: profile.name,
+      currentRole: profile.currentRole,
+      yearsOfExperience: profile.yearsOfExperience,
+      primaryGoal: profile.primaryGoal,
+      skills: profile.skills.map(s => s.name),
+    };
+  }
+
+  // 1. Create or get InterviewTemplate record
+  const template = await prisma.interviewTemplate.create({
     data: {
       userId: dbUser.id,
+      type: InterviewTemplateType.AI_GENERATED,
       role: validatedRequest.role,
-      difficulty: validatedRequest.difficulty,
-      experienceLevel: validatedRequest.experienceLevel,
-      interviewType: validatedRequest.interviewType,
+      experienceLevel: (validatedRequest.experienceLevel.toUpperCase() === "BEGINNER" ? "ENTRY" : validatedRequest.experienceLevel.toUpperCase() === "ADVANCED" ? "SENIOR" : "MID") as any,
+      interviewType: mappedInterviewType,
       questionCount: validatedRequest.questionCount,
-      status: InterviewStatus.GENERATING,
+      templateBlobUrl: "",
+      status: InterviewTemplateStatus.ACTIVE,
+      personalized: isPersonalized,
+      profileSnapshot: profileSnapshot || undefined,
     },
   });
 
-  // 2. Create Job System record
+  // 2. Create InterviewSession Metadata record
+  const interview = await prisma.interviewSession.create({
+    data: {
+      userId: dbUser.id,
+      templateId: template.id,
+      role: validatedRequest.role,
+      experienceLevel: (validatedRequest.experienceLevel.toUpperCase() === "BEGINNER" ? "ENTRY" : validatedRequest.experienceLevel.toUpperCase() === "ADVANCED" ? "SENIOR" : "MID") as any,
+      interviewType: mappedInterviewType,
+      questionCount: validatedRequest.questionCount,
+      status: InterviewStatus.GENERATING,
+      personalized: isPersonalized,
+      profileSnapshot: profileSnapshot || undefined,
+    },
+  });
+
+  // 3. Create Job System record
   const job = await prisma.job.create({
     data: {
       userId: dbUser.id,
@@ -53,7 +98,7 @@ export async function createInterviewJob(request: InterviewRequest) {
     },
   });
 
-  // 3. Trigger background generation task
+  // 4. Trigger background generation task
   let triggerRunId: string | undefined;
   try {
     const handle = await tasks.trigger<typeof generateInterviewTask>(
@@ -82,7 +127,7 @@ export async function createInterviewJob(request: InterviewRequest) {
         error: error instanceof Error ? error.message : "Trigger failed",
       },
     });
-    await prisma.interview.update({
+    await prisma.interviewSession.update({
       where: { id: interview.id },
       data: { status: InterviewStatus.FAILED },
     });

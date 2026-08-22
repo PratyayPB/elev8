@@ -1,36 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { seedRoleSkillMaps } from "./seed-data/role-skill-maps";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Starting database seed script...");
+  console.log("Starting Elev8 database seed process...");
 
-  // TODO: Seed demo data for local development if required
-  // Example structure for reference:
-  /*
-  const user = await prisma.user.upsert({
-    where: { clerkId: "user_demo123" },
-    update: {},
-    create: {
-      clerkId: "user_demo123",
-      email: "demo@elev8.ai",
-      profile: {
-        create: {
-          fullName: "Demo User",
-          currentStatus: "WORKING_PROFESSIONAL",
-          currentRole: "Full Stack Developer",
-          careerInterests: ["AI / Machine Learning", "Full Stack Development"],
-          careerGoals: ["Become a Senior Full Stack Developer"],
-          onboardingStatus: "COMPLETED",
-          onboardingStep: 9,
-          profileCompletion: 100,
-        },
-      },
-    },
-  });
-  */
+  await seedRoleSkillMaps(prisma);
 
-  console.log("Database seed placeholder executed cleanly.");
+  console.log("Elev8 database seeding completed successfully.");
 }
 
 main()

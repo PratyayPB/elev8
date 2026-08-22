@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { PlusCircle, PlayCircle, Award } from "lucide-react";
-import { Interview } from "@prisma/client";
+import { InterviewSession } from "@prisma/client";
 
 interface QuickActionsProps {
-  latestInProgress?: Interview;
-  latestCompleted?: Interview;
+  latestInProgress?: InterviewSession;
+  latestCompleted?: InterviewSession;
 }
 
 export function QuickActions({ latestInProgress, latestCompleted }: QuickActionsProps) {

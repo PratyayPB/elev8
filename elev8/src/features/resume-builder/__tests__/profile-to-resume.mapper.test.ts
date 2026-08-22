@@ -1,6 +1,14 @@
 import assert from "node:assert";
 import { profileToResumeArtifact } from "../services/profile-to-resume.mapper";
-import { UserProfile, CurrentStatus, OnboardingStatus } from "@prisma/client";
+import {
+  Profile,
+  ProfileSkill,
+  CareerStatus,
+  PrimaryGoal,
+  SkillProficiency,
+  CareerExperienceLevel,
+  TargetCompanyType,
+} from "@prisma/client";
 
 export async function runProfileMapperTests() {
   console.log("Running profileToResumeArtifact mapper tests...");
@@ -17,41 +25,49 @@ export async function runProfileMapperTests() {
   assert.deepStrictEqual(emptyArtifact.education, []);
 
   // Test 2: Full profile mapping
-  const mockProfile: UserProfile = {
+  const mockSkills: ProfileSkill[] = [
+    {
+      id: "sk_1",
+      profileId: "prof_123",
+      name: "TypeScript",
+      normalizedName: "typescript",
+      proficiency: "INTERMEDIATE" as SkillProficiency,
+    },
+    {
+      id: "sk_2",
+      profileId: "prof_123",
+      name: "Next.js",
+      normalizedName: "next.js",
+      proficiency: "ADVANCED" as SkillProficiency,
+    },
+  ];
+
+  const mockProfile: Profile & { skills: ProfileSkill[] } = {
     id: "prof_123",
     userId: "user_123",
-    fullName: "John Doe",
-    profilePicture: "https://example.com/pic.jpg",
-    email: "john.doe@example.com",
+    name: "John Doe",
+    age: 24,
     country: "United States",
-    timezone: "EST",
-    currentStatus: "STUDENT" as CurrentStatus,
-    degree: "Bachelor of Science",
-    major: "Computer Science",
-    institution: "State University",
-    graduationYear: 2026,
+    phoneNumber: null,
+    currentStatus: "STUDENT" as CareerStatus,
     currentRole: "Intern",
     yearsOfExperience: 1,
-    industry: "Tech",
-    employmentStatus: "Part-time",
-    careerInterests: ["Web Development"],
-    skills: {
-      languages: ["TypeScript", "Python"],
-      frameworks: ["Next.js", "Express"],
-      customCategory: ["Git", "Docker"],
-    },
-    careerGoals: ["Software Engineer"],
-    learningStyle: "Hands-on",
-    difficulty: "Medium",
-    weeklyHours: 15,
-    onboardingStatus: "COMPLETED" as OnboardingStatus,
-    onboardingStep: 3,
-    profileCompletion: 100,
+    highestQualification: "Bachelor of Science",
+    fieldOfStudy: "Computer Science",
+    primaryGoal: "LAND_A_JOB",
+    targetRole: "Full Stack Engineer",
+    targetCompanyType: "STARTUP",
+    weeklyLearningHours: 15,
     createdAt: new Date(),
     updatedAt: new Date(),
+    skills: mockSkills,
   };
 
-  const mappedArtifact = profileToResumeArtifact(resumeId, mockProfile);
+  const mappedArtifact = profileToResumeArtifact(
+    resumeId,
+    mockProfile,
+    "john.doe@example.com"
+  );
 
   // Assert Personal Info
   assert.strictEqual(mappedArtifact.resumeId, resumeId);
@@ -61,20 +77,14 @@ export async function runProfileMapperTests() {
 
   // Assert Education
   assert.strictEqual(mappedArtifact.education.length, 1);
-  assert.strictEqual(mappedArtifact.education[0].institution, "State University");
   assert.strictEqual(mappedArtifact.education[0].degree, "Bachelor of Science");
   assert.strictEqual(mappedArtifact.education[0].fieldOfStudy, "Computer Science");
-  assert.strictEqual(mappedArtifact.education[0].endDate, "2026");
 
   // Assert Skills
-  assert.strictEqual(mappedArtifact.skills.length, 6); // TS, Python, Next, Express, Git, Docker
-  const nextJsSkill = mappedArtifact.skills.find(s => s.name === "Next.js");
+  assert.strictEqual(mappedArtifact.skills.length, 2);
+  const nextJsSkill = mappedArtifact.skills.find((s) => s.name === "Next.js");
   assert.ok(nextJsSkill);
-  assert.strictEqual(nextJsSkill.category, "Frameworks/Libraries");
-
-  const dockerSkill = mappedArtifact.skills.find(s => s.name === "Docker");
-  assert.ok(dockerSkill);
-  assert.strictEqual(dockerSkill.category, "customCategory");
+  assert.strictEqual(nextJsSkill.category, "Technical Skills");
 
   // Assert independent sections are empty arrays
   assert.deepStrictEqual(mappedArtifact.experience, []);

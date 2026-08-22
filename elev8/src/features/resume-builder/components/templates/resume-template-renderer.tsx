@@ -1,12 +1,12 @@
 import React from "react";
-import { BuilderResumeArtifact, BuilderResumeTemplate } from "../../types";
+import { BuilderResumeArtifact, ResumeBuilderTemplate } from "../../types";
 import { ClassicTemplate } from "./classic-template";
 import { ModernTemplate } from "./modern-template";
 import { MinimalTemplate } from "./minimal-template";
 
 interface ResumeTemplateRendererProps {
   artifact: BuilderResumeArtifact;
-  template?: BuilderResumeTemplate;
+  template?: ResumeBuilderTemplate;
 }
 
 export function ResumeTemplateRenderer({

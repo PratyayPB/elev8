@@ -52,9 +52,9 @@ export function RecommendedActions() {
           </div>
         </Link>
 
-        {/* Career Guidance */}
+        {/* Career Assessment */}
         <Link
-          href="/dashboard/career-guidance"
+          href="/dashboard/career-assessment"
           className="p-5 bg-dashboard-card rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm hover:border-text-primary/30 transition-all flex flex-col justify-between group"
         >
           <div>
@@ -62,14 +62,14 @@ export function RecommendedActions() {
               <UserCheck className="w-5 h-5" />
             </div>
             <h4 className="font-display font-bold text-text-primary group-hover:text-text-primary transition-colors">
-              Career Guidance
+              Career Assessment
             </h4>
             <p className="text-xs font-sans text-text-secondary mt-1 leading-relaxed">
               Evaluate your market readiness and target career progression path.
             </p>
           </div>
           <div className="flex items-center text-xs font-display font-semibold text-text-primary mt-4">
-            View Analytics <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight fill-dashboard-metricHighlight" />
+            View Assessment <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight fill-dashboard-metricHighlight" />
           </div>
         </Link>
       </div>

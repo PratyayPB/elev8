@@ -1,8 +1,8 @@
-import { Interview } from "@prisma/client";
+import { InterviewSession } from "@prisma/client";
 import { TrendingUp } from "lucide-react";
 
 interface TrendChartsProps {
-  completedInterviews: Interview[];
+  completedInterviews: InterviewSession[];
 }
 
 export function TrendCharts({ completedInterviews }: TrendChartsProps) {

@@ -54,21 +54,30 @@ async function seed() {
         totalSkipped++;
       }
 
+      const expLevelMap: Record<string, "ENTRY" | "MID" | "SENIOR"> = {
+        EASY: "ENTRY",
+        MEDIUM: "MID",
+        HARD: "SENIOR",
+      };
+      const experienceLevel = expLevelMap[difficulty] || "MID";
+
       // Upsert record in Prisma
       await prisma.interviewTemplate.upsert({
         where: { id: templateId },
         update: {
           role: roleDef.role,
-          type: roleDef.type,
-          difficulty,
+          type: "PREDEFINED",
+          interviewType: roleDef.type as any,
+          experienceLevel,
           questionCount: questionsCount,
           templateBlobUrl,
         },
         create: {
           id: templateId,
           role: roleDef.role,
-          type: roleDef.type,
-          difficulty,
+          type: "PREDEFINED",
+          interviewType: roleDef.type as any,
+          experienceLevel,
           questionCount: questionsCount,
           templateBlobUrl,
         },

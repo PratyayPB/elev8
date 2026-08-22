@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { JobType, JobStatus, ResumeStatus } from "@prisma/client";
+import { JobType, JobStatus, ResumeScoreStatus } from "@prisma/client";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { assessResumeTask } from "@/trigger/assess-resume";
@@ -47,14 +47,13 @@ export async function createResumeAssessmentJob(formData: FormData) {
   );
 
   // 2. Create Resume Metadata in Prisma
-  const resume = await prisma.resume.create({
+  const resume = await prisma.resumeScore.create({
     data: {
       userId: dbUser.id,
       role,
-      roleDescription,
-      experienceLevel,
-      originalPdfBlobUrl,
-      status: ResumeStatus.DRAFT,
+      roleDesc: roleDescription,
+      expLevel: experienceLevel as any,
+      status: ResumeScoreStatus.PROCESSING,
     },
   });
 
@@ -123,7 +122,7 @@ export async function deleteResume(resumeId: string) {
     throw new Error("User record not found.");
   }
 
-  const resume = await prisma.resume.findUnique({
+  const resume = await prisma.resumeScore.findUnique({
     where: { id: resumeId },
   });
 
@@ -137,19 +136,11 @@ export async function deleteResume(resumeId: string) {
   });
 
   // 2. Delete the resume entry from database
-  await prisma.resume.delete({
+  await prisma.resumeScore.delete({
     where: { id: resumeId },
   });
 
   // 3. Clean up Vercel Blob storage files
-  if (resume.originalPdfBlobUrl) {
-    try {
-      await BlobStorageService.delete(resume.originalPdfBlobUrl);
-    } catch (e) {
-      console.warn("Failed to delete original PDF blob:", e);
-    }
-  }
-
   if (resume.artifactBlobUrl) {
     try {
       await BlobStorageService.delete(resume.artifactBlobUrl);

@@ -1,81 +1,49 @@
 "use server";
 
-import { requireAuth, getAuthUser } from "@/lib/auth";
-import { ProfileService } from "./profile.service";
-import { UserProfileData, OnboardingStatus } from "../types";
+import { getOrCreateDbUser } from "@/lib/auth";
+import { ProfileService, ProfileConflictError } from "./profile.service";
+import { ProfileData, ProfileCreateInput, ProfileUpdateInput } from "../types";
 import { revalidatePath } from "next/cache";
 
-export async function getProfileOrSyncAction(): Promise<UserProfileData> {
-  const user = await getAuthUser();
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-  const email = user.emailAddresses?.[0]?.emailAddress ?? null;
-  const fullName = user.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : null;
-  const profilePicture = user.imageUrl ?? null;
-
-  return await ProfileService.getOrCreateProfile(user.id, email, fullName, profilePicture);
+export async function getProfileAction(): Promise<ProfileData | null> {
+  const user = await getOrCreateDbUser();
+  return await ProfileService.getProfile(user.id);
 }
 
-export async function updateProfileAction(
-  data: Partial<UserProfileData>
-): Promise<{ success: boolean; profile?: UserProfileData; error?: string }> {
+export async function createProfileAction(
+  data: ProfileCreateInput
+): Promise<{ success: boolean; profile?: ProfileData; error?: string }> {
   try {
-    const userId = await requireAuth();
-    const updated = await ProfileService.updateProfile(userId, data);
+    const user = await getOrCreateDbUser();
+    const created = await ProfileService.createProfile(user.id, data);
+
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/settings");
     revalidatePath("/dashboard/onboarding");
+
+    return { success: true, profile: created };
+  } catch (err: unknown) {
+    if (err instanceof ProfileConflictError) {
+      return { success: false, error: err.message };
+    }
+    const errorMsg = err instanceof Error ? err.message : "Failed to create profile";
+    return { success: false, error: errorMsg };
+  }
+}
+
+export async function updateProfileAction(
+  data: ProfileUpdateInput
+): Promise<{ success: boolean; profile?: ProfileData; error?: string }> {
+  try {
+    const user = await getOrCreateDbUser();
+    const updated = await ProfileService.updateProfile(user.id, data);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/settings");
+
     return { success: true, profile: updated };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "An error occurred";
-    return { success: false, error: errorMsg };
-  }
-}
-
-export async function saveOnboardingStepAction(
-  step: number,
-  data: Partial<UserProfileData>
-): Promise<{ success: boolean; profile?: UserProfileData; error?: string }> {
-  try {
-    const userId = await requireAuth();
-    const status: OnboardingStatus = step >= 8 ? "COMPLETED" : "IN_PROGRESS";
-    const updated = await ProfileService.updateProfile(userId, {
-      ...data,
-      onboardingStep: step,
-      onboardingStatus: status,
-    });
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/onboarding");
-    return { success: true, profile: updated };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "An error occurred";
-    return { success: false, error: errorMsg };
-  }
-}
-
-export async function skipOnboardingAction(): Promise<{ success: boolean; error?: string }> {
-  try {
-    const userId = await requireAuth();
-    await ProfileService.setOnboardingStatus(userId, "SKIPPED");
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/onboarding");
-    return { success: true };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "An error occurred";
-    return { success: false, error: errorMsg };
-  }
-}
-
-export async function completeOnboardingAction(): Promise<{ success: boolean; error?: string }> {
-  try {
-    const userId = await requireAuth();
-    await ProfileService.setOnboardingStatus(userId, "COMPLETED", 9);
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/onboarding");
-    return { success: true };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "Failed to complete onboarding";
+    const errorMsg = err instanceof Error ? err.message : "Failed to update profile";
     return { success: false, error: errorMsg };
   }
 }

@@ -13,18 +13,55 @@ datasource db {
 // ENUMS
 // ==========================================
 
-enum CurrentStatus {
+enum CareerStatus {
   STUDENT
-  GRADUATE
-  WORKING_PROFESSIONAL
-  CAREER_SWITCHER
+  EMPLOYED
+  SELF_EMPLOYED
+  BUSINESS_OWNER
+  FREELANCER
+  JOB_SEEKER
+  RECENT_GRADUATE
+  OTHER
 }
 
-enum OnboardingStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  COMPLETED
-  SKIPPED
+enum PrimaryGoal {
+  LAND_A_JOB
+  GET_AN_INTERNSHIP
+  SWITCH_CAREER
+  GET_PROMOTED
+  LEARN_NEW_SKILLS
+  PREPARE_FOR_INTERVIEW
+  BUILD_RESUME
+  IMPROVE_RESUME
+  BECOME_JOB_READY
+  EXPLORE_CAREERS
+  OTHER
+}
+
+enum SkillProficiency {
+  BEGINNER
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum CareerExperienceLevel {
+  ENTRY
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+}
+
+enum TargetCompanyType {
+  STARTUP
+  MID_SIZE
+  ENTERPRISE
+  FAANG
+  GOVERNMENT
+  NON_PROFIT
+  NO_PREFERENCE
 }
 
 enum CareerLevel {
@@ -40,21 +77,20 @@ enum RoadmapStatus {
   ARCHIVED
 }
 
-
-
-enum ResumeStatus {
-  DRAFT
+enum ResumeScoreStatus {
+  PROCESSING
   COMPLETED
+  FAILED
   ARCHIVED
 }
 
-enum BuilderResumeStatus {
+enum ResumeBuildStatus {
   DRAFT
   READY
   ARCHIVED
 }
 
-enum BuilderResumeTemplate {
+enum ResumeBuilderTemplate {
   CLASSIC
   MODERN
   MINIMAL
@@ -69,18 +105,34 @@ enum InterviewStatus {
   ABANDONED
 }
 
-enum InterviewDifficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
-enum InterviewCategory {
+enum InterviewType {
   BEHAVIORAL
   TECHNICAL
   SYSTEM_DESIGN
   ROLE_SPECIFIC
   GENERAL
+}
+
+enum InterviewTemplateType {
+  PREDEFINED
+  AI_GENERATED
+}
+
+enum InterviewTemplateStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum CareerAssessmentStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SkillImportance {
+  CORE
+  IMPORTANT
+  SUPPORTING
 }
 
 enum NotificationStatus {
@@ -105,6 +157,42 @@ enum JobType {
   EXPORT
 }
 
+enum RecommendationSource {
+  RULE_ENGINE
+  HYBRID
+  MODULE_RESULT
+  PROFILE_SIGNAL
+  LLM_ASSESSMENT
+}
+
+enum RecommendationType {
+  MODULE
+  SKILL
+  ACTION
+  PROFILE_CLARIFICATION
+}
+
+enum RecommendationStatus {
+  PENDING
+  ACCEPTED
+  DISMISSED
+  COMPLETED
+}
+
+enum ModuleType {
+  ROADMAP
+  RESUME_SCORE
+  RESUME_BUILD
+  INTERVIEW_PRACTICE
+  CAREER_ASSESSMENT
+}
+
+enum ModuleCompletionStatus {
+  STARTED
+  COMPLETED
+  ABANDONED
+}
+
 
 // ==========================================
 // MODELS
@@ -115,16 +203,16 @@ model User {
   clerkId   String   @unique
   email     String?
 
-  profile           UserProfile?
-  careerAssessments CareerAssessment[]
-  careerGuidances   CareerGuidance[]
-  roadmaps          Roadmap[]
-  resumes           Resume[]
-  builderResumes    BuilderResume[]
-  interviews        Interview[]
-  progress          Progress?
-  notifications     Notification[]
-  jobs              Job[]
+  profile            Profile?
+  careerAssessments  CareerAssessment[]
+  roadmaps           Roadmap[]
+  resumeScores       ResumeScore[]
+  resumeBuilds       ResumeBuild[]
+  interviewTemplates InterviewTemplate[]
+  interviewSessions  InterviewSession[]
+  notifications      Notification[]
+  jobs               Job[]
+  moduleActivities   ModuleActivity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,99 +221,100 @@ model User {
   @@map("users")
 }
 
-model UserProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Personal Information
-  fullName        String?
-  profilePicture  String?   // Read-only URL from Clerk
-  email           String?   // Read-only email synced from Clerk
-  country         String?   // Free-text input
-  timezone        String?   // Free-text input
+  // Basic Information
+  name        String?
+  age         Int?
+  country     String?
+  phoneNumber String?
 
-  // Academic Information
-  currentStatus   CurrentStatus?
-  degree          String?
-  major           String?
-  institution     String?
-  graduationYear  Int?
-
-  // Professional Information
+  // Current Situation
+  currentStatus     CareerStatus
   currentRole       String?
   yearsOfExperience Int?
-  industry          String?
-  employmentStatus  String?
 
-  // Career Interests, Skills, Goals
-  careerInterests   String[]
-  skills            Json?      // JSON object storing categorized arrays: { languages: [], frameworks: [], databases: [], cloud: [], tools: [], softSkills: [] }
-  careerGoals       String[]
+  // Education
+  highestQualification String?
+  fieldOfStudy         String?
 
-  // Preferences
-  learningStyle     String?
-  difficulty        String?
-  weeklyHours       Int?
+  // Career Goals
+  primaryGoal       String?
+  targetRole        String?
+  targetCompanyType String?
 
-  // Onboarding tracking
-  onboardingStatus    OnboardingStatus  @default(NOT_STARTED)
-  onboardingStep      Int               @default(0)
-  profileCompletion   Int               @default(0)
+  // Learning Preferences
+  weeklyLearningHours Int?
 
-  // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  // Skills
+  skills        ProfileSkill[]
+  desiredSkills ProfileDesiredSkill[]
 
-  @@index([userId])
-  @@map("user_profiles")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([currentStatus])
+  @@index([targetRole])
+  @@index([country])
+  @@map("profiles")
+}
+
+model ProfileSkill {
+  id             String           @id @default(cuid())
+  profileId      String
+  profile        Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name           String
+  normalizedName String
+  proficiency    SkillProficiency
+
+  @@unique([profileId, normalizedName])
+  @@index([profileId])
+  @@map("profile_skills")
+}
+
+model ProfileDesiredSkill {
+  id             String   @id @default(cuid())
+  profileId      String
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name           String
+  normalizedName String
+
+  @@unique([profileId, normalizedName])
+  @@index([profileId])
+  @@map("profile_desired_skills")
 }
 
 model CareerAssessment {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  targetRole     String?
-  targetIndustry String?
-  currentLevel   CareerLevel?
-  skills         String[]
-  interests      String[]
-  goals          String[]
-  notes          String?
+  profileVersion Int
 
-  careerGuidances CareerGuidance[]
+  readinessScore     Int?
+  strengths          Json?
+  gaps               Json?
+  suggestedFocusArea Json?
+  narrative          String?
+
+  inputSnapshot Json?
+
+  model  String?
+  status CareerAssessmentStatus @default(PROCESSING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, profileVersion])
+  @@index([status])
   @@index([createdAt])
   @@map("career_assessments")
-}
-
-model CareerGuidance {
-  id           String            @id @default(cuid())
-  userId       String
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assessmentId String?
-  assessment   CareerAssessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
-
-  title           String
-  status          RoadmapStatus? @default(NOT_STARTED)
-  blobUrl         String?        // Reference to large report artifact stored in Blob Storage
-  careerMatch     String?
-  marketReadiness Int?
-  salaryMin       Int?
-  salaryMax       Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([assessmentId])
-  @@index([createdAt])
-  @@map("career_guidances")
 }
 
 model Roadmap {
@@ -241,7 +330,8 @@ model Roadmap {
   status            RoadmapStatus @default(NOT_STARTED)
   blobUrl           String?
 
-
+  personalized    Boolean?
+  profileSnapshot Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -250,6 +340,119 @@ model Roadmap {
   @@index([status])
   @@index([createdAt])
   @@map("roadmaps")
+}
+
+model ResumeScore {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role     String
+  roleDesc String?
+  expLevel CareerExperienceLevel
+
+  ovrScore Int?
+  atsScore Int?
+
+  artifactBlobUrl String?
+
+  personalized    Boolean?
+  profileSnapshot Json?
+
+  status ResumeScoreStatus @default(PROCESSING)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("resume_scores")
+}
+
+model ResumeBuild {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title           String
+  template        ResumeBuilderTemplate @default(CLASSIC)
+  artifactBlobUrl String?
+  status          ResumeBuildStatus     @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("resume_builds")
+}
+
+model InterviewTemplate {
+  id                String                @id @default(cuid())
+  userId            String?
+  user              User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type              InterviewTemplateType
+  role              String
+  experienceLevel   CareerExperienceLevel
+  interviewType     InterviewType
+  questionCount     Int
+  estimatedDuration String?
+
+  personalized    Boolean?
+  profileSnapshot Json?
+
+  templateBlobUrl String
+
+  status InterviewTemplateStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interviews InterviewSession[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@map("interview_templates")
+}
+
+model InterviewSession {
+  id         String            @id @default(cuid())
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  templateId String
+  template   InterviewTemplate @relation(fields: [templateId], references: [id])
+
+  // Historical snapshot
+  role              String
+  experienceLevel   CareerExperienceLevel
+  interviewType     InterviewType
+  questionCount     Int
+  estimatedDuration String?
+
+  blobUrl String?
+
+  overallScore    Int?
+  durationSeconds Int?
+  assessment      Json?
+
+  personalized    Boolean @default(false)
+  profileSnapshot Json?
+
+  status InterviewStatus @default(READY)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("interviews")
 }
 
 model Job {
@@ -276,120 +479,6 @@ model Job {
   @@map("jobs")
 }
 
-
-
-
-model Resume {
-  id                 String       @id @default(cuid())
-  userId             String
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  role               String
-  roleDescription    String?
-  experienceLevel    String
-  overallScore       Int?
-  atsScore           Int?
-  artifactBlobUrl    String?      // Reference to ResumeArtifact JSON in Blob Storage
-  originalPdfBlobUrl String?      // Reference to original uploaded PDF in Blob Storage
-  status             ResumeStatus @default(DRAFT)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("resumes")
-}
-
-
-model BuilderResume {
-  id              String                @id @default(cuid())
-  userId          String
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title           String
-  targetRole      String?
-  template        BuilderResumeTemplate @default(CLASSIC)
-  artifactBlobUrl String?
-  status          BuilderResumeStatus   @default(DRAFT)
-  version         Int                   @default(1)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("builder_resumes")
-}
-
-
-model Interview {
-  id                String            @id @default(cuid())
-  userId            String
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  templateId        String?
-  template          InterviewTemplate? @relation(fields: [templateId], references: [id])
-
-  role              String
-  difficulty        String
-  experienceLevel   String
-  interviewType     String?
-  source            String?
-  status            InterviewStatus   @default(GENERATING)
-  blobUrl           String?
-  questionCount     Int               @default(5)
-  estimatedDuration String?
-
-  overallScore      Int?
-  durationSeconds   Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("interviews")
-}
-
-model InterviewTemplate {
-  id              String   @id
-  role            String
-  type            String
-  difficulty      String
-  questionCount   Int
-  templateBlobUrl String
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  interviews      Interview[]
-
-  @@map("interview_templates")
-}
-
-model Progress {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  completedMilestones Int  @default(0)
-  totalMilestones     Int  @default(0)
-  interviewReadiness  Int?
-  resumeReadiness     Int?
-  careerReadiness     Int?
-  overallProgress     Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@map("progress")
-}
-
 model Notification {
   id     String @id @default(cuid())
   userId String
@@ -407,4 +496,109 @@ model Notification {
   @@index([status])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model RoleSkillProfile {
+  id              String                 @id @default(cuid())
+  role            String
+  normalizedRole  String
+  experienceLevel CareerExperienceLevel
+
+  skills RoleSkillRequirement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([normalizedRole, experienceLevel])
+  @@index([normalizedRole])
+  @@map("role_skill_profiles")
+}
+
+model RoleSkillRequirement {
+  id                 String           @id @default(cuid())
+  roleSkillProfileId String
+  roleSkillProfile   RoleSkillProfile @relation(fields: [roleSkillProfileId], references: [id], onDelete: Cascade)
+
+  name               String
+  normalizedName     String
+  minimumProficiency SkillProficiency
+  importance         SkillImportance
+  estimatedHours     Int?
+
+  @@unique([roleSkillProfileId, normalizedName])
+  @@index([roleSkillProfileId])
+  @@map("role_skill_requirements")
+}
+
+model ModuleActivity {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  module           ModuleType
+  completionStatus ModuleCompletionStatus
+  metadata         Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, module])
+  @@index([userId, createdAt])
+  @@map("module_activities")
+}
+
+model Progress {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  completedMilestones Int  @default(0)
+  totalMilestones     Int  @default(0)
+  interviewReadiness  Int?
+  resumeReadiness     Int?
+  careerReadiness     Int?
+  overallProgress     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("progress")
+}
+
+model RecommendationSet {
+  id             String @id @default(cuid())
+  userId         String
+  profileVersion Int
+  trigger        String
+
+  recommendations Recommendation[]
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("recommendation_sets")
+}
+
+model Recommendation {
+  id                  String               @id @default(cuid())
+  recommendationSetId String
+  recommendationSet   RecommendationSet    @relation(fields: [recommendationSetId], references: [id], onDelete: Cascade)
+  userId              String
+
+  source   RecommendationSource
+  type     RecommendationType
+  refId    String
+  priority Int
+  score    Float
+  scoreBreakdown Json?
+  reason   String
+  context  Json?
+  status   RecommendationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@map("recommendations")
 }

@@ -67,7 +67,7 @@ export class WorkspaceService {
 
   static groupResumesByStatus(resumes: ResumeSummary[]) {
     return {
-      processing: resumes.filter((r) => r.status === "DRAFT"),
+      processing: resumes.filter((r) => r.status === "PROCESSING"),
       completed: resumes.filter((r) => r.status === "COMPLETED"),
       archived: resumes.filter((r) => r.status === "ARCHIVED"),
     };
