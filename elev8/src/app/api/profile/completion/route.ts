@@ -1,28 +1,32 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
-import { ProfileService, calculateProfileCompleteness } from "@/features/profile/services";
+import { ProfileService, calculateProfileCompleteness, checkMandatoryCompletion } from "@/features/profile/services";
+import { getOrCreateDbUser } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+    const user = await getOrCreateDbUser().catch(() => null);
 
     if (!user) {
       const emptyCompleteness = calculateProfileCompleteness(null);
-      return NextResponse.json(emptyCompleteness, { status: 200 });
+      const emptyMandatory = checkMandatoryCompletion(null);
+      return NextResponse.json({
+        ...emptyCompleteness,
+        allMissingFields: emptyCompleteness.missingFields,
+        isComplete: emptyMandatory.isComplete,
+        missingFields: emptyMandatory.missingFields,
+      }, { status: 200 });
     }
 
     const profile = await ProfileService.getProfile(user.id);
     const completeness = calculateProfileCompleteness(profile);
+    const mandatory = checkMandatoryCompletion(profile);
 
-    return NextResponse.json(completeness, { status: 200 });
+    return NextResponse.json({
+      ...completeness,
+      allMissingFields: completeness.missingFields,
+      isComplete: mandatory.isComplete,
+      missingFields: mandatory.missingFields,
+    }, { status: 200 });
   } catch (error) {
     console.error("GET /api/profile/completion error:", error);
     return NextResponse.json(

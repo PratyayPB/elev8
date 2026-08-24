@@ -56,7 +56,7 @@ export const profileCareerGoalsSchema = z.object({
     .transform((val) => (val && val.trim().length > 0 ? val.trim() : null)),
 });
 
-export const profileCreateSchema = z.object({
+export const mandatoryProfileSchema = z.object({
   name: z
     .string()
     .trim()
@@ -68,31 +68,38 @@ export const profileCreateSchema = z.object({
     .min(PROFILE_VALIDATION.AGE_MIN, `Age must be at least ${PROFILE_VALIDATION.AGE_MIN}`)
     .max(PROFILE_VALIDATION.AGE_MAX, `Age must be at most ${PROFILE_VALIDATION.AGE_MAX}`),
   country: z.string().trim().min(1, "Country is required"),
-  phoneNumber: z.string().trim().optional().nullable(),
+  phoneNumber: z.string().trim().min(1, "Phone number is required"),
+});
 
-  currentStatus: currentStatusSchema,
+export const optionalProfileSchema = z.object({
+  currentStatus: currentStatusSchema.nullable().optional(),
   currentRole: z
     .string()
     .trim()
-    .min(1, "Current role is required")
-    .max(PROFILE_VALIDATION.ROLE_MAX),
+    .max(PROFILE_VALIDATION.ROLE_MAX)
+    .nullable()
+    .optional(),
   yearsOfExperience: z.coerce
     .number({ invalid_type_error: "Years of experience must be a number" })
     .int("Years of experience must be an integer")
-    .min(0, "Years of experience cannot be negative"),
+    .min(0, "Years of experience cannot be negative")
+    .nullable()
+    .optional(),
 
   highestQualification: z
     .string()
     .trim()
-    .min(1, "Highest qualification is required")
-    .max(PROFILE_VALIDATION.QUALIFICATION_MAX),
+    .max(PROFILE_VALIDATION.QUALIFICATION_MAX)
+    .nullable()
+    .optional(),
   fieldOfStudy: z
     .string()
     .trim()
-    .min(1, "Field of study is required")
-    .max(PROFILE_VALIDATION.FIELD_OF_STUDY_MAX),
+    .max(PROFILE_VALIDATION.FIELD_OF_STUDY_MAX)
+    .nullable()
+    .optional(),
 
-  primaryGoal: primaryGoalSchema,
+  primaryGoal: primaryGoalSchema.nullable().optional(),
   targetRole: z
     .string()
     .trim()
@@ -101,13 +108,15 @@ export const profileCreateSchema = z.object({
     .nullable()
     .transform((val) => (val && val.trim().length > 0 ? val.trim() : null)),
 
-  targetCompanyType: targetCompanyTypeSchema,
+  targetCompanyType: targetCompanyTypeSchema.nullable().optional(),
 
   weeklyLearningHours: z.coerce
     .number({ invalid_type_error: "Weekly learning hours must be a number" })
     .int("Weekly learning hours must be an integer")
     .min(1, "Must be at least 1 hour")
-    .max(168, "Cannot exceed 168 hours"),
+    .max(168, "Cannot exceed 168 hours")
+    .nullable()
+    .optional(),
 
   skills: z
     .array(profileSkillSchema)
@@ -128,8 +137,12 @@ export const profileCreateSchema = z.object({
     .default([]),
 });
 
+export const profileCreateSchema = mandatoryProfileSchema.merge(optionalProfileSchema.partial());
 export const profileUpdateSchema = profileCreateSchema.partial();
+export const profileUpsertSchema = profileCreateSchema.partial();
 
+export type MandatoryProfileSchemaType = z.infer<typeof mandatoryProfileSchema>;
+export type OptionalProfileSchemaType = z.infer<typeof optionalProfileSchema>;
 export type ProfileCreateSchemaType = z.infer<typeof profileCreateSchema>;
 export type ProfileUpdateSchemaType = z.infer<typeof profileUpdateSchema>;
 export type ProfileSkillSchemaType = z.infer<typeof profileSkillSchema>;

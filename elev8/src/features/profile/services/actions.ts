@@ -47,3 +47,20 @@ export async function updateProfileAction(
     return { success: false, error: errorMsg };
   }
 }
+
+export async function upsertProfileAction(
+  data: Partial<ProfileCreateInput>
+): Promise<{ success: boolean; profile?: ProfileData; error?: string }> {
+  try {
+    const user = await getOrCreateDbUser();
+    const upserted = await ProfileService.upsertProfile(user.id, data);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/settings");
+
+    return { success: true, profile: upserted };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Failed to save profile";
+    return { success: false, error: errorMsg };
+  }
+}

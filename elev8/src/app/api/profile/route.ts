@@ -1,30 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { ProfileService, ProfileConflictError, ProfileNotFoundError } from "@/features/profile/services";
-import { profileCreateSchema, profileUpdateSchema } from "@/features/profile/schemas";
+import { profileCreateSchema, profileUpdateSchema, profileUpsertSchema } from "@/features/profile/schemas";
 import { ZodError } from "zod";
-
-async function getAuthenticatedDbUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) return null;
-
-  let user = await prisma.user.findUnique({
-    where: { clerkId },
-  });
-
-  if (!user) {
-    user = await prisma.user.create({
-      data: { clerkId },
-    });
-  }
-
-  return user;
-}
+import { getOrCreateDbUser } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const user = await getAuthenticatedDbUser();
+    const user = await getOrCreateDbUser().catch(() => null);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -46,7 +29,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getAuthenticatedDbUser();
+    const user = await getOrCreateDbUser().catch(() => null);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -76,7 +59,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const user = await getAuthenticatedDbUser();
+    const user = await getOrCreateDbUser().catch(() => null);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -97,6 +80,33 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
     console.error("PATCH /api/profile error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const user = await getOrCreateDbUser().catch(() => null);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const validated = profileUpsertSchema.parse(body);
+
+    const upserted = await ProfileService.upsertProfile(user.id, validated);
+    return NextResponse.json(upserted, { status: 200 });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error("PUT /api/profile error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

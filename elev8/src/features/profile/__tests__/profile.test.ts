@@ -47,6 +47,7 @@ export async function runProfileFoundationTests() {
     name: "Alex Smith",
     age: 23,
     country: "Canada",
+    phoneNumber: "+1 (555) 123-4567",
     currentStatus: "STUDENT",
     currentRole: "Computer Science Student",
 
@@ -72,7 +73,7 @@ export async function runProfileFoundationTests() {
   assert.strictEqual(parsed.name, "Alex Smith");
   assert.strictEqual(parsed.age, 23);
   assert.strictEqual(parsed.currentStatus, "STUDENT");
-  assert.strictEqual(parsed.skills.length, 2);
+  assert.strictEqual(parsed.skills?.length, 2);
   console.log("✔ Valid payload parsed successfully.");
 
   // 5. Validation: Negative Experience Rejected

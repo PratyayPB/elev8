@@ -97,8 +97,8 @@ export class ProfileService {
       throw new ProfileConflictError();
     }
 
-    const cleanSkills = deduplicateSkills(validated.skills);
-    const cleanDesiredSkills = deduplicateDesiredSkills(validated.desiredSkills);
+    const cleanSkills = deduplicateSkills(validated.skills ?? []);
+    const cleanDesiredSkills = deduplicateDesiredSkills(validated.desiredSkills ?? []);
 
     const created = await prisma.profile.create({
       data: {
@@ -107,15 +107,15 @@ export class ProfileService {
         age: validated.age,
         country: validated.country,
         phoneNumber: validated.phoneNumber ?? null,
-        currentStatus: validated.currentStatus,
-        currentRole: validated.currentRole,
-        yearsOfExperience: validated.yearsOfExperience,
-        highestQualification: validated.highestQualification,
-        fieldOfStudy: validated.fieldOfStudy,
-        primaryGoal: validated.primaryGoal,
+        currentStatus: validated.currentStatus ?? null,
+        currentRole: validated.currentRole ?? null,
+        yearsOfExperience: validated.yearsOfExperience ?? null,
+        highestQualification: validated.highestQualification ?? null,
+        fieldOfStudy: validated.fieldOfStudy ?? null,
+        primaryGoal: validated.primaryGoal ?? null,
         targetRole: validated.targetRole ?? null,
-        targetCompanyType: validated.targetCompanyType,
-        weeklyLearningHours: validated.weeklyLearningHours,
+        targetCompanyType: validated.targetCompanyType ?? null,
+        weeklyLearningHours: validated.weeklyLearningHours ?? null,
         skills: {
           create: cleanSkills.map((s) => ({
             name: s.name,
@@ -246,6 +246,29 @@ export class ProfileService {
   }
 
   /**
+   * Upserts a Profile (Create if missing, update if exists).
+   * Supports partial updates on existing, but enforces required fields on create.
+   */
+  static async upsertProfile(
+    userId: string,
+    input: Partial<ProfileCreateInput>
+  ): Promise<ProfileData> {
+    const existing = await prisma.profile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return this.updateProfile(userId, input as ProfileUpdateInput);
+    }
+
+    // Creating requires mandatory fields. Using profileCreateSchema handles this 
+    // because we combined the mandatory and optional schemas.
+    const createData = input as ProfileCreateInput;
+    return this.createProfile(userId, createData);
+  }
+
+  /**
    * Deletes a user profile (primarily for account cleanup).
    */
   static async deleteProfile(userId: string): Promise<void> {
@@ -335,24 +358,24 @@ export class ProfileService {
       country: profile.country || "",
       phoneNumber: profile.phoneNumber || null,
       currentStatus: profile.currentStatus,
-      currentRole: profile.currentRole || "",
-      yearsOfExperience: profile.yearsOfExperience || 0,
-      education: {
+      currentRole: profile.currentRole,
+      yearsOfExperience: profile.yearsOfExperience,
+      education: (profile.highestQualification || profile.fieldOfStudy) ? {
         highestQualification: profile.highestQualification || "",
         fieldOfStudy: profile.fieldOfStudy || "",
-      },
-      careerGoals: {
-        primaryGoal: (profile.primaryGoal as any) || "OTHER",
+      } : null,
+      careerGoals: profile.primaryGoal ? {
+        primaryGoal: profile.primaryGoal as any,
         targetRole: profile.targetRole,
-      },
+      } : null,
       skills: profile.skills.map((s) => ({
         id: s.id,
         name: s.name,
         proficiency: s.proficiency,
       })),
       desiredSkills: profile.desiredSkills.map((s) => s.name),
-      targetCompanyType: (profile.targetCompanyType as any) || "NO_PREFERENCE",
-      weeklyLearningHours: profile.weeklyLearningHours || 0,
+      targetCompanyType: (profile.targetCompanyType as any) || null,
+      weeklyLearningHours: profile.weeklyLearningHours,
       profileVersion: 1,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,

@@ -38,18 +38,18 @@ export interface ProfileData {
   country: string;
   phoneNumber?: string | null;
 
-  currentStatus: CareerStatus;
-  currentRole: string;
-  yearsOfExperience: number;
+  currentStatus: CareerStatus | null;
+  currentRole: string | null;
+  yearsOfExperience: number | null;
 
-  education: ProfileEducationData;
-  careerGoals: ProfileCareerGoalsData;
+  education: ProfileEducationData | null;
+  careerGoals: ProfileCareerGoalsData | null;
 
   skills: ProfileSkillData[];
   desiredSkills: string[];
 
-  targetCompanyType: TargetCompanyType;
-  weeklyLearningHours: number;
+  targetCompanyType: TargetCompanyType | null;
+  weeklyLearningHours: number | null;
 
   profileVersion: number;
   createdAt: Date | string;
@@ -62,24 +62,24 @@ export interface ProfileCreateInput {
   country: string;
   phoneNumber?: string | null;
 
-  currentStatus: CareerStatus;
-  currentRole: string;
-  yearsOfExperience: number;
+  currentStatus?: CareerStatus | null;
+  currentRole?: string | null;
+  yearsOfExperience?: number | null;
 
-  highestQualification: string;
-  fieldOfStudy: string;
+  highestQualification?: string | null;
+  fieldOfStudy?: string | null;
 
-  primaryGoal: PrimaryGoal;
+  primaryGoal?: PrimaryGoal | null;
   targetRole?: string | null;
 
-  targetCompanyType: TargetCompanyType;
-  weeklyLearningHours: number;
+  targetCompanyType?: TargetCompanyType | null;
+  weeklyLearningHours?: number | null;
 
-  skills: {
+  skills?: {
     name: string;
     proficiency: SkillProficiency;
   }[];
-  desiredSkills: string[];
+  desiredSkills?: string[];
 }
 
 export type ProfileUpdateInput = Partial<ProfileCreateInput>;
@@ -109,4 +109,16 @@ export interface ProfilePromptItem {
   priority: number;
   skippable: boolean;
   context: PromptContext;
+}
+
+export type OnboardingStage = "MANDATORY" | "OPTIONAL";
+
+export interface OnboardingState {
+  isLoading: boolean;
+  isOpen: boolean;
+  stage: OnboardingStage;
+  profile: ProfileData | null;
+  missingFields: string[];
+  isSaving: boolean;
+  error: string | null;
 }

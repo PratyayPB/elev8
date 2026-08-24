@@ -9,6 +9,22 @@ import {
   ProfileCompletenessFieldKey,
 } from "../constants";
 
+export function checkMandatoryCompletion(profile: ProfileData | null): {
+  isComplete: boolean;
+  missingFields: string[];
+} {
+  const missingFields: string[] = [];
+  if (!profile?.name?.trim()) missingFields.push("name");
+  if (!profile?.age) missingFields.push("age");
+  if (!profile?.country?.trim()) missingFields.push("country");
+  if (!profile?.phoneNumber?.trim()) missingFields.push("phoneNumber");
+
+  return {
+    isComplete: missingFields.length === 0,
+    missingFields,
+  };
+}
+
 /**
  * Checks if a string value is present and not just whitespace.
  */

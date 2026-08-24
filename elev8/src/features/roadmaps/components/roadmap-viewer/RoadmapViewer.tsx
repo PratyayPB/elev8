@@ -7,25 +7,37 @@ import { ReadOnlyToolbar } from "./ReadOnlyToolbar";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { EmptyState } from "./EmptyState";
 import { RoadmapExportUtility } from "@/services/roadmaps/roadmap-export.utility";
-import { X, BookOpen, Rocket } from "lucide-react";
+import { useRoadmapPolling } from "../../hooks/use-roadmap-polling";
+import { completeRoadmapPhaseAction } from "../../actions/roadmap-activity.actions";
+import { X, BookOpen, Rocket, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+import { useState as useMilestoneState, useTransition } from "react";
+import { JobStatus } from "@prisma/client";
 
-interface RoadmapViewerProps {
+export interface RoadmapViewerProps {
+  roadmapId?: string;
   artifact?: RoadmapArtifact | null;
   isLoading?: boolean;
   jobStatus?: string;
   jobProgress?: number;
+  jobState?: JobStatus | string | null;
+  error?: string;
   onRegenerate?: () => void;
 }
 
 export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
+  roadmapId,
   artifact,
   isLoading = false,
-  jobStatus = "Processing...",
   jobProgress = 0,
+  jobState,
+  error,
   onRegenerate,
 }) => {
   const [selectedNodeData, setSelectedNodeData] = useState<any | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Hook handles short polling while job is in active state (e.g. IN_PROGRESS / RUNNING / QUEUED)
+  useRoadmapPolling(isLoading);
 
   const handleDownloadPdf = () => {
     if (canvasRef.current && artifact) {
@@ -37,14 +49,76 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
     }
   };
 
+  // 1. Loading State (active background job)
   if (isLoading) {
-    return <LoadingOverlay status={jobStatus} progress={jobProgress} />;
+    return <LoadingOverlay progress={jobProgress} />;
   }
 
+  // 2. Failed or Cancelled State
+  if (jobState === JobStatus.FAILED || jobState === "FAILED" || error) {
+    return (
+      <div className="w-full max-w-xl mx-auto my-12 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 text-center shadow-sm space-y-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-xl font-display font-bold text-text-primary">
+            Generation Failed
+          </h3>
+          <p className="text-sm font-sans text-text-secondary mt-1 max-w-md mx-auto">
+            We couldn&apos;t generate your roadmap. Please try again.
+          </p>
+        </div>
+        {onRegenerate && (
+          <div className="pt-2">
+            <button
+              onClick={onRegenerate}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-text-primary text-white rounded-lg hover:bg-black/80 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try Again
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (jobState === JobStatus.CANCELLED || jobState === "CANCELLED") {
+    return (
+      <div className="w-full max-w-xl mx-auto my-12 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 text-center shadow-sm space-y-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-muted text-text-muted border border-border-subtle">
+          <X className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-xl font-display font-bold text-text-primary">
+            Generation Cancelled
+          </h3>
+          <p className="text-sm font-sans text-text-secondary mt-1 max-w-md mx-auto">
+            Roadmap generation was cancelled before completion.
+          </p>
+        </div>
+        {onRegenerate && (
+          <div className="pt-2">
+            <button
+              onClick={onRegenerate}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-text-primary text-white rounded-lg hover:bg-black/80 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Generate Roadmap
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 3. Empty State (no artifact available)
   if (!artifact) {
     return <EmptyState onGenerateClick={onRegenerate} />;
   }
 
+  // 4. Completed State
   return (
     <div className="relative w-full max-w-7xl mx-auto space-y-6 pb-10">
       <ReadOnlyToolbar
@@ -86,7 +160,10 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
 
               {selectedNodeData.estimatedHours && (
                 <div className="mb-4 text-xs font-sans text-text-muted">
-                  Estimated Time: <span className="text-text-primary font-semibold">{selectedNodeData.estimatedHours} hours</span>
+                  Estimated Time:{" "}
+                  <span className="text-text-primary font-semibold">
+                    {selectedNodeData.estimatedHours} hours
+                  </span>
                 </div>
               )}
             </div>
@@ -111,8 +188,7 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
               <MilestoneCard
                 key={m.id}
                 milestone={m}
-                roadmapId={artifact.metadata.title} // Or we need the actual ID. Wait, artifact doesn't have the roadmapId at the top level? Let's assume roadmapId is passed or we can use a wrapper. Wait, I'll pass the roadmapId from props if possible.
-                roadmap={artifact}
+                roadmapId={roadmapId}
               />
             ))}
           </div>
@@ -126,14 +202,21 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
           </div>
           <div className="space-y-3">
             {artifact.projects.map((p) => (
-              <div key={p.id} className="p-4 bg-surface-muted/50 rounded-xl border border-border-subtle">
+              <div
+                key={p.id}
+                className="p-4 bg-surface-muted/50 rounded-xl border border-border-subtle"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-display font-semibold text-text-primary">{p.title}</span>
+                  <span className="text-sm font-display font-semibold text-text-primary">
+                    {p.title}
+                  </span>
                   <span className="text-[11px] font-display font-semibold bg-dashboard-metricHighlight/30 text-black px-2.5 py-0.5 rounded-full border border-dashboard-metricHighlight">
                     {p.difficulty}
                   </span>
                 </div>
-                <p className="text-xs font-sans text-text-secondary mt-1">{p.description}</p>
+                <p className="text-xs font-sans text-text-secondary mt-1">
+                  {p.description}
+                </p>
               </div>
             ))}
           </div>
@@ -143,26 +226,27 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
   );
 };
 
-// Extracted MilestoneCard to handle client-side completion
-import { useState as useMilestoneState, useTransition } from "react";
-import { completeRoadmapPhaseAction } from "../../actions/roadmap-activity.actions";
-import { CheckCircle } from "lucide-react";
-
-function MilestoneCard({ milestone, roadmap, roadmapId }: { milestone: any; roadmap: any; roadmapId?: string }) {
+function MilestoneCard({
+  milestone,
+  roadmapId,
+}: {
+  milestone: any;
+  roadmapId?: string;
+}) {
   const [isCompleted, setIsCompleted] = useMilestoneState(false);
   const [isPending, startTransition] = useTransition();
 
-  // In RoadmapViewer, we don't have the roadmapId directly on the artifact, but we know the viewer
-  // is rendered on a page that knows it. We can parse it from URL or pass it down. 
-  // Let's parse from window.location for MVP if roadmapId is missing, but ideally it should be in props.
   const handleComplete = () => {
     startTransition(async () => {
-      // Very hacky but avoids changing page.tsx and passing it down all the way.
-      const resolvedRoadmapId = roadmapId || (typeof window !== 'undefined' ? window.location.pathname.match(/\/roadmaps\/([a-zA-Z0-9_-]+)/)?.[1] : null);
+      const resolvedRoadmapId =
+        roadmapId ||
+        (typeof window !== "undefined"
+          ? window.location.pathname.match(/\/roadmaps\/([a-zA-Z0-9_-]+)/)?.[1]
+          : null);
 
       if (!resolvedRoadmapId) {
-         console.warn("Could not determine roadmapId to complete phase");
-         return;
+        console.warn("Could not determine roadmapId to complete phase");
+        return;
       }
 
       const res = await completeRoadmapPhaseAction({
@@ -184,7 +268,9 @@ function MilestoneCard({ milestone, roadmap, roadmapId }: { milestone: any; road
           Phase {milestone.order}: {milestone.title}
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-sans text-text-muted">{milestone.estimatedWeeks} wks</span>
+          <span className="text-xs font-sans text-text-muted">
+            {milestone.estimatedWeeks} wks
+          </span>
           {isCompleted ? (
             <span className="inline-flex items-center gap-1 text-xs text-emerald-500 font-medium">
               <CheckCircle className="w-4 h-4" />
@@ -201,7 +287,9 @@ function MilestoneCard({ milestone, roadmap, roadmapId }: { milestone: any; road
           )}
         </div>
       </div>
-      <p className="text-xs font-sans text-text-secondary">{milestone.description}</p>
+      <p className="text-xs font-sans text-text-secondary">
+        {milestone.description}
+      </p>
     </div>
   );
 }

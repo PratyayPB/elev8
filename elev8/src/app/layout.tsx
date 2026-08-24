@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkAuthProvider } from "@/providers/clerk-provider";
+import { OnboardingProvider } from "@/providers";
+import { OnboardingModal } from "@/components/modals";
 import { Albert_Sans, Geist } from "next/font/google";
 import "./globals.css";
 
@@ -25,11 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkAuthProvider>
-      <html lang="en" className={`scroll-smooth ${geistSans.variable} ${albertSans.variable}`}>
-        <body className="font-sans antialiased bg-background text-foreground selection:bg-accent-cyan selection:text-black">
-          {children}
-        </body>
-      </html>
+      <OnboardingProvider>
+        <html lang="en" className={`scroll-smooth ${geistSans.variable} ${albertSans.variable}`}>
+          <body className="font-sans antialiased bg-background text-foreground selection:bg-accent-cyan selection:text-black">
+            {children}
+            <OnboardingModal />
+          </body>
+        </html>
+      </OnboardingProvider>
     </ClerkAuthProvider>
   );
 }

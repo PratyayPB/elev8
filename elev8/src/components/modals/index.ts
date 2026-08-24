@@ -1,2 +1,3 @@
 // Modals components module
-export {};
+export * from "./country-select";
+export * from "./onboarding-modal";

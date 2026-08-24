@@ -233,7 +233,7 @@ model Profile {
   phoneNumber String?
 
   // Current Situation
-  currentStatus     CareerStatus
+  currentStatus     CareerStatus?
   currentRole       String?
   yearsOfExperience Int?
 

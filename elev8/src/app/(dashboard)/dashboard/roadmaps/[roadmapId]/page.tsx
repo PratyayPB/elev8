@@ -42,10 +42,13 @@ export default async function RoadmapViewerPage({ params }: RoadmapViewerPagePro
   return (
     <div className="p-6">
       <RoadmapViewer
+        roadmapId={roadmapId}
         artifact={res.artifact}
         isLoading={res.roadmap.status === "IN_PROGRESS"}
         jobStatus={res.job?.step || "Generating..."}
         jobProgress={res.job?.progress || 0}
+        jobState={res.job?.status ?? null}
+        error={res.error}
       />
     </div>
   );

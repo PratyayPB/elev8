@@ -74,7 +74,7 @@ Phase 6.6: Integration & Unified Career Dashboard
   - Verified 100% type safety with zero TS errors across the codebase.
 
 ## In Progress
-- None
+- [ ] **Phase 7.1: User Onboarding Implementation** (Mandatory/Optional modals, Profile schema migration for nullable fields, upsert semantics, Clerk webhook svix verification, Shadcn UI country selector combobox)
 
 ## Next Up
 - Project Polish & Release (or the next specified phase)
