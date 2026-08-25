@@ -1,2 +1,3 @@
-// UI primitives module (shadcn/ui placeholders)
-export {};
+// UI primitives module
+export * from "./random-letter-swap";
+

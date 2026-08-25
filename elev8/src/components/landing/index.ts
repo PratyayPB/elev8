@@ -3,6 +3,7 @@ export { Footer } from "./footer/Footer";
 export { ChatButton } from "./chatbot/ChatButton";
 // New sections
 export { Hero } from "./hero/Hero";
+export { DashboardPreview } from "./dashboard-preview";
 export { LogoBar } from "./logo-bar/LogoBar";
 export { Features } from "./features/Features";
 export { Showcase } from "./showcase/Showcase";

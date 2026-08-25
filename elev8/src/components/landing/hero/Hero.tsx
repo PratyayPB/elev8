@@ -29,19 +29,21 @@ export function Hero() {
               success.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="flex flex-row items-center gap-4 w-full sm:w-auto">
               <Link
-                href="/sign-up"
-                className="inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-xs font-medium text-white shadow-sm hover:bg-black/90 transition-colors"
+                href="/sign-in"
+                className="inline-flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-sm font-medium shadow-lg shadow-black/10 hover:bg-black/90 transition-all group"
               >
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Get started
+                <div className="bg-white text-black rounded-full p-1.5 group-hover:translate-x-0.5 transition-transform flex items-center justify-center">
+                  <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                </div>
               </Link>
               <Link
-                href="#features"
-                className="inline-flex items-center justify-center rounded-full border border-border-subtle bg-white px-6 py-3 text-xs font-medium text-text-primary hover:bg-surface-muted transition-colors"
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-full border border-black bg-transparent px-6 py-2.5 text-sm font-medium text-black hover:bg-black/5 transition-colors"
               >
-                Learn More
+                Contact us
               </Link>
             </div>
           </motion.div>
@@ -51,17 +53,28 @@ export function Hero() {
             initial={{ opacity: 0, scale: 0.95, x: 20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-            className="relative w-full aspect-[4/3] md:aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl"
+            className="relative w-full aspect-[4/3] md:aspect-square"
           >
-            <Image
-              src="/images/landing/hero.jpg"
-              alt="Professional using AI career platform"
-              fill
-              className="object-cover"
-              priority
-            />
-            {/* Decorative gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent"></div>
+            {/* Back Image (Left/Bottom) */}
+            <div className="absolute top-0 -left-4 w-[75%] h-[75%] rounded-3xl overflow-hidden shadow-xl z-0 rotate-[3deg]">
+              <Image
+                src="/images/landing/pic2.jpg"
+                alt="Platform Interface 1"
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            {/* Front Image (Right/Top) */}
+            <div className="absolute bottom-8 -right-4 w-[55%] h-[55%] rounded-3xl overflow-hidden shadow-2xl z-10 border border-white/50 -rotate-[6deg] scale-[0.8]">
+              <Image
+                src="/images/landing/pic3.jpg"
+                alt="Platform Interface 2"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
           </motion.div>
         </div>
       </div>
