@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { MoveUpRight } from "lucide-react";
 
 const featuredStory = {
@@ -59,14 +59,14 @@ const sideContainerVariants = {
   },
 };
 
-const sideCardVariants = {
+const sideCardVariants: Variants = {
   hidden: { opacity: 0, x: 150 },
   visible: {
     opacity: 1,
     x: 0,
     transition: {
       duration: 0.65,
-      ease: [0.42, 0, 1, 1], // ease-in
+      ease: [0.42, 0, 1, 1],
     },
   },
 };

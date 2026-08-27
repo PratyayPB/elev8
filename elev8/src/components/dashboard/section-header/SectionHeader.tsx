@@ -18,13 +18,13 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   return (
     <div className={cn("flex items-center justify-between mb-6", className)}>
-      <h2 className="text-xl font-display font-bold text-text-primary tracking-tight">
+      <h2 className="text-xl font-display font-bold text-foreground tracking-tight">
         {title}
       </h2>
       {actionLabel && actionHref && (
         <Link
           href={actionHref}
-          className="group flex items-center gap-1 text-sm font-display font-semibold text-text-secondary hover:text-text-primary transition-colors"
+          className="group flex items-center gap-1 text-sm font-display font-semibold text-muted-foreground hover:text-foreground transition-colors"
         >
           {actionLabel}
           <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

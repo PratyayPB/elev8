@@ -198,7 +198,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+                      <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground border border-border">
                         {resume.status === "DRAFT" ? "Draft" : resume.status === "READY" ? "Ready" : "Archived"}
                       </span>
                       

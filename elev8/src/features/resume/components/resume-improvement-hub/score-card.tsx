@@ -12,8 +12,8 @@ interface ScoreCardProps {
 
 export function ScoreCard({ title, score, icon: Icon, subtitle, accentColor = "text-blue-600" }: ScoreCardProps) {
   const getScoreBg = (val: number) => {
-    if (val >= 85) return "bg-dashboard-metricHighlight text-text-primary border-border-strong";
-    if (val >= 70) return "bg-accent-cream text-text-primary border-border-subtle";
+    if (val >= 85) return "bg-primary text-primary-foreground border-border-strong";
+    if (val >= 70) return "bg-secondary text-secondary-foreground border-border-subtle";
     if (val >= 50) return "bg-surface-muted text-text-secondary border-border-subtle";
     return "bg-accent-coral/20 text-text-primary border-accent-coral";
   };

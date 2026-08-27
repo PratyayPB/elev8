@@ -13,9 +13,9 @@ export function ResumeHealthComponent({ report }: ResumeHealthProps) {
   const getHealthBadge = (status: string) => {
     switch (status) {
       case "Excellent":
-        return "bg-dashboard-metricHighlight text-text-primary border-border-strong";
+        return "bg-primary text-primary-foreground border-border-strong";
       case "Good":
-        return "bg-accent-cream text-text-primary border-border-subtle";
+        return "bg-secondary text-secondary-foreground border-border-subtle";
       case "Needs Improvement":
         return "bg-surface-muted text-text-secondary border-border-subtle";
       default:

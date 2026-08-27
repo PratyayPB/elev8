@@ -60,7 +60,7 @@ export function EditorHeader({
         );
       case "dirty":
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-yellow-700 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-200">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-secondary px-2.5 py-1 rounded-full border border-border">
             Unsaved changes
           </span>
         );

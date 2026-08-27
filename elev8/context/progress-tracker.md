@@ -3,10 +3,10 @@
 Update this file whenever the current phase, active feature, or implementation state changes.
 
 ## Current Phase
-Phase 6: Career Guidance & Recommendation System
+Phase 7: User Onboarding & Dashboard System
 
 ## Current Goal
-Phase 6.6: Integration & Unified Career Dashboard
+Phase 7.2: Release & Production Verification
 
 ## Completed
 - [x] Initialized production-ready repository directory structure under `src/`.
@@ -62,7 +62,6 @@ Phase 6.6: Integration & Unified Career Dashboard
   - Applied migration `20260821223350_enum_updates` and regenerated Prisma Client.
   - Updated all downstream TypeScript types, schemas, services, actions, and UI components.
   - Verified 100% type safety (`npx tsc --noEmit`) with 0 errors.
-
 - [x] **Manual Fixes: Codebase Compatibility Update (`elev8-code-compatibility-update-spec.md`)**:
   - Removed deprecated Profile fields (`currentCompany`, `institution`, `graduationYear`, `goalDescription`, `targetIndustry`, `careerExperienceLevel`) across frontend components, schemas, and backend mapping. Added `phoneNumber` field.
   - Rebalanced Profile completeness weights to account for field removal.
@@ -72,12 +71,23 @@ Phase 6.6: Integration & Unified Career Dashboard
   - Fixed Interview Session timer accumulation and updated `submitInterview` and `saveSessionProgress` actions to correctly track `durationSeconds`.
   - Added support for `personalized` and `profileSnapshot` mapping on interview generation.
   - Verified 100% type safety with zero TS errors across the codebase.
+- [x] **Phase 7.1: User Onboarding Implementation** (Mandatory/Optional modals, Profile schema migration for nullable fields, upsert semantics, Clerk webhook svix verification, Shadcn UI country selector combobox)
+- [x] **Phase 7 Task 34: Dashboard Design System Implementation (`34-dashboard-design-system.md`)**:
+  - Generated full **50–950 tonal scales** for brand colors (Primary `#171816`, Secondary `#FCFBFA`, Accent `#FFDB00`) in `globals.css` and mapped all semantic CSS variables for Light and Dark modes.
+  - Configured `components.json` to use shadcn **New York** style and wired Tailwind configuration with full brand scales and semantic tokens.
+  - Integrated `next-themes` with `defaultTheme="system"` and class-based theme switching (`.dark`).
+  - Created `ThemeToggle` component with segmented Light/Dark/System controls and compact icon mode, integrated exclusively inside the `DashboardSidebar` and `MobileNavigation`.
+  - Rethemed `DashboardSidebar`, `DashboardShell`, and `MobileNavigation` using semantic tokens with vivid Accent (`#FFDB00`) active state indicators.
+  - Rethemed existing UI primitives (`button`, `input`, `badge`, `dialog`, `select`, `label`, `form`, `command`, `popover`) and built missing shadcn components (`card`, `table`, `avatar`, `tooltip`, `skeleton`, `tabs`, `dropdown-menu`, `switch`, `checkbox`, `radio-group`, `textarea`, `alert`, `separator`, `breadcrumb`, `sonner`).
+  - Rethemed dashboard UI blocks (`MetricCard`, `EmptyState`, `PageHeader`, `SectionHeader`, `LoadingSkeleton`).
+  - Built interactive Design System preview page at `/dashboard/design-system`.
+  - Verified 100% type safety with zero TypeScript compilation errors.
 
 ## In Progress
-- [ ] **Phase 7.1: User Onboarding Implementation** (Mandatory/Optional modals, Profile schema migration for nullable fields, upsert semantics, Clerk webhook svix verification, Shadcn UI country selector combobox)
+- [ ] **Phase 7.2: Final Integration & QA Review**
 
 ## Next Up
-- Project Polish & Release (or the next specified phase)
+- Project Polish & Release
 
 ## Open Questions
 - None at present.
@@ -95,3 +105,4 @@ Phase 6.6: Integration & Unified Career Dashboard
 - **Deterministic RoleSkillMap & Skill Gap Engine (Phase 6.4)**: RoleSkillMap is the canonical knowledge base of role skill requirements across 5 experience levels (`ENTRY`, `JUNIOR`, `MID`, `SENIOR`, `LEAD`) with weighted importance (`CORE=3`, `IMPORTANT=2`, `SUPPORTING=1`). Skill Gap calculation is 100% deterministic (pure function, no LLM, no Trigger.dev). Skill gaps are computed dynamically on request and not persisted as redundant database state. Gaps are consumed by both Career Assessment (Phase 6.3).
 - **Dormant Models Unwiring & Career Guidance Removal**: `CareerGuidance` is fully excised. `Progress`, `RecommendationSet`, and `Recommendation` remain dormant in `schema.prisma` without active application wiring or User relations.
 - **Unified Career Dashboard & Module Activity Logging**: The main dashboard dynamically adjusts to user state through an attention hierarchy (Profile Completion -> Assessment CTA -> Recent Activity). `ModuleActivity` logs user milestones cleanly.
+- **Dashboard Design System Scope & Theming**: The dashboard design system tokens and dark mode toggle apply strictly to `/dashboard/**`. Base brand palette scales: Primary (`#171816`), Secondary (`#FCFBFA`), Accent (`#FFDB00`). Theme toggle is placed in the sidebar with system preference default.

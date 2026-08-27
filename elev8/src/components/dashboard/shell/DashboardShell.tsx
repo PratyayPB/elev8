@@ -3,7 +3,7 @@ import { MobileNavigation } from "../mobile-nav/MobileNavigation";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-dashboard-pageBg text-text-primary selection:bg-accent-cream selection:text-text-primary">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileNavigation />

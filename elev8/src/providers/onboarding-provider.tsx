@@ -16,6 +16,7 @@ interface OnboardingContextValue {
   saveMandatory: (data: Partial<ProfileCreateInput>) => Promise<boolean>;
   saveOptional: (data: Partial<ProfileCreateInput>) => Promise<boolean>;
   closeOptional: () => void;
+  checkCompletion: () => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -41,29 +42,24 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
 
     try {
-      // Profile completion endpoint returns isComplete
       const res = await fetch("/api/profile/completion");
       if (res.ok) {
         const data = await res.json();
         
-        // Also fetch profile data to populate the form if partial
         const profileRes = await fetch("/api/profile");
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           setProfile(profileData.id ? profileData : null);
         }
 
-        if (!data.isComplete) {
-          setMissingFields(data.missingFields || []);
-          // 3000ms delay as per spec
-          setTimeout(() => {
-            setStage("MANDATORY");
-            setIsOpen(true);
-            setIsLoading(false);
-          }, 3000);
-        } else {
+        setMissingFields(data.missingFields || []);
+        
+        // Modal popup behaviour instead of redirection
+        setTimeout(() => {
+          setStage(data.isComplete ? "OPTIONAL" : "MANDATORY");
+          setIsOpen(true); // Always trigger the modal
           setIsLoading(false);
-        }
+        }, 3000);
       } else {
         setIsLoading(false);
       }
@@ -140,6 +136,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         saveMandatory,
         saveOptional,
         closeOptional,
+        checkCompletion,
       }}
     >
       {children}

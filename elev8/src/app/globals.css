@@ -4,37 +4,179 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #fcfbfa;
-  --foreground: #1a1a1a;
-  --surface-primary: #ffffff;
-  --surface-muted: #ede9e6;
-  --text-primary: #000000;
-  --text-secondary: #605f5f;
-  --text-muted: #999999;
-  --border-subtle: #e6e6e6;
-  --border-strong: #1a1a1a;
+@layer base {
+  :root {
+    /* Brand Tonal Scales (50-950) */
+    /* Primary: #171816 (Charcoal / Near-black) */
+    --brand-primary-50: #f5f5f4;
+    --brand-primary-100: #e7e7e5;
+    --brand-primary-200: #d0d0cc;
+    --brand-primary-300: #afafa9;
+    --brand-primary-400: #82827b;
+    --brand-primary-500: #5f5f59;
+    --brand-primary-600: #44443f;
+    --brand-primary-700: #2e2f2b;
+    --brand-primary-800: #21221f;
+    --brand-primary-900: #171816;
+    --brand-primary-950: #0d0e0c;
 
-  --color-secondary: #f4f2ee;
-  --color-neutral: #f0ece6;
+    /* Secondary: #FCFBFA (Off-white / Warm Cream) */
+    --brand-secondary-50: #fcfbfa;
+    --brand-secondary-100: #f8f6f3;
+    --brand-secondary-200: #f2eee9;
+    --brand-secondary-300: #e8e2d9;
+    --brand-secondary-400: #dbd2c5;
+    --brand-secondary-500: #c9bcab;
+    --brand-secondary-600: #b3a28e;
+    --brand-secondary-700: #978470;
+    --brand-secondary-800: #7a6a58;
+    --brand-secondary-900: #5c4f41;
+    --brand-secondary-950: #3d342b;
 
-  --accent-cyan: #84e6f6;
-  --accent-coral: #f7a49e;
-  --accent-gold: #fecd1a;
-  --accent-cream: #fef7af;
-  --accent-red: #e83043;
+    /* Accent: #FFDB00 (Vivid Yellow) */
+    --brand-accent-50: #fffdeb;
+    --brand-accent-100: #fff9c7;
+    --brand-accent-200: #fff38a;
+    --brand-accent-300: #ffe94d;
+    --brand-accent-400: #ffdb00;
+    --brand-accent-500: #e6c500;
+    --brand-accent-600: #b89e00;
+    --brand-accent-700: #8a7600;
+    --brand-accent-800: #5c4f00;
+    --brand-accent-900: #332c00;
+    --brand-accent-950: #1a1600;
 
-  /* Dashboard Tokens */
-  --sidebar-bg: #ffffff;
-  --sidebar-width: 260px;
-  --nav-active-bg: #000000;
-  --nav-active-text: #ffffff;
-  --card-bg: #ffffff;
-  --card-border: #e6e6e6;
-  --card-radius: 16px;
-  --card-radius-lg: 20px;
-  --page-bg: #f4f2ee;
-  --metric-highlight: #ffeb18;
+    /* Semantic Tokens - Light Mode */
+    --background: var(--brand-secondary-50);
+    --foreground: var(--brand-primary-900);
+
+    --card: #ffffff;
+    --card-foreground: var(--brand-primary-900);
+
+    --popover: #ffffff;
+    --popover-foreground: var(--brand-primary-900);
+
+    --primary: var(--brand-primary-900);
+    --primary-foreground: var(--brand-secondary-50);
+
+    --secondary: var(--brand-secondary-200);
+    --secondary-foreground: var(--brand-primary-900);
+
+    --muted: var(--brand-secondary-200);
+    --muted-foreground: var(--brand-primary-500);
+
+    --accent: var(--brand-secondary-200);
+    --accent-foreground: var(--brand-primary-900);
+
+    --destructive: #e11d48;
+    --destructive-foreground: #ffffff;
+
+    --border: var(--brand-secondary-300);
+    --input: var(--brand-secondary-300);
+    --ring: var(--brand-primary-900);
+
+    --radius: 0.75rem;
+
+    --success: #16a34a;
+    --success-foreground: #ffffff;
+    --warning: #d97706;
+    --warning-foreground: #ffffff;
+    --info: #2563eb;
+    --info-foreground: #ffffff;
+
+    /* Legacy and landing page surface tokens */
+    --surface-primary: #ffffff;
+    --surface-muted: var(--brand-secondary-200);
+    --text-primary: var(--brand-primary-900);
+    --text-secondary: var(--brand-primary-500);
+    --text-muted: var(--brand-primary-400);
+    --border-subtle: var(--brand-secondary-300);
+    --border-strong: var(--brand-primary-900);
+
+    --color-secondary: var(--brand-secondary-100);
+    --color-neutral: var(--brand-secondary-200);
+
+    --accent-cyan: #84e6f6;
+    --accent-coral: #f7a49e;
+    --accent-gold: #fecd1a;
+    --accent-cream: #fef7af;
+    --accent-red: #e83043;
+
+    /* Dashboard Specific Tokens */
+    --sidebar-bg: var(--brand-secondary-100);
+    --sidebar-width: 260px;
+    --nav-active-bg: var(--brand-primary-900);
+    --nav-active-text: var(--brand-secondary-50);
+    --card-bg: #ffffff;
+    --card-border: var(--brand-secondary-300);
+    --card-radius: 16px;
+    --card-radius-lg: 20px;
+    --page-bg: var(--brand-secondary-50);
+    --metric-highlight: var(--brand-primary-900);
+
+    /* Dark Mode Black Shades Depth Palette */
+    --dm-base: #000000;
+    --dm-surface: #111111;
+    --dm-card: #1F1F1F;
+    --dm-elevated: #242424;
+  }
+
+  .dark {
+    /* Semantic Tokens - Dark Mode Depth Architecture (#000000, #111111, #1F1F1F, #242424) */
+    --background: #000000;
+    --foreground: var(--brand-secondary-50);
+
+    --card: #1F1F1F;
+    --card-foreground: var(--brand-secondary-50);
+
+    --popover: #1F1F1F;
+    --popover-foreground: var(--brand-secondary-50);
+
+    --primary: var(--brand-secondary-50);
+    --primary-foreground: #000000;
+
+    --secondary: #242424;
+    --secondary-foreground: var(--brand-secondary-50);
+
+    --muted: #1F1F1F;
+    --muted-foreground: var(--brand-primary-300);
+
+    --accent: #242424;
+    --accent-foreground: var(--brand-secondary-50);
+
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fef2f2;
+
+    /* Borderless in dark mode */
+    --border: transparent;
+    --input: #242424;
+    --ring: var(--brand-secondary-50);
+
+    --success: #22c55e;
+    --success-foreground: #000000;
+    --warning: #f59e0b;
+    --warning-foreground: #000000;
+    --info: #3b82f6;
+    --info-foreground: #ffffff;
+
+    /* Legacy and landing page surface tokens in dark mode */
+    --surface-primary: #1F1F1F;
+    --surface-muted: #111111;
+    --text-primary: var(--brand-secondary-50);
+    --text-secondary: var(--brand-primary-300);
+    --text-muted: var(--brand-primary-400);
+    --border-subtle: transparent;
+    --border-strong: transparent;
+
+    /* Dashboard Specific Tokens in dark mode */
+    --sidebar-bg: #111111;
+    --nav-active-bg: #242424;
+    --nav-active-text: var(--brand-secondary-50);
+    --card-bg: #1F1F1F;
+    --card-border: transparent;
+    --page-bg: #000000;
+    --metric-highlight: var(--brand-secondary-50);
+  }
 }
 
 html {
@@ -63,4 +205,28 @@ h6 {
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-subtle);
   }
+}
+
+/* Hide Clerk's Last Used auth badge globally */
+.cl-lastAuthenticationStrategyBadge {
+  display: none !important;
+}
+
+/* Remove box-shadow from Clerk cardBox */
+.cl-cardBox {
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   DARK MODE ONLY: Remove borders & use multi-tone black depth
+   ========================================================= */
+.dark * {
+  border-color: transparent !important;
+}
+
+/* Ensure inputs, textareas, and select triggers have elevated background (#242424) in dark mode */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.dark textarea,
+.dark select {
+  background-color: var(--dm-elevated) !important;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { MoveDownLeft, MoveUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -48,14 +48,14 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, x: 150 },
   visible: {
     opacity: 1,
     x: 0,
     transition: {
       duration: 0.65,
-      ease: [0.42, 0, 1, 1], // ease-in timing curve
+      ease: [0.42, 0, 1, 1],
     },
   },
 };
