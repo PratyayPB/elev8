@@ -2,43 +2,48 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import LiquidEther from "@/components/LiquidEther";
 
 export function CTA() {
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-container-max mx-auto">
+    <section className="bg-[#FCFBFA]">
+      <div className="max-w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="bg-black text-white rounded-[2.5rem] py-20 px-6 text-center relative overflow-hidden"
+          className="bg-[#0B0C09] text-white py-24 md:py-32 lg:py-40 px-6 text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px]"
         >
-          {/* Subtle gradient effect */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[500px] bg-gradient-to-b from-white/10 to-transparent blur-3xl opacity-30 pointer-events-none"></div>
-          
-          <div className="relative z-10 max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-medium mb-6">
-              Ready to optimize your flow?
+          {/* LiquidEther Background Effect */}
+          <div
+            className="absolute inset-0 z-0 pointer-events-none w-full h-full"
+          >
+            <LiquidEther
+              mouseForce={20}
+              cursorSize={100}
+              isViscous
+              viscous={30}
+              colors={["#efefe8", "#e3cc84", "#FFDB00"]}
+              autoDemo
+              autoSpeed={0.5}
+              autoIntensity={2.2}
+              isBounce={false}
+              resolution={0.5}
+            />
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center justify-center max-w-4xl mx-auto">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-display font-semibold leading-[1.15] tracking-tight text-white mb-10">
+              Be among the first
+              <br className="hidden sm:block" /> to try Elev8
             </h2>
-            <p className="text-white/70 text-base md:text-lg mb-10 max-w-xl mx-auto">
-              Join thousands of professionals accelerating their careers using AI-driven insights and personalized roadmaps.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link
-                href="/sign-up"
-                className="inline-flex items-center justify-center rounded-full bg-accent-cream px-6 py-3 text-xs font-medium text-black hover:bg-accent-cream/90 transition-colors"
-              >
-                Get Started Free
-              </Link>
-              <Link
-                href="/sign-up"
-                className="inline-flex items-center justify-center rounded-full border border-white/20 bg-transparent px-6 py-3 text-xs font-medium text-white hover:bg-white/10 transition-colors"
-              >
-                Talk to Sales
-              </Link>
-            </div>
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-3.5 text-sm md:text-base font-semibold text-black hover:bg-white/90 transition-colors shadow-sm pointer-events-auto"
+            >
+              Join Waitlist
+            </Link>
           </div>
         </motion.div>
       </div>

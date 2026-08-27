@@ -7,8 +7,11 @@ import { ArrowRight } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden">
-      <div className="max-w-container-max mx-auto px-4 sm:px-6 relative z-10">
+    <section 
+      className="relative min-h-screen pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden bg-cover bg-top bg-no-repeat flex items-center"
+      style={{ backgroundImage: "url('/images/landing/hero-bg.png')" }}
+    >
+      <div className="max-w-container-max w-full mx-auto px-4 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
           <motion.div

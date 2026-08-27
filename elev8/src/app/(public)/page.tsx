@@ -26,11 +26,11 @@ export default function LandingPage() {
       <DashboardPreview />
       {/* <LogoBar /> */}
       <Features />
-      <Showcase />
+      {/* <Showcase /> */}
       <Stats />
       <Results />
-      <Pricing />
       <Testimonial />
+      <Pricing />
       <FAQ />
       <CTA />
     </>

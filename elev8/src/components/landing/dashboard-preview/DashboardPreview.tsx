@@ -23,7 +23,7 @@ export function DashboardPreview() {
   const y = useTransform(smoothProgress, [0, 1], ["0%", "-5.5%"]);
 
   return (
-    <section className="relative pt-4 pb-20 md:pt-6 md:pb-28 overflow-hidden">
+    <section className="relative pt-4 pb-20 md:pt-16 md:pb-28 overflow-hidden">
       <div className="max-w-container-max mx-auto px-4 sm:px-6 flex justify-center">
         <motion.div
           ref={containerRef}
@@ -39,7 +39,7 @@ export function DashboardPreview() {
             className="absolute top-0 left-0 w-full h-[106%] will-change-transform"
           >
             <Image
-              src="/images/landing/pic4.jpg"
+              src="/images/landing/dahsboard-design-best-practices-example.png.webp"
               alt="Dashboard Visuals & UI"
               fill
               className="object-cover object-top"
