@@ -100,12 +100,20 @@ export class ProfileService {
     const cleanSkills = deduplicateSkills(validated.skills ?? []);
     const cleanDesiredSkills = deduplicateDesiredSkills(validated.desiredSkills ?? []);
 
+    const isMandatory =
+      Boolean(validated.name?.trim()) &&
+      typeof validated.age === "number" &&
+      validated.age > 0 &&
+      Boolean(validated.country?.trim()) &&
+      Boolean(validated.phoneNumber?.trim());
+
     const created = await prisma.profile.create({
       data: {
         userId,
         name: validated.name,
         age: validated.age,
         country: validated.country,
+        phoneCountryCode: validated.phoneCountryCode ?? null,
         phoneNumber: validated.phoneNumber ?? null,
         currentStatus: validated.currentStatus ?? null,
         currentRole: validated.currentRole ?? null,
@@ -116,6 +124,7 @@ export class ProfileService {
         targetRole: validated.targetRole ?? null,
         targetCompanyType: validated.targetCompanyType ?? null,
         weeklyLearningHours: validated.weeklyLearningHours ?? null,
+        isMandatoryCompleted: isMandatory,
         skills: {
           create: cleanSkills.map((s) => ({
             name: s.name,
@@ -208,6 +217,7 @@ export class ProfileService {
       if (validated.name !== undefined) updateData.name = validated.name;
       if (validated.age !== undefined) updateData.age = validated.age;
       if (validated.country !== undefined) updateData.country = validated.country;
+      if (validated.phoneCountryCode !== undefined) updateData.phoneCountryCode = validated.phoneCountryCode;
       if (validated.phoneNumber !== undefined) updateData.phoneNumber = validated.phoneNumber;
       if (validated.currentStatus !== undefined) updateData.currentStatus = validated.currentStatus;
       if (validated.currentRole !== undefined) updateData.currentRole = validated.currentRole;
@@ -224,6 +234,21 @@ export class ProfileService {
         updateData.targetCompanyType = validated.targetCompanyType;
       if (validated.weeklyLearningHours !== undefined)
         updateData.weeklyLearningHours = validated.weeklyLearningHours;
+
+      // Compute resulting mandatory completion status
+      const effectiveName = validated.name !== undefined ? validated.name : existing.name;
+      const effectiveAge = validated.age !== undefined ? validated.age : existing.age;
+      const effectiveCountry = validated.country !== undefined ? validated.country : existing.country;
+      const effectivePhone = validated.phoneNumber !== undefined ? validated.phoneNumber : existing.phoneNumber;
+
+      const isMandatory =
+        Boolean(effectiveName?.trim()) &&
+        typeof effectiveAge === "number" &&
+        effectiveAge > 0 &&
+        Boolean(effectiveCountry?.trim()) &&
+        Boolean(effectivePhone?.trim());
+
+      updateData.isMandatoryCompleted = isMandatory;
 
       const updated = await tx.profile.update({
         where: { id: existing.id },
@@ -356,6 +381,7 @@ export class ProfileService {
       name: profile.name || "",
       age: profile.age || 0,
       country: profile.country || "",
+      phoneCountryCode: profile.phoneCountryCode || null,
       phoneNumber: profile.phoneNumber || null,
       currentStatus: profile.currentStatus,
       currentRole: profile.currentRole,
@@ -376,6 +402,7 @@ export class ProfileService {
       desiredSkills: profile.desiredSkills.map((s) => s.name),
       targetCompanyType: (profile.targetCompanyType as any) || null,
       weeklyLearningHours: profile.weeklyLearningHours,
+      isMandatoryCompleted: profile.isMandatoryCompleted,
       profileVersion: 1,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,

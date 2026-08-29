@@ -26,7 +26,7 @@ export function ExperienceSelector({ value, onChange }: ExperienceSelectorProps)
               onClick={() => onChange(level)}
               className={`py-2.5 px-3 rounded-xl border text-xs font-display font-bold transition-all text-center ${
                 isSelected
-                  ? "bg-text-primary text-white border-text-primary shadow-sm"
+                  ? "bg-text-primary text-white dark:text-brand-primary-900 border-text-primary shadow-sm"
                   : "bg-white text-text-secondary border-border-subtle hover:bg-surface-muted hover:border-text-primary/30"
               }`}
             >

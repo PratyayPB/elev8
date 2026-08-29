@@ -227,10 +227,11 @@ model Profile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Basic Information
-  name        String?
-  age         Int?
-  country     String?
-  phoneNumber String?
+  name             String?
+  age              Int?
+  country          String?
+  phoneCountryCode String?
+  phoneNumber      String?
 
   // Current Situation
   currentStatus     CareerStatus?
@@ -248,6 +249,9 @@ model Profile {
 
   // Learning Preferences
   weeklyLearningHours Int?
+
+  // Status Flags
+  isMandatoryCompleted Boolean @default(false)
 
   // Skills
   skills        ProfileSkill[]

@@ -14,14 +14,15 @@ export async function runProfileCompletenessTests() {
   );
   assert.strictEqual(sumWeights, 100, `Weights sum to ${sumWeights}, expected 100`);
   console.log("✔ Weights sum exactly to 100.");
-
   // 2. Empty Profile (null) -> 0% & NOT_STARTED
   console.log("2. Testing null profile...");
   const nullResult = calculateProfileCompleteness(null);
   assert.strictEqual(nullResult.score, 0);
   assert.strictEqual(nullResult.state, "NOT_STARTED");
+  assert.strictEqual(nullResult.isComplete, false);
+  assert.strictEqual(nullResult.isMandatoryCompleted, false);
   assert.strictEqual(nullResult.completedFields.length, 0);
-  assert.strictEqual(nullResult.missingFields.length, 10);
+  assert.strictEqual(nullResult.missingFields.length, 9);
   assert.strictEqual(nullResult.missingFields[0].field, "primaryGoal"); // 15
   console.log("✔ Null profile returns 0% score and NOT_STARTED state.");
 
@@ -33,30 +34,27 @@ export async function runProfileCompletenessTests() {
     name: "Jane Doe",
     age: 24,
     country: "United States",
+    phoneNumber: "+1234567890",
+    phoneCountryCode: "+1",
     currentStatus: "EMPLOYED",
     currentRole: "Frontend Developer",
-    
     yearsOfExperience: 2,
     education: {
       highestQualification: "Bachelor of Science",
       fieldOfStudy: "Computer Science",
-      
-
     },
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
-      
       targetRole: "Full Stack Engineer",
-      
     },
     skills: [
       { id: "s1", name: "React", proficiency: "INTERMEDIATE" },
       { id: "s2", name: "TypeScript", proficiency: "ADVANCED" },
     ],
     desiredSkills: ["Go", "Kubernetes"],
-    
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 15,
+    isMandatoryCompleted: true,
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -65,26 +63,25 @@ export async function runProfileCompletenessTests() {
   const fullResult = calculateProfileCompleteness(fullProfile);
   assert.strictEqual(fullResult.score, 100);
   assert.strictEqual(fullResult.state, "COMPLETED");
-  assert.strictEqual(fullResult.completedFields.length, 10);
+  assert.strictEqual(fullResult.isComplete, true);
+  assert.strictEqual(fullResult.isMandatoryCompleted, true);
+  assert.strictEqual(fullResult.completedFields.length, 9);
   assert.strictEqual(fullResult.missingFields.length, 0);
   console.log("✔ Fully complete profile returns 100% and COMPLETED state.");
 
-  // 4. Education Group: Requires all 4 fields
+  // 4. Education Group: Incomplete education
   console.log("4. Testing Education group completion logic...");
   const missingGradYearProfile: ProfileData = {
     ...fullProfile,
-    education: {
-      highestQualification: "Bachelor of Science",
-      fieldOfStudy: "Computer Science",
-      
-
-    },
+    education: null,
   };
   const eduResult = calculateProfileCompleteness(missingGradYearProfile);
-  assert.strictEqual(eduResult.score, 90); // 100 - 10
+  assert.strictEqual(eduResult.score, 85); // 100 - 15
   assert.strictEqual(eduResult.state, "IN_PROGRESS");
+  assert.strictEqual(eduResult.isComplete, false);
+  assert.strictEqual(eduResult.isMandatoryCompleted, true);
   assert.ok(eduResult.missingFields.some((f) => f.field === "education"));
-  console.log("✔ Incomplete education correctly forfeits 10 points.");
+  console.log("✔ Incomplete education correctly forfeits 15 points and sets isComplete to false.");
 
   // 5. Skills Group: Empty array does not count
   console.log("5. Testing empty skills array...");
@@ -94,6 +91,7 @@ export async function runProfileCompletenessTests() {
   };
   const skillsResult = calculateProfileCompleteness(emptySkillsProfile);
   assert.strictEqual(skillsResult.score, 85); // 100 - 15
+  assert.strictEqual(skillsResult.isComplete, false);
   assert.ok(skillsResult.missingFields.some((f) => f.field === "skills"));
   console.log("✔ Empty skills array correctly forfeits 15 points.");
 
@@ -105,18 +103,17 @@ export async function runProfileCompletenessTests() {
   };
   const desiredResult = calculateProfileCompleteness(emptyDesiredProfile);
   assert.strictEqual(desiredResult.score, 90); // 100 - 10
+  assert.strictEqual(desiredResult.isComplete, false);
   assert.ok(desiredResult.missingFields.some((f) => f.field === "desiredSkills"));
   console.log("✔ Empty desired skills correctly forfeits 10 points.");
 
-  // 7. EXPLORE_CAREERS Exception: targetRole = null is valid and completed
+  // 7. EXPLORE_CAREERS Exception: targetRole = null is valid for score
   console.log("7. Testing EXPLORE_CAREERS targetRole exception...");
   const exploreProfile: ProfileData = {
     ...fullProfile,
     careerGoals: {
       primaryGoal: "EXPLORE_CAREERS",
       targetRole: null,
-      
-      
     },
   };
   const exploreResult = calculateProfileCompleteness(exploreProfile);
@@ -133,27 +130,20 @@ export async function runProfileCompletenessTests() {
     name: "Test",
     age: 20,
     country: "USA",
+    phoneNumber: "123",
     currentStatus: "STUDENT",
     currentRole: "",
-
     yearsOfExperience: 0,
-    education: {
-      highestQualification: "",
-      fieldOfStudy: "",
-      
-
-    },
+    education: null,
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
-
       targetRole: null,
-
     },
     skills: [],
     desiredSkills: [],
-    
     targetCompanyType: "NO_PREFERENCE",
     weeklyLearningHours: 10,
+    isMandatoryCompleted: true,
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -163,6 +153,8 @@ export async function runProfileCompletenessTests() {
   const minResult = calculateProfileCompleteness(minimalProfile);
   assert.strictEqual(minResult.score, 40);
   assert.strictEqual(minResult.state, "IN_PROGRESS");
+  assert.strictEqual(minResult.isComplete, false);
+  assert.strictEqual(minResult.isMandatoryCompleted, true);
   console.log("✔ Partial field weights calculate accurately.");
 
   console.log("\n==============================================");

@@ -19,6 +19,7 @@ import {
   PROFILE_VALIDATION,
 } from "../constants";
 import { createProfileAction, updateProfileAction } from "../services/actions";
+import { normalizeCareerStatus } from "../utils";
 import {
   User,
   Briefcase,
@@ -33,6 +34,15 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
+import { CountrySelect } from "@/components/modals/country-select";
+import { PhoneInput } from "@/components/ui/phone-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProfileFormProps {
   initialProfile?: ProfileData | null;
@@ -52,13 +62,21 @@ export function ProfileForm({
   const [name, setName] = useState(initialProfile?.name || "");
   const [age, setAge] = useState<number | "">(initialProfile?.age ?? 22);
   const [country, setCountry] = useState(initialProfile?.country || "");
-  const [phoneNumber, setPhoneNumber] = useState(initialProfile?.phoneNumber || "");
+  const [phoneCountryCode, setPhoneCountryCode] = useState(
+    initialProfile?.phoneCountryCode || ""
+  );
+  const [phoneNumber, setPhoneNumber] = useState(
+    initialProfile?.phoneNumber || ""
+  );
 
   // Career Status
   const [currentStatus, setCurrentStatus] = useState<CareerStatus>(
     initialProfile?.currentStatus || "STUDENT"
   );
-  const [currentRole, setCurrentRole] = useState(initialProfile?.currentRole || "");
+  const [otherStatus, setOtherStatus] = useState("");
+  const [currentRole, setCurrentRole] = useState(
+    initialProfile?.currentRole || ""
+  );
   const [yearsOfExperience, setYearsOfExperience] = useState<number | "">(
     initialProfile?.yearsOfExperience ?? 0
   );
@@ -72,16 +90,39 @@ export function ProfileForm({
   );
 
   // Career Goals
+  const knownGoals: string[] = [
+    "LAND_A_JOB",
+    "GET_AN_INTERNSHIP",
+    "SWITCH_CAREER",
+    "GET_PROMOTED",
+    "LEARN_NEW_SKILLS",
+    "PREPARE_FOR_INTERVIEW",
+    "BUILD_RESUME",
+    "IMPROVE_RESUME",
+    "BECOME_JOB_READY",
+    "EXPLORE_CAREERS",
+  ];
+  const initialGoalRaw = initialProfile?.careerGoals?.primaryGoal;
+  const isCustomGoal = Boolean(initialGoalRaw && !knownGoals.includes(initialGoalRaw));
+
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
-    initialProfile?.careerGoals?.primaryGoal || "LAND_A_JOB"
+    isCustomGoal ? "OTHER" : (initialGoalRaw || "LAND_A_JOB")
+  );
+  const [otherPrimaryGoal, setOtherPrimaryGoal] = useState<string>(
+    isCustomGoal ? (initialGoalRaw as string) : ""
   );
   const [targetRole, setTargetRole] = useState(
     initialProfile?.careerGoals?.targetRole || ""
   );
 
   // Skills
-  const [skills, setSkills] = useState<{ name: string; proficiency: SkillProficiency }[]>(
-    initialProfile?.skills?.map((s) => ({ name: s.name, proficiency: s.proficiency })) || []
+  const [skills, setSkills] = useState<
+    { name: string; proficiency: SkillProficiency }[]
+  >(
+    initialProfile?.skills?.map((s) => ({
+      name: s.name,
+      proficiency: s.proficiency,
+    })) || []
   );
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillProficiency, setNewSkillProficiency] =
@@ -94,11 +135,15 @@ export function ProfileForm({
   const [newDesiredSkill, setNewDesiredSkill] = useState("");
 
   // Target & Learning
-  const [targetCompanyType, setTargetCompanyType] = useState<TargetCompanyType>(
-    initialProfile?.targetCompanyType || "STARTUP"
-  );
-  const [weeklyLearningHours, setWeeklyLearningHours] = useState<number>(
-    initialProfile?.weeklyLearningHours || 10
+  const [targetCompanyType, setTargetCompanyType] = useState<
+    TargetCompanyType | ""
+  >(initialProfile?.targetCompanyType || "");
+  const [weeklyLearningHours, setWeeklyLearningHours] = useState<
+    number | ""
+  >(
+    typeof initialProfile?.weeklyLearningHours === "number"
+      ? initialProfile.weeklyLearningHours
+      : ""
   );
 
   // UI state
@@ -115,7 +160,9 @@ export function ProfileForm({
       return;
     }
     if (skills.length >= PROFILE_VALIDATION.MAX_SKILLS) {
-      setErrorMessage(`Maximum ${PROFILE_VALIDATION.MAX_SKILLS} skills allowed.`);
+      setErrorMessage(
+        `Maximum ${PROFILE_VALIDATION.MAX_SKILLS} skills allowed.`
+      );
       return;
     }
     setSkills([...skills, { name: trimmed, proficiency: newSkillProficiency }]);
@@ -136,7 +183,9 @@ export function ProfileForm({
       return;
     }
     if (desiredSkills.length >= PROFILE_VALIDATION.MAX_DESIRED_SKILLS) {
-      setErrorMessage(`Maximum ${PROFILE_VALIDATION.MAX_DESIRED_SKILLS} desired skills allowed.`);
+      setErrorMessage(
+        `Maximum ${PROFILE_VALIDATION.MAX_DESIRED_SKILLS} desired skills allowed.`
+      );
       return;
     }
     setDesiredSkills([...desiredSkills, trimmed]);
@@ -155,20 +204,32 @@ export function ProfileForm({
     setSuccessMessage(null);
 
     try {
+      const finalStatus =
+        currentStatus === "OTHER" && otherStatus.trim()
+          ? normalizeCareerStatus(otherStatus)
+          : currentStatus;
+
+      const finalGoal =
+        primaryGoal === "OTHER" && otherPrimaryGoal.trim()
+          ? (otherPrimaryGoal.trim() as any)
+          : primaryGoal;
+
       const payload: ProfileCreateInput = {
         name: name.trim(),
         age: Number(age) || 20,
         country: country.trim(),
+        phoneCountryCode: phoneCountryCode.trim() || null,
         phoneNumber: phoneNumber.trim() || null,
-        currentStatus,
+        currentStatus: finalStatus,
         currentRole: currentRole.trim(),
         yearsOfExperience: Number(yearsOfExperience) || 0,
         highestQualification: highestQualification.trim(),
         fieldOfStudy: fieldOfStudy.trim(),
-        primaryGoal,
+        primaryGoal: finalGoal,
         targetRole: targetRole.trim() || null,
-        targetCompanyType,
-        weeklyLearningHours: Number(weeklyLearningHours) || 10,
+        targetCompanyType: (targetCompanyType as TargetCompanyType) || null,
+        weeklyLearningHours:
+          typeof weeklyLearningHours === "number" ? weeklyLearningHours : null,
         skills,
         desiredSkills,
       };
@@ -200,7 +261,8 @@ export function ProfileForm({
         }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred";
+      const msg =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
@@ -224,21 +286,25 @@ export function ProfileForm({
       )}
 
       {/* 1. Basic Info */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-basic-info" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <User className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Basic Information</h2>
-            <p className="text-xs font-sans text-text-secondary">Personal identity details for your profile.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Basic Information
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              Personal identity details for your profile.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Full Name <span className="text-rose-500">*</span>
+              Full Name
             </label>
             <input
               type="text"
@@ -246,13 +312,13 @@ export function ProfileForm({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Jane Doe"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Age <span className="text-rose-500">*</span>
+              Age
             </label>
             <input
               type="number"
@@ -260,74 +326,95 @@ export function ProfileForm({
               min={PROFILE_VALIDATION.AGE_MIN}
               max={PROFILE_VALIDATION.AGE_MAX}
               value={age}
-              onChange={(e) => setAge(e.target.value === "" ? "" : Number(e.target.value))}
+              onChange={(e) =>
+                setAge(e.target.value === "" ? "" : Number(e.target.value))
+              }
               placeholder="22"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Country <span className="text-rose-500">*</span>
+              Country
             </label>
-            <input
-              type="text"
-              required
+            <CountrySelect
               value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              placeholder="e.g. United States, India"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              onChange={(value) => setCountry(value)}
             />
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Phone Number <span className="text-text-tertiary">(Optional)</span>
+              Phone Number
             </label>
-            <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="e.g. +1 555 123 4567"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+            <PhoneInput
+              codeValue={phoneCountryCode}
+              numberValue={phoneNumber}
+              onCodeChange={setPhoneCountryCode}
+              onNumberChange={setPhoneNumber}
+              placeholder="e.g. 9876543210"
+              country={country}
             />
           </div>
         </div>
       </div>
 
       {/* 2. Current Career Status */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-currentStatus" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <Briefcase className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Current Career Status</h2>
-            <p className="text-xs font-sans text-text-secondary">Where you currently stand in your professional journey.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Current Career Status
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              Where you currently stand in your professional journey.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Current Status <span className="text-rose-500">*</span>
+              Current Status
             </label>
-            <select
+            <Select
               value={currentStatus}
-              onChange={(e) => setCurrentStatus(e.target.value as CareerStatus)}
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              onValueChange={(val) => setCurrentStatus(val as CareerStatus)}
             >
-              {CURRENT_STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="rounded-xl border border-border-subtle bg-surface-subtle">
+                <SelectValue placeholder="Select current status..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENT_STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {currentStatus === "OTHER" && (
+              <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
+                  Specify Status
+                </label>
+                <input
+                  type="text"
+                  value={otherStatus}
+                  onChange={(e) => setOtherStatus(e.target.value)}
+                  placeholder="e.g. Freelance Consultant, Sabbatical"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
+                />
+              </div>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Current Role / Title <span className="text-rose-500">*</span>
+              Current Role / Title
             </label>
             <input
               type="text"
@@ -335,13 +422,13 @@ export function ProfileForm({
               value={currentRole}
               onChange={(e) => setCurrentRole(e.target.value)}
               placeholder="e.g. CS Student, Junior Developer"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Years of Experience <span className="text-rose-500">*</span>
+              Years of Experience
             </label>
             <input
               type="number"
@@ -349,31 +436,37 @@ export function ProfileForm({
               min={0}
               value={yearsOfExperience}
               onChange={(e) =>
-                setYearsOfExperience(e.target.value === "" ? "" : Number(e.target.value))
+                setYearsOfExperience(
+                  e.target.value === "" ? "" : Number(e.target.value)
+                )
               }
               placeholder="0"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
         </div>
       </div>
 
       {/* 3. Education */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-education" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <GraduationCap className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Education</h2>
-            <p className="text-xs font-sans text-text-secondary">Your academic credentials.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Education
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              Your academic credentials.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Highest Qualification <span className="text-rose-500">*</span>
+              Highest Qualification
             </label>
             <input
               type="text"
@@ -381,13 +474,13 @@ export function ProfileForm({
               value={highestQualification}
               onChange={(e) => setHighestQualification(e.target.value)}
               placeholder="e.g. Bachelor's Degree, Master's Degree, High School"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Field of Study / Major <span className="text-rose-500">*</span>
+              Field of Study / Major
             </label>
             <input
               type="text"
@@ -395,66 +488,96 @@ export function ProfileForm({
               value={fieldOfStudy}
               onChange={(e) => setFieldOfStudy(e.target.value)}
               placeholder="e.g. Computer Science, Information Technology"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
         </div>
       </div>
 
       {/* 4. Career Goals */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-careerGoals" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <Target className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Career Goals</h2>
-            <p className="text-xs font-sans text-text-secondary">What you want to achieve with Elev8.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Career Goals
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              What you want to achieve with Elev8.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Primary Goal <span className="text-rose-500">*</span>
+              Primary Goal
             </label>
-            <select
+            <Select
               value={primaryGoal}
-              onChange={(e) => setPrimaryGoal(e.target.value as PrimaryGoal)}
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              onValueChange={(val) => setPrimaryGoal(val as PrimaryGoal)}
             >
-              {PRIMARY_GOAL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="rounded-xl border border-border-subtle bg-surface-subtle">
+                <SelectValue placeholder="Select primary goal..." />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIMARY_GOAL_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {primaryGoal === "OTHER" && (
+              <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
+                  Specify Primary Goal
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={otherPrimaryGoal}
+                  onChange={(e) => setOtherPrimaryGoal(e.target.value)}
+                  placeholder="e.g. Launch a Tech Startup, Transition to Freelancing"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
+                />
+              </div>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Target Role <span className="text-text-tertiary">(Optional for exploration)</span>
+              Target Role{" "}
+              <span className="text-text-tertiary">
+                (Optional for exploration)
+              </span>
             </label>
             <input
               type="text"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
               placeholder="e.g. Full Stack Developer, AI Engineer"
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
             />
           </div>
         </div>
       </div>
 
       {/* 5. Current Skills with Proficiency */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-skills" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <Wrench className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Current Skills</h2>
-            <p className="text-xs font-sans text-text-secondary">Skills you currently possess with your proficiency level.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Current Skills
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              Skills you currently possess with your proficiency level.
+            </p>
           </div>
         </div>
 
@@ -470,25 +593,33 @@ export function ProfileForm({
               }
             }}
             placeholder="Skill name (e.g. React, Python, PostgreSQL)"
-            className="flex-1 px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
           />
 
-          <select
-            value={newSkillProficiency}
-            onChange={(e) => setNewSkillProficiency(e.target.value as SkillProficiency)}
-            className="px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
-          >
-            {SKILL_PROFICIENCY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className="w-full sm:w-48">
+            <Select
+              value={newSkillProficiency}
+              onValueChange={(val) =>
+                setNewSkillProficiency(val as SkillProficiency)
+              }
+            >
+              <SelectTrigger className="rounded-xl border border-border-subtle bg-surface-subtle">
+                <SelectValue placeholder="Proficiency" />
+              </SelectTrigger>
+              <SelectContent>
+                {SKILL_PROFICIENCY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <button
             type="button"
             onClick={() => handleAddSkill()}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm hover:bg-black/80 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
           >
             <Plus className="h-4 w-4" /> Add Skill
           </button>
@@ -523,14 +654,18 @@ export function ProfileForm({
       </div>
 
       {/* 6. Desired Skills */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-desiredSkills" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Desired Skills</h2>
-            <p className="text-xs font-sans text-text-secondary">Skills you want to learn or improve for career growth.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Desired Skills
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              Skills you want to learn or improve for career growth.
+            </p>
           </div>
         </div>
 
@@ -546,13 +681,13 @@ export function ProfileForm({
               }
             }}
             placeholder="Skill to learn (e.g. System Design, Docker, GraphQL)"
-            className="flex-1 px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-secondary-50/40 focus:border-brand-secondary-50/60 transition-all"
           />
 
           <button
             type="button"
             onClick={() => handleAddDesiredSkill()}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm hover:bg-black/80 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
           >
             <Plus className="h-4 w-4" /> Add Desired Skill
           </button>
@@ -584,50 +719,70 @@ export function ProfileForm({
       </div>
 
       {/* 7. Target Level & Learning Preferences */}
-      <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
+      <div id="section-preferences" className="scroll-mt-24 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-6 md:p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b border-border-subtle">
           <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-text-primary">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-text-primary">Career Targeting & Learning</h2>
-            <p className="text-xs font-sans text-text-secondary">Preferences that inform personalized guidance.</p>
+            <h2 className="text-lg font-display font-bold text-text-primary">
+              Career Targeting & Learning
+            </h2>
+            <p className="text-xs font-sans text-text-secondary">
+              Preferences that inform personalized guidance.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Target Company Type <span className="text-rose-500">*</span>
+              Target Company Type
             </label>
-            <select
-              value={targetCompanyType}
-              onChange={(e) => setTargetCompanyType(e.target.value as TargetCompanyType)}
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+            <Select
+              value={targetCompanyType || ""}
+              onValueChange={(val) =>
+                setTargetCompanyType((val as TargetCompanyType) || "")
+              }
             >
-              {TARGET_COMPANY_TYPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="rounded-xl border border-border-subtle bg-surface-subtle">
+                <SelectValue placeholder="Select target company type..." />
+              </SelectTrigger>
+              <SelectContent>
+                {TARGET_COMPANY_TYPE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label className="block text-xs font-display font-semibold text-text-primary mb-1.5">
-              Weekly Learning Hours <span className="text-rose-500">*</span>
+              Weekly Learning Hours
             </label>
-            <select
-              value={weeklyLearningHours}
-              onChange={(e) => setWeeklyLearningHours(Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-surface-subtle text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20"
+            <Select
+              value={
+                typeof weeklyLearningHours === "number"
+                  ? String(weeklyLearningHours)
+                  : ""
+              }
+              onValueChange={(val) =>
+                setWeeklyLearningHours(val === "" ? "" : Number(val))
+              }
             >
-              {WEEKLY_LEARNING_HOURS_OPTIONS.map((hours) => (
-                <option key={hours} value={hours}>
-                  {hours} hours / week
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="rounded-xl border border-border-subtle bg-surface-subtle">
+                <SelectValue placeholder="Select weekly learning hours..." />
+              </SelectTrigger>
+              <SelectContent>
+                {WEEKLY_LEARNING_HOURS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={String(opt.value)}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -637,7 +792,7 @@ export function ProfileForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm hover:bg-black/80 transition-all disabled:opacity-50 shadow-sm"
+          className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-all disabled:opacity-50 shadow-sm"
         >
           {isSubmitting ? (
             <>

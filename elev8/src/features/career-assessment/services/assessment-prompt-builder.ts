@@ -5,6 +5,7 @@ import {
   ASSESSMENT_MAX_ARRAY_LENGTH,
   ASSESSMENT_MAX_NARRATIVE_LENGTH,
 } from "../constants";
+import { getCountryName } from "@/lib/data/countries";
 
 export class CareerAssessmentPromptBuilder {
   public static buildSystemPrompt(): string {
@@ -22,7 +23,7 @@ CRITICAL RULES & BOUNDARIES:
 
   public static buildProfileContext(profile: ProfileData): string {
     return `### USER PROFILE & CAREER CONTEXT:
-- Name: ${profile.name} (Age: ${profile.age}, Country: ${profile.country})
+- Name: ${profile.name} (Age: ${profile.age}, Country: ${getCountryName(profile.country)})
 - Current Status: ${profile.currentStatus}
 - Current Role: ${profile.currentRole || "Not specified"}
 - Years of Experience: ${profile.yearsOfExperience} years

@@ -4,6 +4,7 @@ import React from "react";
 import { ProfileData } from "@/features/profile/types";
 import { ProfileAvatar } from "./profile-avatar";
 import { Briefcase, GraduationCap, Target, Sparkles, Sliders, MapPin, Clock, Phone } from "lucide-react";
+import { getCountryName } from "@/lib/data/countries";
 
 interface ProfileSummaryProps {
   profile: ProfileData | null;
@@ -23,7 +24,7 @@ export function ProfileSummary({ profile }: ProfileSummaryProps) {
           <div className="flex flex-wrap gap-3 text-xs font-sans text-text-secondary mt-2">
             {profile.country && (
               <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-text-muted" /> {profile.country}
+                <MapPin className="w-3.5 h-3.5 text-text-muted" /> {getCountryName(profile.country)}
               </span>
             )}
             {profile.phoneNumber && (

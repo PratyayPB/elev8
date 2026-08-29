@@ -4,7 +4,12 @@ import {
   profileUpdateSchema,
   profileSkillSchema,
 } from "../schemas";
-import { deduplicateSkills, deduplicateDesiredSkills, normalizeSkillName } from "../utils";
+import {
+  deduplicateSkills,
+  deduplicateDesiredSkills,
+  normalizeSkillName,
+  normalizeCareerStatus,
+} from "../utils";
 
 export async function runProfileFoundationTests() {
   console.log("Running Phase 6.1 Profile Foundation Unit Tests...\n");
@@ -46,8 +51,8 @@ export async function runProfileFoundationTests() {
   const validPayload = {
     name: "Alex Smith",
     age: 23,
-    country: "Canada",
-    phoneNumber: "+1 (555) 123-4567",
+    country: "US",
+    phoneNumber: "+14155552671",
     currentStatus: "STUDENT",
     currentRole: "Computer Science Student",
 
@@ -103,14 +108,26 @@ export async function runProfileFoundationTests() {
   }, /Age must be at most 100/);
   console.log("✔ Age bounds correctly enforced.");
 
-  // 7. Validation: Invalid Enums Rejected
-  console.log("7. Testing Enum Validation...");
-  assert.throws(() => {
-    profileCreateSchema.parse({
-      ...validPayload,
-      currentStatus: "INVALID_STATUS",
-    });
+  // 7. Validation: Career Status Normalization
+  console.log("7. Testing Career Status Normalization...");
+  assert.strictEqual(normalizeCareerStatus("freelancer"), "FREELANCER");
+  assert.strictEqual(normalizeCareerStatus("freelance web developer"), "FREELANCER");
+  assert.strictEqual(normalizeCareerStatus("College Student"), "STUDENT");
+  assert.strictEqual(normalizeCareerStatus("looking for a job"), "JOB_SEEKER");
+  assert.strictEqual(normalizeCareerStatus("Self-Employed"), "SELF_EMPLOYED");
+  assert.strictEqual(normalizeCareerStatus("Startup Founder"), "BUSINESS_OWNER");
+  assert.strictEqual(normalizeCareerStatus("recent grad"), "RECENT_GRADUATE");
+  assert.strictEqual(normalizeCareerStatus("homemaker"), "OTHER");
+  assert.strictEqual(normalizeCareerStatus(""), "OTHER");
+  assert.strictEqual(normalizeCareerStatus(null), "OTHER");
+
+  const normalizedStatus = normalizeCareerStatus("Freelancing as React dev");
+  assert.strictEqual(normalizedStatus, "FREELANCER");
+  const parsedCustomStatus = profileCreateSchema.parse({
+    ...validPayload,
+    currentStatus: normalizedStatus,
   });
+  assert.strictEqual(parsedCustomStatus.currentStatus, "FREELANCER");
 
   assert.throws(() => {
     profileCreateSchema.parse({
@@ -125,7 +142,7 @@ export async function runProfileFoundationTests() {
       proficiency: "SUPER_EXPERT",
     });
   });
-  console.log("✔ Invalid enums correctly rejected.");
+  console.log("✔ Career status normalization and invalid enums correctly verified.");
 
   // 8. Validation: Optional Target Role Allowed
   console.log("8. Testing Optional Target Role (e.g. for Career Exploration)...");
@@ -157,9 +174,7 @@ export async function runProfileFoundationTests() {
   console.log("=========================================\n");
 }
 
-if (require.main === module) {
-  runProfileFoundationTests().catch((err) => {
-    console.error("Test failed:", err);
-    process.exit(1);
-  });
-}
+runProfileFoundationTests().catch((err) => {
+  console.error("Test failed:", err);
+  process.exit(1);
+});

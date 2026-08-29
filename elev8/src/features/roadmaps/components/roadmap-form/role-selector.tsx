@@ -65,7 +65,7 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
                 onClick={() => onChange(role)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-display font-medium transition-all ${
                   isSelected
-                    ? "bg-text-primary text-white shadow-sm"
+                    ? "bg-text-primary text-white dark:text-brand-primary-900 shadow-sm"
                     : "bg-surface-muted text-text-primary border border-border-subtle hover:bg-border-subtle"
                 }`}
               >

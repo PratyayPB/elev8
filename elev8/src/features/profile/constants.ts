@@ -59,7 +59,17 @@ export const TARGET_COMPANY_TYPE_OPTIONS: { label: string; value: TargetCompanyT
   { label: "No Preference", value: "NO_PREFERENCE" },
 ];
 
-export const WEEKLY_LEARNING_HOURS_OPTIONS = [5, 10, 15, 20, 25, 30, 40] as const;
+export const WEEKLY_LEARNING_HOURS_OPTIONS = [
+  { label: "< 5 hours / week", value: 3 },
+  { label: "5 hours / week", value: 5 },
+  { label: "10 hours / week", value: 10 },
+  { label: "15 hours / week", value: 15 },
+  { label: "20 hours / week", value: 20 },
+  { label: "25 hours / week", value: 25 },
+  { label: "30 hours / week", value: 30 },
+  { label: "40 hours / week", value: 40 },
+  { label: "> 40 hours / week", value: 45 },
+] as const;
 
 export const PROFILE_VALIDATION = {
   AGE_MIN: 16,

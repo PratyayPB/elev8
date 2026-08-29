@@ -102,7 +102,7 @@ export const RoadmapLibrary: React.FC = () => {
         action={
           <Link
             href="/dashboard/roadmaps/new"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-text-primary hover:bg-black/80 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" /> Create New Roadmap
           </Link>
@@ -141,7 +141,7 @@ export const RoadmapLibrary: React.FC = () => {
           </p>
           <Link
             href="/dashboard/roadmaps/new"
-            className="px-6 py-2.5 bg-text-primary hover:bg-black/80 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
+            className="px-6 py-2.5 bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
           >
             Generate Roadmap
           </Link>

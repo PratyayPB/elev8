@@ -63,7 +63,7 @@ export function Testimonial() {
             </button>
             <button 
               onClick={handleNext}
-              className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-white hover:bg-black/90 transition-colors shrink-0"
+              className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-white hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors shrink-0"
             >
               <ArrowRight className="w-5 h-5" strokeWidth={1.5} />
             </button>

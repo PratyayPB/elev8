@@ -143,7 +143,7 @@ export function EditorHeader({
             type="button"
             onClick={onSave}
             disabled={saveStatus === "saving" || !isDirty}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white font-display font-semibold text-xs transition-all hover:bg-black/80 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-xs transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 disabled:opacity-50"
           >
             {saveStatus === "saving" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

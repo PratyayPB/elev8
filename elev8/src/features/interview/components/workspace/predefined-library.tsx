@@ -92,7 +92,7 @@ export function PredefinedLibrary({ catalog }: PredefinedLibraryProps) {
               onClick={() => setCurrentPage(page)}
               className={`px-4 py-2 rounded-lg text-sm font-display font-semibold transition-all ${
                 currentPage === page
-                  ? "bg-text-primary text-white border border-text-primary shadow-sm"
+                  ? "bg-text-primary text-white dark:text-brand-primary-900 border border-text-primary shadow-sm"
                   : "border border-border-subtle bg-dashboard-card text-text-primary hover:bg-surface-muted"
               }`}
             >
@@ -175,7 +175,7 @@ export function PredefinedLibrary({ catalog }: PredefinedLibraryProps) {
                   <button
                     onClick={handleStart}
                     disabled={!selectedDifficulty || isStarting}
-                    className="px-6 py-2.5 rounded-xl bg-text-primary hover:bg-black/85 text-white font-display font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2.5 rounded-xl bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white font-display font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isStarting ? (
                       <>

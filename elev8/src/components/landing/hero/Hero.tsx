@@ -35,7 +35,7 @@ export function Hero() {
             <div className="flex flex-row items-center gap-4 w-full sm:w-auto">
               <Link
                 href="/sign-in"
-                className="inline-flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-sm font-medium shadow-lg shadow-black/10 hover:bg-black/90 transition-all group"
+                className="inline-flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-sm font-medium shadow-lg shadow-black/10 hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all group"
               >
                 Get started
                 <div className="bg-white text-black rounded-full p-1.5 group-hover:translate-x-0.5 transition-transform flex items-center justify-center">

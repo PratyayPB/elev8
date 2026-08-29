@@ -135,7 +135,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
         </div>
         <Link
           href={BUILDER_ROUTES.NEW}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm transition-all hover:bg-black/80 hover:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 hover:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
           Create Resume
@@ -153,7 +153,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
           </p>
           <Link
             href={BUILDER_ROUTES.NEW}
-            className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm transition-all hover:bg-black/80 hover:scale-[0.98]"
+            className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 hover:scale-[0.98]"
           >
             <Plus className="h-4 w-4" />
             Build My First Resume
@@ -311,7 +311,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-text-primary rounded-md hover:bg-black/80 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-text-primary rounded-md hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
                 >
                   Save Changes
                 </button>

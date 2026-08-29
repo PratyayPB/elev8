@@ -27,7 +27,7 @@ export function PredefinedCard({ interview, onSelect }: PredefinedCardProps) {
 
       <button
         onClick={onSelect}
-        className="mt-6 w-full py-2.5 px-4 bg-text-primary hover:bg-black/85 text-white font-display font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1 active:scale-[0.98]"
+        className="mt-6 w-full py-2.5 px-4 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white font-display font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1 active:scale-[0.98]"
       >
         Practice Interview
       </button>

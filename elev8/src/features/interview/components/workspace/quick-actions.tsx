@@ -13,7 +13,7 @@ export function QuickActions({ latestInProgress, latestCompleted }: QuickActions
       {/* 1. Generate New Interview */}
       <Link
         href="/dashboard/interviews/new"
-        className="px-5 py-2.5 bg-text-primary hover:bg-black/85 text-white font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center gap-2"
+        className="px-5 py-2.5 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center gap-2"
       >
         <PlusCircle className="w-4 h-4 text-dashboard-metricHighlight" />
         Generate New Interview

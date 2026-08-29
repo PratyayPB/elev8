@@ -88,7 +88,7 @@ export function ChatButton() {
             <button
               type="submit"
               aria-label="Send message"
-              className="bg-black text-white p-2 rounded-full hover:bg-black/90 shrink-0"
+              className="bg-black text-white p-2 rounded-full hover:bg-black/90 dark:hover:bg-brand-secondary-200 shrink-0"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

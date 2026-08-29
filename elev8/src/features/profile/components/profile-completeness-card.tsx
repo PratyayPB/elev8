@@ -65,7 +65,7 @@ export function ProfileCompletenessCard({
           </span>
           <Link
             href="/dashboard/profile"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white font-display font-semibold text-xs transition-all hover:bg-black/80 shrink-0"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-xs transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 shrink-0"
           >
             {state === "COMPLETED" ? "View Profile" : "Edit Profile"}
             <ArrowRight className="h-3.5 w-3.5" />
@@ -93,29 +93,61 @@ export function ProfileCompletenessCard({
             Complete these next for maximum personalization:
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {missingFields.slice(0, 3).map((item) => (
-              <Link
-                key={item.field}
-                href="/dashboard/profile"
-                className="group p-3 rounded-xl border border-border-subtle bg-surface-subtle hover:border-text-primary/30 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs font-display font-semibold text-text-primary mb-1">
-                    <span>{item.label}</span>
-                    <span className="text-[10px] text-text-secondary font-normal font-sans">
-                      +{item.weight} pts
-                    </span>
+            {missingFields.slice(0, 3).map((item) => {
+              const targetSectionId =
+                item.field === "education"
+                  ? "section-education"
+                  : item.field === "skills"
+                  ? "section-skills"
+                  : item.field === "desiredSkills"
+                  ? "section-desiredSkills"
+                  : item.field === "currentStatus" || item.field === "currentRole"
+                  ? "section-currentStatus"
+                  : item.field === "primaryGoal" || item.field === "targetRole"
+                  ? "section-careerGoals"
+                  : item.field === "weeklyLearningHours" || item.field === "targetCompanyType"
+                  ? "section-preferences"
+                  : "section-basic-info";
+
+              const handleClick = (e: React.MouseEvent) => {
+                if (typeof window !== "undefined" && window.location.pathname.includes("/dashboard/profile")) {
+                  const el = document.getElementById(targetSectionId);
+                  if (el) {
+                    e.preventDefault();
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    el.classList.add("ring-2", "ring-dashboard-metricHighlight", "transition-all", "duration-500");
+                    setTimeout(() => {
+                      el.classList.remove("ring-2", "ring-dashboard-metricHighlight");
+                    }, 2000);
+                  }
+                }
+              };
+
+              return (
+                <Link
+                  key={item.field}
+                  href={`/dashboard/profile#${targetSectionId}`}
+                  onClick={handleClick}
+                  className="group p-3 rounded-xl border border-border-subtle bg-surface-subtle hover:border-text-primary/30 transition-all flex flex-col justify-between cursor-pointer"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-display font-semibold text-text-primary mb-1">
+                      <span>{item.label}</span>
+                      <span className="text-[10px] text-text-secondary font-normal font-sans">
+                        +{item.weight} pts
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-sans text-text-secondary line-clamp-2">
+                      {item.description}
+                    </p>
                   </div>
-                  <p className="text-[11px] font-sans text-text-secondary line-clamp-2">
-                    {item.description}
-                  </p>
-                </div>
-                <div className="mt-2 flex items-center gap-1 text-[11px] font-display font-semibold text-text-primary group-hover:underline">
-                  <span>Add now</span>
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </Link>
-            ))}
+                  <div className="mt-2 flex items-center gap-1 text-[11px] font-display font-semibold text-text-primary group-hover:underline">
+                    <span>Add now</span>
+                    <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

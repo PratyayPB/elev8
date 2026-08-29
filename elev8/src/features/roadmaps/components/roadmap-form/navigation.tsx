@@ -60,7 +60,7 @@ export function Navigation({
           onClick={onNext}
           className={`inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-display font-bold shadow-sm transition-all ${
             canContinue && !isSubmitting
-              ? "bg-text-primary text-white hover:bg-black/80 cursor-pointer active:scale-[0.98]"
+              ? "bg-text-primary text-white dark:text-brand-primary-900 hover:bg-black/80 dark:hover:bg-brand-secondary-200 cursor-pointer active:scale-[0.98]"
               : "bg-surface-muted text-text-muted cursor-not-allowed border border-border-subtle"
           }`}
         >

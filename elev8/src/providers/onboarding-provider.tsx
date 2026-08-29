@@ -52,12 +52,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           setProfile(profileData.id ? profileData : null);
         }
 
-        setMissingFields(data.missingFields || []);
+        setMissingFields(data.missingMandatoryFields || data.missingFields || []);
         
-        // Modal popup behaviour instead of redirection
+        // Modal popup behaviour: display only if isMandatoryCompleted is false
         setTimeout(() => {
-          setStage(data.isComplete ? "OPTIONAL" : "MANDATORY");
-          setIsOpen(true); // Always trigger the modal
+          if (!data.isMandatoryCompleted) {
+            setStage("MANDATORY");
+            setIsOpen(true);
+          } else {
+            setIsOpen(false);
+          }
           setIsLoading(false);
         }, 3000);
       } else {

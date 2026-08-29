@@ -2,6 +2,7 @@ import { Profile, ProfileSkill } from "@prisma/client";
 import { BuilderResumeArtifact, SkillEntry, EducationEntry } from "../types";
 import { createEmptyResumeArtifact } from "../utils/create-empty-resume";
 import crypto from "crypto";
+import { getCountryName } from "@/lib/data/countries";
 
 type ProfileWithSkills = Profile & {
   skills?: ProfileSkill[];
@@ -27,7 +28,7 @@ export function profileToResumeArtifact(
     artifact.personalInformation.email = userEmail;
   }
   if (profile.country) {
-    artifact.personalInformation.location = profile.country;
+    artifact.personalInformation.location = getCountryName(profile.country);
   }
 
   // Map education (HighestQualification/FieldOfStudy)

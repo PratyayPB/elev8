@@ -63,7 +63,7 @@ export function ProgressivePromptBanner({
         )}
         <Link
           href="/dashboard/profile"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white font-display font-semibold text-xs transition-all hover:bg-black/80 shrink-0"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-xs transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 shrink-0"
         >
           Add to Profile
           <ArrowRight className="h-3.5 w-3.5" />

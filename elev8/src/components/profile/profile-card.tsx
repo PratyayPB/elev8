@@ -4,6 +4,7 @@ import React from "react";
 import { ProfileAvatar } from "./profile-avatar";
 import { ProfileData } from "@/features/profile/types";
 import { Briefcase, MapPin, Phone } from "lucide-react";
+import { getCountryName } from "@/lib/data/countries";
 
 interface ProfileCardProps {
   profile: ProfileData | null;
@@ -43,7 +44,7 @@ export function ProfileCard({ profile, className = "" }: ProfileCardProps) {
           {profile.country && (
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-text-muted" />
-              <span>{profile.country}</span>
+              <span>{getCountryName(profile.country)}</span>
             </div>
           )}
           {profile.phoneNumber && (

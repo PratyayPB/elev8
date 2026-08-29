@@ -158,7 +158,7 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
             onClick={() => setMobileTab("edit")}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               mobileTab === "edit"
-                ? "bg-text-primary text-white shadow-sm"
+                ? "bg-text-primary text-white dark:text-brand-primary-900 shadow-sm"
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
@@ -170,7 +170,7 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
             onClick={() => setMobileTab("preview")}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               mobileTab === "preview"
-                ? "bg-text-primary text-white shadow-sm"
+                ? "bg-text-primary text-white dark:text-brand-primary-900 shadow-sm"
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >

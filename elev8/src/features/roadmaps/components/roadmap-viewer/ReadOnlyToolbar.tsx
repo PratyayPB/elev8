@@ -41,7 +41,7 @@ export const ReadOnlyToolbar: React.FC<ReadOnlyToolbarProps> = ({
         {onRegenerate && (
           <button
             onClick={onRegenerate}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-display font-semibold bg-text-primary hover:bg-black/80 text-white rounded-xl transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-display font-semibold bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white rounded-xl transition-all shadow-sm"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Regenerate
           </button>

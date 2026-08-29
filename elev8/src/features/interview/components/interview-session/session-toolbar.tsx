@@ -56,7 +56,7 @@ export function SessionToolbar({ autosaveStatus, onPause, onSubmit, onManualSave
 
         <button
           onClick={onSubmit}
-          className="px-4 py-2 flex items-center justify-center rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-all active:scale-[0.98]"
+          className="px-4 py-2 flex items-center justify-center rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all active:scale-[0.98]"
         >
           Submit
         </button>

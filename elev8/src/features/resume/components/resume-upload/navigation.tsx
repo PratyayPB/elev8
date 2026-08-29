@@ -49,7 +49,7 @@ export function Navigation({
             type="button"
             onClick={onNext}
             disabled={isNextDisabled}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-display font-semibold text-white bg-text-primary hover:bg-black/85 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-display font-semibold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
           >
             {nextLabel}
             <ArrowRight className="w-4 h-4" />

@@ -36,7 +36,7 @@ export function AssessmentFocusAreas({
             key={index}
             className="flex items-center gap-3 p-4 rounded-xl border border-border-subtle bg-surface-subtle"
           >
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-text-primary text-white font-display font-bold text-xs shrink-0">
+            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-text-primary text-white dark:text-brand-primary-900 font-display font-bold text-xs shrink-0">
               {index + 1}
             </span>
             <span className="text-xs font-display font-semibold text-text-primary">

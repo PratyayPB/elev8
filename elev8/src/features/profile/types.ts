@@ -36,6 +36,7 @@ export interface ProfileData {
   name: string;
   age: number;
   country: string;
+  phoneCountryCode?: string | null;
   phoneNumber?: string | null;
 
   currentStatus: CareerStatus | null;
@@ -51,6 +52,8 @@ export interface ProfileData {
   targetCompanyType: TargetCompanyType | null;
   weeklyLearningHours: number | null;
 
+  isMandatoryCompleted: boolean;
+
   profileVersion: number;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -60,6 +63,7 @@ export interface ProfileCreateInput {
   name: string;
   age: number;
   country: string;
+  phoneCountryCode?: string | null;
   phoneNumber?: string | null;
 
   currentStatus?: CareerStatus | null;
@@ -98,6 +102,8 @@ export interface MissingFieldItem {
 export interface ProfileCompletenessResult {
   score: number;
   state: ProfileCompletionState;
+  isComplete: boolean;
+  isMandatoryCompleted: boolean;
   completedFields: string[];
   missingFields: MissingFieldItem[];
 }

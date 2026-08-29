@@ -36,9 +36,9 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 ${
                   isCompleted
-                    ? "bg-text-primary text-white shadow-sm"
+                    ? "bg-text-primary text-white dark:text-brand-primary-900 shadow-sm"
                     : isCurrent
-                    ? "bg-text-primary text-white ring-4 ring-dashboard-metricHighlight/60 shadow-sm font-display"
+                    ? "bg-text-primary text-white dark:text-brand-primary-900 ring-4 ring-dashboard-metricHighlight/60 shadow-sm font-display"
                     : "bg-dashboard-card text-text-muted border-2 border-border-subtle"
                 }`}
               >

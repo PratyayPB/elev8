@@ -20,7 +20,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ onGenerateClick }) => {
       {onGenerateClick && (
         <button
           onClick={onGenerateClick}
-          className="px-6 py-2.5 bg-text-primary hover:bg-black/80 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
+          className="px-6 py-2.5 bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
         >
           Generate Roadmap
         </button>

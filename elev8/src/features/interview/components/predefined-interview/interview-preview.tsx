@@ -23,7 +23,7 @@ export function InterviewPreview({ interview, difficulty, isStarting, onStart }:
         <div className="bg-surface-muted p-8 border-b border-border-subtle relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-3 py-1 rounded-full text-xs font-display font-semibold bg-text-primary text-white">
+              <span className="px-3 py-1 rounded-full text-xs font-display font-semibold bg-text-primary text-white dark:text-brand-primary-900">
                 {typeInfo?.label || interview.type}
               </span>
               <span className="px-3 py-1 rounded-full text-xs font-display font-semibold bg-dashboard-metricHighlight text-black border border-dashboard-metricHighlight/50">
@@ -76,7 +76,7 @@ export function InterviewPreview({ interview, difficulty, isStarting, onStart }:
             <button
               onClick={onStart}
               disabled={isStarting}
-              className="px-8 py-3 rounded-xl bg-text-primary hover:bg-black/85 text-white font-display font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[180px] active:scale-[0.98] shadow-sm"
+              className="px-8 py-3 rounded-xl bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white font-display font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[180px] active:scale-[0.98] shadow-sm"
             >
               {isStarting ? (
                 <>

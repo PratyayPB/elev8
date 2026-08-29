@@ -36,6 +36,7 @@ export async function runAssessmentPromptBuilderTests() {
     
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 12,
+    isMandatoryCompleted: true,
     profileVersion: 3,
     createdAt: new Date(),
     updatedAt: new Date(),

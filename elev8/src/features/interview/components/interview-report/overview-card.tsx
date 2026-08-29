@@ -14,7 +14,7 @@ export function OverviewCard({ metadata, assessment }: OverviewCardProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border-subtle pb-6 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-3 py-1 bg-text-primary text-white font-display font-semibold text-xs rounded-full">
+            <span className="px-3 py-1 bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-xs rounded-full">
               {metadata.interviewType}
             </span>
             <span className="px-3 py-1 bg-dashboard-metricHighlight text-black border border-dashboard-metricHighlight/50 font-display font-semibold text-xs rounded-full">

@@ -32,6 +32,7 @@ export async function runRecommendationEngineTests() {
     
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 10,
+    isMandatoryCompleted: true,
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -52,7 +53,7 @@ export async function runRecommendationEngineTests() {
   const ctxWithDismissals: RecommendationContext = {
     userId: "u_test",
     profile: baseProfile,
-    completeness: { score: 100, state: "COMPLETED", completedFields: [], missingFields: [] },
+    completeness: { score: 100, state: "COMPLETED", isComplete: true, isMandatoryCompleted: true, completedFields: [], missingFields: [] },
     moduleActivity: [],
     recommendationHistory: [
       { refId: "RESUME_SCORE", type: "MODULE", status: "DISMISSED", createdAt: new Date() },

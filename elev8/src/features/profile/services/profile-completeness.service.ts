@@ -10,7 +10,7 @@ import {
 } from "../constants";
 
 export function checkMandatoryCompletion(profile: ProfileData | null): {
-  isComplete: boolean;
+  isMandatoryCompleted: boolean;
   missingFields: string[];
 } {
   const missingFields: string[] = [];
@@ -20,7 +20,7 @@ export function checkMandatoryCompletion(profile: ProfileData | null): {
   if (!profile?.phoneNumber?.trim()) missingFields.push("phoneNumber");
 
   return {
-    isComplete: missingFields.length === 0,
+    isMandatoryCompleted: missingFields.length === 0,
     missingFields,
   };
 }
@@ -33,12 +33,14 @@ function isNonEmptyString(val: unknown): boolean {
 }
 
 /**
- * Calculates a weighted completeness score (0-100) and completion state for a profile.
- * Server-authoritative and deterministic.
+ * Calculates completeness, mandatory completion, and full profile completion.
+ * isComplete is true only if ALL attributes in the Profile schema have valid values.
  */
 export function calculateProfileCompleteness(
   profile: ProfileData | null
 ): ProfileCompletenessResult {
+  const mandatory = checkMandatoryCompletion(profile);
+
   if (!profile) {
     const allMissing: MissingFieldItem[] = (
       Object.keys(PROFILE_COMPLETION_WEIGHTS) as ProfileCompletenessFieldKey[]
@@ -54,6 +56,8 @@ export function calculateProfileCompleteness(
     return {
       score: 0,
       state: "NOT_STARTED",
+      isComplete: false,
+      isMandatoryCompleted: false,
       completedFields: [],
       missingFields: allMissing,
     };
@@ -92,6 +96,7 @@ export function calculateProfileCompleteness(
   // 3. Skills (15)
   if (
     Array.isArray(profile.skills) &&
+    profile.skills.length > 0 &&
     profile.skills.some((s) => isNonEmptyString(s.name) && s.proficiency)
   ) {
     totalScore += PROFILE_COMPLETION_WEIGHTS.skills;
@@ -105,7 +110,7 @@ export function calculateProfileCompleteness(
     });
   }
 
-  // 4. Target Role (10) - EXPLORE_CAREERS does not require a specific targetRole
+  // 4. Target Role (10) - EXPLORE_CAREERS does not require a specific targetRole for score, but check role
   const isExploration = profile.careerGoals?.primaryGoal === "EXPLORE_CAREERS";
   const hasTargetRole = isNonEmptyString(profile.careerGoals?.targetRole);
 
@@ -143,6 +148,7 @@ export function calculateProfileCompleteness(
   // 6. Desired Skills (10)
   if (
     Array.isArray(profile.desiredSkills) &&
+    profile.desiredSkills.length > 0 &&
     profile.desiredSkills.some((s) => isNonEmptyString(s))
   ) {
     totalScore += PROFILE_COMPLETION_WEIGHTS.desiredSkills;
@@ -198,11 +204,33 @@ export function calculateProfileCompleteness(
     });
   }
 
+  // Check if ALL attributes in Profile schema have valid values
+  const hasValidBasicInfo = mandatory.isMandatoryCompleted;
+  const hasValidYearsOfExp = typeof profile.yearsOfExperience === "number" && profile.yearsOfExperience >= 0;
+  const hasValidTargetRole = isNonEmptyString(profile.careerGoals?.targetRole);
+  const isAllAttributesComplete =
+    hasValidBasicInfo &&
+    Boolean(profile.currentStatus) &&
+    isNonEmptyString(profile.currentRole) &&
+    hasValidYearsOfExp &&
+    isEducationComplete &&
+    Boolean(profile.careerGoals?.primaryGoal) &&
+    hasValidTargetRole &&
+    Boolean(profile.targetCompanyType) &&
+    typeof profile.weeklyLearningHours === "number" &&
+    profile.weeklyLearningHours > 0 &&
+    Array.isArray(profile.skills) &&
+    profile.skills.length > 0 &&
+    profile.skills.every((s) => isNonEmptyString(s.name) && s.proficiency) &&
+    Array.isArray(profile.desiredSkills) &&
+    profile.desiredSkills.length > 0 &&
+    profile.desiredSkills.every((s) => isNonEmptyString(s));
+
   const score = Math.min(100, Math.max(0, totalScore));
   let state: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" = "IN_PROGRESS";
   if (score === 0) {
     state = "NOT_STARTED";
-  } else if (score === 100) {
+  } else if (score === 100 || isAllAttributesComplete) {
     state = "COMPLETED";
   }
 
@@ -212,6 +240,8 @@ export function calculateProfileCompleteness(
   return {
     score,
     state,
+    isComplete: isAllAttributesComplete,
+    isMandatoryCompleted: mandatory.isMandatoryCompleted,
     completedFields,
     missingFields,
   };

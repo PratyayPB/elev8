@@ -68,7 +68,7 @@ export default async function DashboardPage() {
             href={ROUTES.CAREER_ASSESSMENT}
             className={`whitespace-nowrap px-6 py-2.5 rounded-xl font-display font-semibold text-sm transition-all shadow-sm flex items-center gap-2 ${
               !latestAssessment
-                ? "bg-text-primary text-white hover:bg-black/80"
+                ? "bg-text-primary text-white dark:text-brand-primary-900 hover:bg-black/80 dark:hover:bg-brand-secondary-200"
                 : "bg-surface-muted text-text-primary hover:bg-border-subtle border border-dashboard-cardBorder"
             }`}
           >

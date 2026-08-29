@@ -27,7 +27,7 @@ export function PersonalizationStep() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={optIn}
-            className="flex items-center justify-center px-6 py-3 rounded-xl font-display font-semibold text-white bg-text-primary hover:bg-black/85 transition-all shadow-sm active:scale-[0.98]"
+            className="flex items-center justify-center px-6 py-3 rounded-xl font-display font-semibold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all shadow-sm active:scale-[0.98]"
           >
             <Sparkles className="w-5 h-5 mr-2 text-dashboard-metricHighlight" />
             Yes, Personalize It

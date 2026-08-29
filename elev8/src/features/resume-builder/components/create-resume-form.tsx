@@ -160,7 +160,7 @@ export function CreateResumeForm({}: CreateResumeFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm transition-all hover:bg-black/80 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 disabled:opacity-50"
         >
           {isSubmitting ? (
             <>

@@ -150,7 +150,7 @@
     /* Borderless in dark mode */
     --border: transparent;
     --input: #242424;
-    --ring: var(--brand-secondary-50);
+    --ring: #FCFBFA;
 
     --success: #22c55e;
     --success-foreground: #000000;
@@ -220,7 +220,7 @@ h6 {
 /* =========================================================
    DARK MODE ONLY: Remove borders & use multi-tone black depth
    ========================================================= */
-.dark * {
+.dark *:not(:focus):not(:focus-within):not([data-state="open"]) {
   border-color: transparent !important;
 }
 
@@ -229,4 +229,17 @@ h6 {
 .dark textarea,
 .dark select {
   background-color: var(--dm-elevated) !important;
+}
+
+/* Active / Focus border state for inputs in dark mode */
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus,
+.dark [role="combobox"]:focus,
+.dark [role="combobox"][aria-expanded="true"],
+.dark [data-state="open"] {
+  border-color: rgba(252, 251, 250, 0.75) !important;
+  outline: 1px solid rgba(252, 251, 250, 0.4) !important;
+  outline-offset: 0px !important;
+  box-shadow: 0 0 0 1px rgba(252, 251, 250, 0.25) !important;
 }

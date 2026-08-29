@@ -69,7 +69,7 @@ export function Header() {
           <SignedOut>
             <Link
               href="/sign-in"
-              className="flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-[15px] font-medium hover:bg-black/90 transition-all group"
+              className="flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-[15px] font-medium hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all group"
             >
               Get Started
               <div className="bg-white text-black rounded-full p-1.5 group-hover:translate-x-0.5 transition-transform flex items-center justify-center">
@@ -80,7 +80,7 @@ export function Header() {
           <SignedIn>
             <Link
               href="/dashboard"
-              className="flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-[15px] font-medium hover:bg-black/90 transition-all group"
+              className="flex items-center gap-3 bg-black text-white pl-5 pr-1.5 py-1.5 rounded-full text-[15px] font-medium hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all group"
             >
               Dashboard
               <div className="bg-white text-black rounded-full p-1.5 group-hover:translate-x-0.5 transition-transform flex items-center justify-center">

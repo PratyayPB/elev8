@@ -82,7 +82,7 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
           ) : (
             <Link
               href={`/dashboard/interviews/${interview.id}`}
-              className="w-full py-2 bg-text-primary text-white text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
+              className="w-full py-2 bg-text-primary text-white dark:text-brand-primary-900 text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
             >
               <Eye className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
               View Assessment

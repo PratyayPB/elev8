@@ -12,8 +12,10 @@ export async function GET() {
       return NextResponse.json({
         ...emptyCompleteness,
         allMissingFields: emptyCompleteness.missingFields,
-        isComplete: emptyMandatory.isComplete,
-        missingFields: emptyMandatory.missingFields,
+        isComplete: false,
+        isMandatoryCompleted: false,
+        missingFields: emptyCompleteness.missingFields,
+        missingMandatoryFields: emptyMandatory.missingFields,
       }, { status: 200 });
     }
 
@@ -24,8 +26,10 @@ export async function GET() {
     return NextResponse.json({
       ...completeness,
       allMissingFields: completeness.missingFields,
-      isComplete: mandatory.isComplete,
-      missingFields: mandatory.missingFields,
+      isComplete: completeness.isComplete,
+      isMandatoryCompleted: mandatory.isMandatoryCompleted,
+      missingFields: completeness.missingFields,
+      missingMandatoryFields: mandatory.missingFields,
     }, { status: 200 });
   } catch (error) {
     console.error("GET /api/profile/completion error:", error);

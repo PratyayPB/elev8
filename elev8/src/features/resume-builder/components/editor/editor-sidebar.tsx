@@ -43,7 +43,7 @@ export function EditorSidebar({ activeSection, onSectionClick }: EditorSidebarPr
             onClick={() => handleSectionClick(sec.id)}
             className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
               isActive
-                ? "bg-text-primary text-white shadow-sm"
+                ? "bg-text-primary text-white dark:text-brand-primary-900 shadow-sm"
                 : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 border border-transparent"
             }`}
           >

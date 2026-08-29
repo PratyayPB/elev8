@@ -17,14 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-// ISO 3166-1 alpha-2 country names
-const COUNTRIES = [
-  "United States", "United Kingdom", "Canada", "Australia", "India",
-  "Germany", "France", "Spain", "Italy", "Brazil", "Japan",
-  "South Korea", "Mexico", "Netherlands", "Sweden", "Switzerland",
-  "Singapore", "United Arab Emirates"
-].sort();
+import { countries, getCountryName } from "@/lib/data/countries";
 
 interface CountrySelectProps {
   value: string;
@@ -43,37 +36,42 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between font-normal",
+            "w-full justify-between font-normal dark:bg-[#242424] dark:hover:bg-[#242424] dark:text-foreground dark:hover:text-foreground focus-visible:ring-1 focus-visible:ring-brand-secondary-50/40 focus-visible:border-brand-secondary-50/60 data-[state=open]:ring-1 data-[state=open]:ring-brand-secondary-50/40 data-[state=open]:border-brand-secondary-50/60 transition-all",
             !value && "text-text-muted",
             error && "border-red-500"
           )}
         >
-          {value ? value : "Select country..."}
+          {value ? getCountryName(value) : "Select country..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" align="start">
+      <PopoverContent
+        className="w-[300px] p-0"
+        align="start"
+        side="top"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <Command>
           <CommandInput placeholder="Search country..." />
           <CommandList>
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>
-              {COUNTRIES.map((country) => (
+              {countries.map((country) => (
                 <CommandItem
-                  key={country}
-                  value={country}
+                  key={country.code}
+                  value={country.name} // CommandItem filters based on this value
                   onSelect={() => {
-                    onChange(country);
+                    onChange(country.code);
                     setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === country ? "opacity-100" : "opacity-0"
+                      value === country.code ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {country}
+                  {country.name}
                 </CommandItem>
               ))}
             </CommandGroup>

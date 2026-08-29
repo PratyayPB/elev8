@@ -37,7 +37,7 @@ export function AssessmentCtaCard({
         <div>
           <Link
             href="/dashboard/profile"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-text-primary text-white font-display font-semibold text-xs transition-all hover:bg-black/80 shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-xs transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 shadow-sm"
           >
             Complete Profile
             <ArrowRight className="h-4 w-4" />
@@ -71,7 +71,7 @@ export function AssessmentCtaCard({
           type="button"
           onClick={onStart}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-text-primary text-white font-display font-semibold text-sm transition-all hover:bg-black/80 hover:scale-[0.98] disabled:opacity-50 shadow-md"
+          className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 hover:scale-[0.98] disabled:opacity-50 shadow-md"
         >
           <Sparkles className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           {isLoading ? "Analyzing Career Profile..." : "Start Career Assessment"}

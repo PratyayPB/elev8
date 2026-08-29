@@ -32,6 +32,7 @@ export async function runCandidateScorerTests() {
     
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 10,
+    isMandatoryCompleted: true,
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -77,7 +78,7 @@ export async function runCandidateScorerTests() {
   const ctx: RecommendationContext = {
     userId: "u_test",
     profile: baseProfile,
-    completeness: { score: 100, state: "COMPLETED", completedFields: [], missingFields: [] },
+    completeness: { score: 100, state: "COMPLETED", isComplete: true, isMandatoryCompleted: true, completedFields: [], missingFields: [] },
     skillGap: {
       status: "SUCCESS",
       targetRole: "Full Stack Developer",

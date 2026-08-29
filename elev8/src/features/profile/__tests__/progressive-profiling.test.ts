@@ -32,6 +32,7 @@ export async function runProgressiveProfilingTests() {
     
     targetCompanyType: "NO_PREFERENCE",
     weeklyLearningHours: 10,
+    isMandatoryCompleted: true,
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),

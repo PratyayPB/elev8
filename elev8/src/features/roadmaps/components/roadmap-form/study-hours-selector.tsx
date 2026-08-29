@@ -31,7 +31,7 @@ export function StudyHoursSelector({ value, onChange, error }: StudyHoursSelecto
               onClick={() => onChange(option.value as StudyHoursValue)}
               className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-display font-medium transition-all ${
                 isSelected
-                  ? "bg-text-primary text-white border-text-primary shadow-sm"
+                  ? "bg-text-primary text-white dark:text-brand-primary-900 border-text-primary shadow-sm"
                   : "bg-surface-muted text-text-primary border-border-subtle hover:border-text-primary/30 hover:bg-border-subtle"
               }`}
             >

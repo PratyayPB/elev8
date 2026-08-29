@@ -50,7 +50,7 @@ export function DynamicQuestion({ question, initialAnswers, onChange }: DynamicQ
               <div
                 className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                   isSelected
-                    ? "border-text-primary bg-text-primary text-white"
+                    ? "border-text-primary bg-text-primary text-white dark:text-brand-primary-900"
                     : "border-border-subtle"
                 }`}
               >

@@ -146,7 +146,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
               {!isLast ? (
                 <button
                   onClick={handleNext}
-                  className="flex items-center px-5 py-2.5 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-colors active:scale-[0.98]"
+                  className="flex items-center px-5 py-2.5 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-colors active:scale-[0.98]"
                 >
                   Next Question
                   <ChevronRight className="w-5 h-5 ml-1" />
@@ -154,7 +154,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
               ) : (
                 <button
                   onClick={() => setIsSubmitOpen(true)}
-                  className="flex items-center px-5 py-2.5 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-colors active:scale-[0.98]"
+                  className="flex items-center px-5 py-2.5 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-colors active:scale-[0.98]"
                 >
                   Review & Submit
                   <ChevronRight className="w-5 h-5 ml-1 text-dashboard-metricHighlight" />

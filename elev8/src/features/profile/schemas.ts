@@ -7,13 +7,61 @@ import {
   TargetCompanyType,
 } from "./types";
 import { PROFILE_VALIDATION } from "./constants";
+import { isValidCountryCode } from "@/lib/data/countries";
+import { parsePhoneNumberWithError, CountryCode } from "libphonenumber-js";
+import { normalizeCareerStatus } from "./utils";
 
-export const skillProficiencySchema = z.nativeEnum(SkillProficiency);
-export const careerStatusSchema = z.nativeEnum(CareerStatus);
+export const skillProficiencySchema = z.enum(["BEGINNER", "BASIC", "INTERMEDIATE", "ADVANCED", "EXPERT"]);
+export const careerStatusSchema = z.enum(["STUDENT", "EMPLOYED", "SELF_EMPLOYED", "BUSINESS_OWNER", "FREELANCER", "JOB_SEEKER", "RECENT_GRADUATE", "OTHER"]);
 export const currentStatusSchema = careerStatusSchema;
-export const primaryGoalSchema = z.nativeEnum(PrimaryGoal);
-export const careerExperienceLevelSchema = z.nativeEnum(CareerExperienceLevel);
-export const targetCompanyTypeSchema = z.nativeEnum(TargetCompanyType);
+export const primaryGoalSchema = z.enum(["LAND_A_JOB", "GET_AN_INTERNSHIP", "SWITCH_CAREER", "GET_PROMOTED", "LEARN_NEW_SKILLS", "PREPARE_FOR_INTERVIEW", "BUILD_RESUME", "IMPROVE_RESUME", "BECOME_JOB_READY", "EXPLORE_CAREERS", "OTHER"]);
+export const careerExperienceLevelSchema = z.enum(["ENTRY", "JUNIOR", "MID", "SENIOR", "LEAD"]);
+export const targetCompanyTypeSchema = z.enum(["STARTUP", "MID_SIZE", "ENTERPRISE", "FAANG", "GOVERNMENT", "NON_PROFIT", "NO_PREFERENCE"]);
+
+const validatePhoneNumber = (data: any, ctx: z.RefinementCtx) => {
+  const hasCountryCode = !!data.phoneCountryCode;
+  const hasNumber = !!data.phoneNumber;
+
+  if (hasCountryCode && !hasNumber) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Phone number is required when country code is provided.",
+      path: ["phoneNumber"],
+    });
+    return;
+  }
+
+  if (!hasCountryCode && hasNumber) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Country code is required when phone number is provided.",
+      path: ["phoneCountryCode"],
+    });
+    return;
+  }
+
+  if (hasCountryCode && hasNumber) {
+    try {
+      // Validate complete international number
+      // Assuming phoneCountryCode already includes '+' e.g. "+91"
+      const fullNumber = `${data.phoneCountryCode}${data.phoneNumber}`;
+      const phone = parsePhoneNumberWithError(fullNumber);
+      if (!phone.isValid()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter a valid international phone number.",
+          path: ["phoneNumber"],
+        });
+      }
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a valid international phone number.",
+        path: ["phoneNumber"],
+      });
+    }
+  }
+};
 
 export const profileSkillSchema = z.object({
   name: z
@@ -67,11 +115,28 @@ export const mandatoryProfileSchema = z.object({
     .int("Age must be an integer")
     .min(PROFILE_VALIDATION.AGE_MIN, `Age must be at least ${PROFILE_VALIDATION.AGE_MIN}`)
     .max(PROFILE_VALIDATION.AGE_MAX, `Age must be at most ${PROFILE_VALIDATION.AGE_MAX}`),
-  country: z.string().trim().min(1, "Country is required"),
-  phoneNumber: z.string().trim().min(1, "Phone number is required"),
+  country: z
+    .string()
+    .trim()
+    .min(1, "Country is required")
+    .refine((val) => isValidCountryCode(val), {
+      message: "Please select a valid country",
+    }),
 });
 
 export const optionalProfileSchema = z.object({
+  phoneCountryCode: z
+    .string()
+    .trim()
+    .transform((val) => (val === "" ? null : val))
+    .nullable()
+    .optional(),
+  phoneNumber: z
+    .string()
+    .trim()
+    .transform((val) => (val === "" ? null : val))
+    .nullable()
+    .optional(),
   currentStatus: currentStatusSchema.nullable().optional(),
   currentRole: z
     .string()
@@ -137,9 +202,40 @@ export const optionalProfileSchema = z.object({
     .default([]),
 });
 
-export const profileCreateSchema = mandatoryProfileSchema.merge(optionalProfileSchema.partial());
-export const profileUpdateSchema = profileCreateSchema.partial();
-export const profileUpsertSchema = profileCreateSchema.partial();
+const transformProfile = <
+  T extends {
+    phoneCountryCode?: string | null;
+    phoneNumber?: string | null;
+    currentStatus?: any;
+  }
+>(
+  data: T
+): T => {
+  const result: any = { ...data };
+  
+  if (result.phoneCountryCode && result.phoneNumber) {
+    try {
+      const fullNumber = `${result.phoneCountryCode}${result.phoneNumber}`;
+      const phone = parsePhoneNumberWithError(fullNumber);
+      
+      // Extract formatted country code (e.g. "+91") and national number
+      const callingCode = phone.countryCallingCode;
+      result.phoneCountryCode = `+${callingCode}`;
+      result.phoneNumber = phone.nationalNumber;
+    } catch (e) {
+      // should not happen as superRefine caught it
+    }
+  }
+
+  if (result.currentStatus) {
+    result.currentStatus = normalizeCareerStatus(result.currentStatus);
+  }
+  return result;
+};
+
+export const profileCreateSchema = mandatoryProfileSchema.merge(optionalProfileSchema.partial()).superRefine(validatePhoneNumber).transform(transformProfile);
+export const profileUpdateSchema = mandatoryProfileSchema.partial().merge(optionalProfileSchema.partial()).superRefine(validatePhoneNumber).transform(transformProfile);
+export const profileUpsertSchema = mandatoryProfileSchema.partial().merge(optionalProfileSchema.partial()).superRefine(validatePhoneNumber).transform(transformProfile);
 
 export type MandatoryProfileSchemaType = z.infer<typeof mandatoryProfileSchema>;
 export type OptionalProfileSchemaType = z.infer<typeof optionalProfileSchema>;

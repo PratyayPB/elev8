@@ -25,7 +25,7 @@ export function RoleSelector({ catalog, selectedId, onSelect }: RoleSelectorProp
               "cursor-pointer rounded-xl border p-5 transition-all",
               "hover:border-text-primary/30 hover:shadow-sm",
               isSelected 
-                ? "border-text-primary bg-text-primary text-white hover:bg-black/90 shadow-md" 
+                ? "border-text-primary bg-text-primary text-white dark:text-brand-primary-900 hover:bg-black/90 dark:hover:bg-brand-secondary-200 shadow-md" 
                 : "border-border-subtle bg-dashboard-card text-text-primary"
             )}
           >

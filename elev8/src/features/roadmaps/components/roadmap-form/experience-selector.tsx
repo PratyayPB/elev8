@@ -32,7 +32,7 @@ export function ExperienceSelector({ value, onChange, error }: ExperienceSelecto
               onClick={() => onChange(item.id as ExperienceLevel)}
               className={`text-left p-4 rounded-xl border transition-all flex flex-col justify-between ${
                 isSelected
-                  ? "bg-text-primary text-white border-text-primary shadow-md"
+                  ? "bg-text-primary text-white dark:text-brand-primary-900 border-text-primary shadow-md"
                   : "bg-surface-muted text-text-primary border-border-subtle hover:border-text-primary/30 hover:bg-border-subtle"
               }`}
             >

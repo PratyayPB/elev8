@@ -51,6 +51,7 @@ export async function runCareerAssessmentServiceTests() {
     
     targetCompanyType: "ENTERPRISE",
     weeklyLearningHours: 10,
+    isMandatoryCompleted: true,
     profileVersion: 5,
     createdAt: new Date(),
     updatedAt: new Date(),

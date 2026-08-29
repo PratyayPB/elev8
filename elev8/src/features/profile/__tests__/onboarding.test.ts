@@ -15,8 +15,9 @@ export async function runOnboardingTests() {
   const validMandatory = {
     name: "Jane Doe",
     age: 25,
-    country: "United States",
-    phoneNumber: "+1 (555) 123-4567",
+    country: "US",
+    phoneNumber: "2025550123",
+    phoneCountryCode: "+1",
   };
   
   const parsedMandatory = mandatoryProfileSchema.parse(validMandatory);
@@ -51,7 +52,7 @@ export async function runOnboardingTests() {
   console.log("3. Testing Mandatory Completion Logic...");
   const emptyProfile = null;
   const emptyResult = checkMandatoryCompletion(emptyProfile);
-  assert.strictEqual(emptyResult.isComplete, false);
+  assert.strictEqual(emptyResult.isMandatoryCompleted, false);
   assert.strictEqual(emptyResult.missingFields.length, 4);
   assert.ok(emptyResult.missingFields.includes("name"));
   assert.ok(emptyResult.missingFields.includes("age"));
@@ -66,7 +67,7 @@ export async function runOnboardingTests() {
   } as unknown as ProfileData;
 
   const partialResult = checkMandatoryCompletion(partialProfile);
-  assert.strictEqual(partialResult.isComplete, false);
+  assert.strictEqual(partialResult.isMandatoryCompleted, false);
   assert.strictEqual(partialResult.missingFields.length, 2);
   assert.ok(partialResult.missingFields.includes("country"));
   assert.ok(partialResult.missingFields.includes("phoneNumber"));
@@ -79,7 +80,7 @@ export async function runOnboardingTests() {
   } as unknown as ProfileData;
 
   const completeResult = checkMandatoryCompletion(completeMandatoryProfile);
-  assert.strictEqual(completeResult.isComplete, true);
+  assert.strictEqual(completeResult.isMandatoryCompleted, true);
   assert.strictEqual(completeResult.missingFields.length, 0);
 
   console.log("✔ Mandatory completion logic passed.");

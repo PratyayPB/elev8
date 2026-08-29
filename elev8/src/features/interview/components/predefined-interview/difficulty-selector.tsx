@@ -26,7 +26,7 @@ export function DifficultySelector({ selectedDifficulty, onSelect }: DifficultyS
               "cursor-pointer rounded-xl border p-6 transition-all text-center flex flex-col items-center justify-center min-h-[200px]",
               "hover:border-text-primary/30 hover:shadow-md",
               isSelected 
-                ? "border-text-primary bg-text-primary text-white shadow-md" 
+                ? "border-text-primary bg-text-primary text-white dark:text-brand-primary-900 shadow-md" 
                 : "border-border-subtle bg-dashboard-card text-text-primary"
             )}
           >

@@ -137,6 +137,7 @@ export async function runSkillGapEngineTests() {
     
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 15,
+    isMandatoryCompleted: true,
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),

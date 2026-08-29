@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkAuthProvider } from "@/providers/clerk-provider";
-import { OnboardingProvider, ThemeProvider } from "@/providers";
-import { OnboardingModal } from "@/components/modals";
+import { ThemeProvider } from "@/providers";
 import { Albert_Sans, Geist } from "next/font/google";
 import "./globals.css";
 
@@ -27,25 +26,22 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkAuthProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
+      <html
+        lang="en"
+        suppressHydrationWarning
+        className={`scroll-smooth ${geistSans.variable} ${albertSans.variable}`}
       >
-        <OnboardingProvider>
-          <html
-            lang="en"
-            suppressHydrationWarning
-            className={`scroll-smooth ${geistSans.variable} ${albertSans.variable}`}
+        <body className="font-sans antialiased bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
           >
-            <body className="font-sans antialiased bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-              {children}
-              <OnboardingModal />
-            </body>
-          </html>
-        </OnboardingProvider>
-      </ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
     </ClerkAuthProvider>
   );
 }

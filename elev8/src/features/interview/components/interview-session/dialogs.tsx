@@ -28,7 +28,7 @@ export function PauseDialog({ isOpen, onClose, onConfirm, isProcessing }: Dialog
           <button
             onClick={onConfirm}
             disabled={isProcessing}
-            className="flex items-center px-4 py-2 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 disabled:opacity-50 transition-colors"
+            className="flex items-center px-4 py-2 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-50 transition-colors"
           >
             {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-2 text-dashboard-metricHighlight" /> : null}
             Save & Exit
@@ -79,7 +79,7 @@ export function SubmitDialog({
           <button
             onClick={onConfirm}
             disabled={isProcessing}
-            className="flex items-center px-4 py-2 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 disabled:opacity-50 transition-colors"
+            className="flex items-center px-4 py-2 rounded-xl font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-50 transition-colors"
           >
             {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-2 text-dashboard-metricHighlight" /> : null}
             Submit Interview

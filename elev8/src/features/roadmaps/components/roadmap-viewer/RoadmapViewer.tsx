@@ -73,7 +73,7 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
           <div className="pt-2">
             <button
               onClick={onRegenerate}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-text-primary text-white rounded-lg hover:bg-black/80 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-text-primary text-white dark:text-brand-primary-900 rounded-lg hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Try Again
@@ -102,7 +102,7 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
           <div className="pt-2">
             <button
               onClick={onRegenerate}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-text-primary text-white rounded-lg hover:bg-black/80 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-sans font-medium bg-text-primary text-white dark:text-brand-primary-900 rounded-lg hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Generate Roadmap
@@ -280,7 +280,7 @@ function MilestoneCard({
             <button
               onClick={handleComplete}
               disabled={isPending}
-              className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold bg-text-primary text-white rounded hover:bg-black/80 transition-colors disabled:opacity-50"
+              className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold bg-text-primary text-white dark:text-brand-primary-900 rounded hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors disabled:opacity-50"
             >
               {isPending ? "Saving..." : "Mark Complete"}
             </button>

@@ -62,7 +62,7 @@ export function PersonalizationStep({
           <button
             type="button"
             onClick={onOptIn}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 text-white text-xs font-display font-semibold transition-all shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white text-xs font-display font-semibold transition-all shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-dashboard-metricHighlight" />
             Yes, Personalize My Roadmap
@@ -105,7 +105,7 @@ export function PersonalizationStep({
         <button
           type="button"
           onClick={onUnskip}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white text-xs font-display font-semibold hover:bg-black/90 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 text-xs font-display font-semibold hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all shadow-sm"
         >
           <Sparkles className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
           Enable Personalization
