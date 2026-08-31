@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { RoadmapArtifact } from "@/services/roadmaps/roadmap-artifact.service";
+import { RoadmapRenderService } from "@/services/roadmaps/roadmap-render.service";
 import { ReactFlowCanvas } from "./ReactFlowCanvas";
 import { ReadOnlyToolbar } from "./ReadOnlyToolbar";
 import { LoadingOverlay } from "./LoadingOverlay";
@@ -35,6 +36,17 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
 }) => {
   const [selectedNodeData, setSelectedNodeData] = useState<any | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Compute graph dynamically to ensure layout reflects current sizing and spacing rules
+  const graph = useMemo(() => {
+    if (artifact?.logicalGraph?.nodes && artifact?.logicalGraph?.edges) {
+      return RoadmapRenderService.convertToReactFlow(
+        artifact.logicalGraph.nodes,
+        artifact.logicalGraph.edges
+      );
+    }
+    return artifact?.reactFlow || { nodes: [], edges: [] };
+  }, [artifact]);
 
   // Hook handles short polling while job is in active state (e.g. IN_PROGRESS / RUNNING / QUEUED)
   useRoadmapPolling(isLoading);
@@ -130,7 +142,7 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
 
       <div className="relative" ref={canvasRef}>
         <ReactFlowCanvas
-          graph={artifact.reactFlow}
+          graph={graph}
           onNodeClick={(_, data) => setSelectedNodeData(data)}
         />
 

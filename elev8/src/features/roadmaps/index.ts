@@ -3,7 +3,7 @@ export * from "./hooks/use-roadmap-form";
 export * from "./hooks/use-personalization";
 export * from "./hooks/use-roadmap-request";
 export * from "./services/roadmap-request.service";
-export * from "./services/personalization.service";
+export * from "./actions/profile-status.action";
 export * from "./types";
 export * from "./constants/experience-levels";
 export * from "./constants/study-hours";

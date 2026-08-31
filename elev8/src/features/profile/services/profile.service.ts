@@ -107,24 +107,31 @@ export class ProfileService {
       Boolean(validated.country?.trim()) &&
       Boolean(validated.phoneNumber?.trim());
 
+    const createDataObj = {
+      userId,
+      name: validated.name,
+      age: validated.age,
+      country: validated.country,
+      phoneCountryCode: validated.phoneCountryCode ?? null,
+      phoneNumber: validated.phoneNumber ?? null,
+      currentStatus: validated.currentStatus ?? null,
+      currentRole: validated.currentRole ?? null,
+      yearsOfExperience: validated.yearsOfExperience ?? null,
+      highestQualification: validated.highestQualification ?? null,
+      fieldOfStudy: validated.fieldOfStudy ?? null,
+      primaryGoal: validated.primaryGoal ?? null,
+      targetRole: validated.targetRole ?? null,
+      targetCompanyType: validated.targetCompanyType ?? null,
+      weeklyLearningHours: validated.weeklyLearningHours ?? null,
+      isMandatoryCompleted: isMandatory,
+    };
+
+    const isCompleted = ProfileService.checkIsCompleted(createDataObj, cleanSkills, cleanDesiredSkills);
+
     const created = await prisma.profile.create({
       data: {
-        userId,
-        name: validated.name,
-        age: validated.age,
-        country: validated.country,
-        phoneCountryCode: validated.phoneCountryCode ?? null,
-        phoneNumber: validated.phoneNumber ?? null,
-        currentStatus: validated.currentStatus ?? null,
-        currentRole: validated.currentRole ?? null,
-        yearsOfExperience: validated.yearsOfExperience ?? null,
-        highestQualification: validated.highestQualification ?? null,
-        fieldOfStudy: validated.fieldOfStudy ?? null,
-        primaryGoal: validated.primaryGoal ?? null,
-        targetRole: validated.targetRole ?? null,
-        targetCompanyType: validated.targetCompanyType ?? null,
-        weeklyLearningHours: validated.weeklyLearningHours ?? null,
-        isMandatoryCompleted: isMandatory,
+        ...createDataObj,
+        isCompleted,
         skills: {
           create: cleanSkills.map((s) => ({
             name: s.name,
@@ -152,6 +159,33 @@ export class ProfileService {
     return this.mapToProfileData(created);
   }
 
+  private static checkIsCompleted(data: any, skills: any[], desiredSkills: any[]): boolean {
+    const isEducationComplete = Boolean(
+      typeof data.highestQualification === "string" && data.highestQualification.trim() &&
+      typeof data.fieldOfStudy === "string" && data.fieldOfStudy.trim()
+    );
+    const hasValidYearsOfExp = typeof data.yearsOfExperience === "number" && data.yearsOfExperience >= 0;
+    const hasValidTargetRole = typeof data.targetRole === "string" && data.targetRole.trim().length > 0;
+    const hasValidCurrentRole = typeof data.currentRole === "string" && data.currentRole.trim().length > 0;
+
+    return Boolean(
+      data.isMandatoryCompleted &&
+      Boolean(data.currentStatus) &&
+      hasValidCurrentRole &&
+      hasValidYearsOfExp &&
+      isEducationComplete &&
+      Boolean(data.primaryGoal) &&
+      hasValidTargetRole &&
+      Boolean(data.targetCompanyType) &&
+      typeof data.weeklyLearningHours === "number" &&
+      data.weeklyLearningHours > 0 &&
+      skills.length > 0 &&
+      skills.every((s: any) => typeof s.name === "string" && s.name.trim() && Boolean(s.proficiency)) &&
+      desiredSkills.length > 0 &&
+      desiredSkills.every((s: any) => typeof s.name === "string" && s.name.trim())
+    );
+  }
+
   /**
    * Updates an existing Profile atomically.
    */
@@ -175,6 +209,7 @@ export class ProfileService {
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update skills if provided
+      let currentSkills = existing.skills;
       if (validated.skills !== undefined) {
         await tx.profileSkill.deleteMany({
           where: { profileId: existing.id },
@@ -191,9 +226,11 @@ export class ProfileService {
             })),
           });
         }
+        currentSkills = cleanSkills as any;
       }
 
       // 2. Update desired skills if provided
+      let currentDesiredSkills = existing.desiredSkills;
       if (validated.desiredSkills !== undefined) {
         await tx.profileDesiredSkill.deleteMany({
           where: { profileId: existing.id },
@@ -209,6 +246,7 @@ export class ProfileService {
             })),
           });
         }
+        currentDesiredSkills = cleanDesiredSkills as any;
       }
 
       // 3. Update main profile fields
@@ -249,6 +287,9 @@ export class ProfileService {
         Boolean(effectivePhone?.trim());
 
       updateData.isMandatoryCompleted = isMandatory;
+
+      const combinedData = { ...existing, ...updateData, isMandatoryCompleted: isMandatory };
+      updateData.isCompleted = ProfileService.checkIsCompleted(combinedData, currentSkills, currentDesiredSkills);
 
       const updated = await tx.profile.update({
         where: { id: existing.id },
@@ -403,6 +444,7 @@ export class ProfileService {
       targetCompanyType: (profile.targetCompanyType as any) || null,
       weeklyLearningHours: profile.weeklyLearningHours,
       isMandatoryCompleted: profile.isMandatoryCompleted,
+      isCompleted: profile.isCompleted,
       profileVersion: 1,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,

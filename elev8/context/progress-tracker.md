@@ -82,6 +82,13 @@ Phase 7.2: Release & Production Verification
   - Rethemed dashboard UI blocks (`MetricCard`, `EmptyState`, `PageHeader`, `SectionHeader`, `LoadingSkeleton`).
   - Built interactive Design System preview page at `/dashboard/design-system`.
   - Verified 100% type safety with zero TypeScript compilation errors.
+- [x] **Dashboard Roadmap Library Tabbed UI (Personal vs Global Roadmaps)**:
+  - Added unified `LibraryRoadmap` interface supporting both `Roadmap` and `GlobalRoadmap` entities.
+  - Updated `RoadmapLibraryService.getRoadmaps` to support `section: "mine" | "global"`, merging personal roadmaps with user-created global roadmaps in "My Roadmaps", and showcasing community roadmaps in "Global Roadmaps".
+  - Upgraded `RoadmapActionsService` to support duplicating global roadmaps into personal libraries and unlinking user creation on delete.
+  - Implemented responsive `Tabs` in `RoadmapLibrary.tsx` with URL synchronization (`?tab=global`), contextual empty states, and status badges.
+  - Wrapped roadmaps page in `<Suspense>` boundary.
+  - Verified 100% type safety and clean production build.
 
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**

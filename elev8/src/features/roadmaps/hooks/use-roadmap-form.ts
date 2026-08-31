@@ -9,7 +9,6 @@ export function useRoadmapForm(defaultValues?: Partial<Stage1FormData>) {
     resolver: zodResolver(Stage1Schema),
     defaultValues: {
       role: defaultValues?.role || "",
-      hoursPerWeek: defaultValues?.hoursPerWeek || 10,
       experienceLevel: defaultValues?.experienceLevel || "Beginner",
     },
     mode: "onChange",

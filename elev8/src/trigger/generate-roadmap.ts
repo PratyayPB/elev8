@@ -5,12 +5,16 @@ import { RoadmapGenerationService } from "@/services/roadmaps/roadmap-generation
 import { RoadmapArtifactService } from "@/services/roadmaps/roadmap-artifact.service";
 import { JobService } from "@/services/jobs/job.service";
 import { prisma } from "@/lib/prisma";
-import { RoadmapStatus } from "@prisma/client";
+import { RoadmapStatus, CareerLevel } from "@prisma/client";
+
+import { parseCareerLevel, normalizeRole } from "@/features/roadmaps/utils";
 
 export const GenerateRoadmapTaskSchema = RoadmapRequestSchema.extend({
   jobId: z.string().optional(),
   userId: z.string().optional(),
   roadmapId: z.string().optional(),
+  isGlobal: z.boolean().optional(),
+  normalizedRole: z.string().optional(),
 });
 
 export const generateRoadmapTask = schemaTask({
@@ -64,41 +68,93 @@ export const generateRoadmapTask = schemaTask({
       metadata.set("progress", 95);
       if (jobId) await JobService.updateProgress(jobId, 95, "Saving Metadata");
 
-      let roadmapRecord;
-      if (userId) {
-        roadmapRecord = await prisma.roadmap.upsert({
-          where: { id: targetId },
+      let finalRoadmapId = targetId;
+
+      if (payload.isGlobal) {
+        const normRole = payload.normalizedRole || normalizeRole(payload.role);
+        const expLevel = parseCareerLevel(payload.experienceLevel);
+        const globalRecord = await prisma.globalRoadmap.upsert({
+          where: {
+            normalizedRole_experienceLevel: {
+              normalizedRole: normRole,
+              experienceLevel: expLevel,
+            },
+          },
           create: {
             id: targetId,
-            userId,
+            createdByUserId: userId || null,
             title: generatedRoadmap.metadata.title,
+            description: generatedRoadmap.summary,
             targetRole: payload.role,
+            normalizedRole: normRole,
+            experienceLevel: expLevel,
             estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
             status: RoadmapStatus.COMPLETED,
             blobUrl,
           },
           update: {
             title: generatedRoadmap.metadata.title,
+            description: generatedRoadmap.summary,
             targetRole: payload.role,
             estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
             status: RoadmapStatus.COMPLETED,
             blobUrl,
           },
         });
-      }
+        finalRoadmapId = globalRecord.id;
 
-      // Step 7: Complete
-      metadata.set("status", "Completed");
-      metadata.set("progress", 100);
-      if (jobId) {
-        await JobService.completeJob(jobId, roadmapRecord?.id || targetId, "ROADMAP");
+        // Step 7: Complete
+        metadata.set("status", "Completed");
+        metadata.set("progress", 100);
+        if (jobId) {
+          await JobService.completeJob(jobId, finalRoadmapId, "GLOBAL_ROADMAP");
+        }
+      } else {
+        let roadmapRecord;
+        if (userId) {
+          roadmapRecord = await prisma.roadmap.upsert({
+            where: { id: targetId },
+            create: {
+              id: targetId,
+              userId,
+              title: generatedRoadmap.metadata.title,
+              description: generatedRoadmap.summary,
+              targetRole: payload.role,
+              experienceLevel: parseCareerLevel(payload.experienceLevel),
+              estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
+              status: RoadmapStatus.COMPLETED,
+              blobUrl,
+              personalized: true,
+              profileSnapshot: payload.personalization.profileContext
+                ? JSON.parse(JSON.stringify(payload.personalization.profileContext))
+                : undefined,
+            },
+            update: {
+              title: generatedRoadmap.metadata.title,
+              description: generatedRoadmap.summary,
+              targetRole: payload.role,
+              experienceLevel: parseCareerLevel(payload.experienceLevel),
+              estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
+              status: RoadmapStatus.COMPLETED,
+              blobUrl,
+            },
+          });
+          finalRoadmapId = roadmapRecord?.id || targetId;
+        }
+
+        // Step 7: Complete
+        metadata.set("status", "Completed");
+        metadata.set("progress", 100);
+        if (jobId) {
+          await JobService.completeJob(jobId, finalRoadmapId, "ROADMAP");
+        }
       }
 
       console.log("[Trigger.dev] Roadmap post-processing pipeline finished successfully!");
 
       return {
         success: true,
-        roadmapId: roadmapRecord?.id || targetId,
+        roadmapId: finalRoadmapId,
         blobUrl,
         artifact,
       };

@@ -53,6 +53,7 @@ export interface ProfileData {
   weeklyLearningHours: number | null;
 
   isMandatoryCompleted: boolean;
+  isCompleted: boolean;
 
   profileVersion: number;
   createdAt: Date | string;

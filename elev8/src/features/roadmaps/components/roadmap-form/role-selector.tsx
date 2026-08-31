@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { POPULAR_ROADMAP_ROLES } from "../../constants/roadmap-roles";
 import { Search, Briefcase } from "lucide-react";
 
@@ -11,12 +11,6 @@ interface RoleSelectorProps {
 }
 
 export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
-  const [query, setQuery] = useState("");
-
-  const filteredRoles = POPULAR_ROADMAP_ROLES.filter((role) =>
-    role.toLowerCase().includes(query.toLowerCase())
-  );
-
   return (
     <div className="space-y-4">
       <div>
@@ -35,10 +29,7 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
           <input
             type="text"
             value={value}
-            onChange={(e) => {
-              onChange(e.target.value);
-              setQuery(e.target.value);
-            }}
+            onChange={(e) => onChange(e.target.value)}
             placeholder="e.g. Full Stack Developer, AI Engineer..."
             className={`w-full pl-10 pr-4 py-3 bg-surface-muted border rounded-xl text-sm font-sans text-text-primary placeholder-text-muted focus:outline-none transition-all ${
               error
@@ -50,14 +41,14 @@ export function RoleSelector({ value, onChange, error }: RoleSelectorProps) {
         {error && <p className="text-xs font-sans text-rose-500 mt-1.5">{error}</p>}
       </div>
 
-      {/* Suggested roles pill tags */}
+      {/* Suggested roles pill tags (fixed & static to avoid CLS) */}
       <div>
         <span className="text-xs font-display font-semibold text-text-secondary block mb-2">
           Popular Roles
         </span>
-        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
-          {filteredRoles.map((role) => {
-            const isSelected = value.toLowerCase() === role.toLowerCase();
+        <div className="flex flex-wrap gap-2">
+          {POPULAR_ROADMAP_ROLES.map((role) => {
+            const isSelected = value.trim().toLowerCase() === role.toLowerCase();
             return (
               <button
                 key={role}

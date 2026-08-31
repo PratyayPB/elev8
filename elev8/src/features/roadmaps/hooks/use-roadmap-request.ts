@@ -1,6 +1,7 @@
 "use client";
+
 import { useState } from "react";
-import { Stage1FormData, Answer, RoadmapRequest } from "../types";
+import { Stage1FormData, ProfileContext, RoadmapRequest } from "../types";
 import { RoadmapRequestService } from "../services/roadmap-request.service";
 
 export function useRoadmapRequest() {
@@ -9,7 +10,10 @@ export function useRoadmapRequest() {
 
   const generateRequest = (
     stage1Data: Stage1FormData,
-    personalization: { skipped: boolean; answers: Answer[] }
+    personalization: {
+      skipped: boolean;
+      profileContext?: ProfileContext | null;
+    }
   ): RoadmapRequest | null => {
     try {
       setBuildError(null);

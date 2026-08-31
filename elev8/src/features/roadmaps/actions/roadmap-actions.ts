@@ -15,14 +15,7 @@ import { tasks } from "@trigger.dev/sdk/v3";
 import { RoadmapGenerationService } from "@/services/roadmaps/roadmap-generation.service";
 import { RoadmapArtifactService } from "@/services/roadmaps/roadmap-artifact.service";
 import { JobService } from "@/services/jobs/job.service";
-
-function parseCareerLevel(level: string): CareerLevel {
-  const upper = (level || "").toUpperCase();
-  if (upper === "BEGINNER" || upper === "BASIC") return CareerLevel.BEGINNER;
-  if (upper === "INTERMEDIATE") return CareerLevel.INTERMEDIATE;
-  if (upper === "ADVANCED") return CareerLevel.ADVANCED;
-  return CareerLevel.BEGINNER;
-}
+import { parseCareerLevel, normalizeRole } from "../utils";
 
 export async function fetchUserRoadmaps(
   options: Omit<GetRoadmapsOptions, "userId">
@@ -50,23 +43,165 @@ export async function deleteRoadmapAction(roadmapId: string) {
 
 export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
   const user = await getOrCreateDbUser();
+  const isPersonalized = !requestPayload.personalization.skipped;
 
-  // 1. Create Roadmap placeholder in DB
+  // 1. Generic Roadmap: Check cache in GlobalRoadmap table for instant reuse
+  if (!isPersonalized) {
+    const normalizedRole = normalizeRole(requestPayload.role);
+    const experienceLevel = parseCareerLevel(requestPayload.experienceLevel);
+
+    const existingGlobal = await prisma.globalRoadmap.findUnique({
+      where: {
+        normalizedRole_experienceLevel: {
+          normalizedRole,
+          experienceLevel,
+        },
+      },
+    });
+
+    if (existingGlobal) {
+      if (existingGlobal.status === RoadmapStatus.COMPLETED) {
+        console.log(
+          `[GlobalRoadmap] Cache hit for "${normalizedRole}" (${experienceLevel}). Reusing ${existingGlobal.id}.`
+        );
+        return {
+          success: true,
+          roadmapId: existingGlobal.id,
+          jobId: null,
+          isExisting: true,
+        };
+      }
+
+      if (existingGlobal.status === RoadmapStatus.IN_PROGRESS) {
+        const activeJob = await prisma.job.findFirst({
+          where: {
+            artifactId: existingGlobal.id,
+            status: JobStatus.RUNNING,
+          },
+          orderBy: { createdAt: "desc" },
+        });
+
+        return {
+          success: true,
+          roadmapId: existingGlobal.id,
+          jobId: activeJob?.id || null,
+          isExisting: true,
+        };
+      }
+    }
+
+    // Cache miss: Create GlobalRoadmap placeholder
+    const targetId = `rm_global_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const globalRoadmap = await prisma.globalRoadmap.create({
+      data: {
+        id: targetId,
+        createdByUserId: user.id,
+        title: `${requestPayload.role} Roadmap`,
+        description: `Generic career roadmap for ${requestPayload.role} (${requestPayload.experienceLevel} level).`,
+        targetRole: requestPayload.role,
+        normalizedRole,
+        experienceLevel,
+        status: RoadmapStatus.IN_PROGRESS,
+      },
+    });
+
+    const job = await prisma.job.create({
+      data: {
+        userId: user.id,
+        type: JobType.ROADMAP,
+        status: JobStatus.RUNNING,
+        progress: 5,
+        step: "Queued for AI Generation",
+        artifactId: globalRoadmap.id,
+        artifactType: "GLOBAL_ROADMAP",
+      },
+    });
+
+    try {
+      const handle = await tasks.trigger<typeof generateRoadmapTask>(
+        "generate-roadmap",
+        {
+          ...requestPayload,
+          jobId: job.id,
+          userId: user.id,
+          roadmapId: globalRoadmap.id,
+          isGlobal: true,
+          normalizedRole,
+        }
+      );
+
+      if (handle?.id) {
+        await prisma.job.update({
+          where: { id: job.id },
+          data: { triggerRunId: handle.id },
+        });
+      }
+    } catch (triggerError) {
+      console.warn(
+        "[Trigger.dev] Direct cloud trigger skipped, running local background task...",
+        triggerError
+      );
+
+      (async () => {
+        try {
+          await JobService.updateProgress(job.id, 25, "Generating Roadmap");
+          const generatedRoadmap =
+            await RoadmapGenerationService.generate(requestPayload);
+
+          await JobService.updateProgress(job.id, 65, "Computing Layout");
+          const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
+
+          await JobService.updateProgress(job.id, 80, "Uploading Artifact");
+          const blobUrl = await RoadmapArtifactService.uploadArtifact(
+            globalRoadmap.id,
+            artifact
+          );
+
+          await JobService.updateProgress(job.id, 95, "Saving Metadata");
+          await prisma.globalRoadmap.update({
+            where: { id: globalRoadmap.id },
+            data: {
+              title: generatedRoadmap.metadata.title,
+              description: generatedRoadmap.summary,
+              estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
+              status: RoadmapStatus.COMPLETED,
+              blobUrl,
+            },
+          });
+          await JobService.completeJob(job.id, globalRoadmap.id, "GLOBAL_ROADMAP");
+        } catch (err: any) {
+          console.error("[Local Background Job Error]:", err);
+          await JobService.failJob(job.id, err?.message || String(err));
+        }
+      })();
+    }
+
+    revalidatePath("/dashboard/roadmaps");
+    return {
+      success: true,
+      roadmapId: globalRoadmap.id,
+      jobId: job.id,
+    };
+  }
+
+  // 2. Personalized Roadmap: Create user-specific Roadmap
   const targetId = `rm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const profileSnapshot = requestPayload.personalization.profileContext ?? null;
+
   const roadmap = await prisma.roadmap.create({
     data: {
       id: targetId,
       userId: user.id,
       title: `${requestPayload.role} Roadmap`,
-      description: `AI-generated career roadmap for ${requestPayload.role} (${requestPayload.experienceLevel} level).`,
+      description: `Personalized career roadmap for ${requestPayload.role} (${requestPayload.experienceLevel} level).`,
       targetRole: requestPayload.role,
       experienceLevel: parseCareerLevel(requestPayload.experienceLevel),
-      estimatedDuration: `${requestPayload.hoursPerWeek === "Flexible" ? "Flexible" : `${requestPayload.hoursPerWeek} hrs/wk`}`,
       status: RoadmapStatus.IN_PROGRESS,
+      personalized: true,
+      profileSnapshot: profileSnapshot ? JSON.parse(JSON.stringify(profileSnapshot)) : undefined,
     },
   });
 
-  // 2. Create Job tracking record
   const job = await prisma.job.create({
     data: {
       userId: user.id,
@@ -79,7 +214,6 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
     },
   });
 
-  // 3. Trigger Trigger.dev task or run inline fallback
   try {
     const handle = await tasks.trigger<typeof generateRoadmapTask>(
       "generate-roadmap",
@@ -88,6 +222,7 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
         jobId: job.id,
         userId: user.id,
         roadmapId: roadmap.id,
+        isGlobal: false,
       }
     );
 
@@ -103,7 +238,6 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
       triggerError
     );
 
-    // Background execution fallback for local dev when Trigger.dev engine isn't connected
     (async () => {
       try {
         await JobService.updateProgress(job.id, 25, "Generating Roadmap");
@@ -124,6 +258,8 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
           where: { id: roadmap.id },
           data: {
             title: generatedRoadmap.metadata.title,
+            description: generatedRoadmap.summary,
+            estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
             status: RoadmapStatus.COMPLETED,
             blobUrl,
           },

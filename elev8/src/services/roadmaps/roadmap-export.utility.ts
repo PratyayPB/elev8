@@ -1,12 +1,13 @@
 "use client";
 
-import { toPng } from "html-to-image";
+import { toJpeg } from "html-to-image";
 import jsPDF from "jspdf";
 import { getNodesBounds, getViewportForBounds } from "@xyflow/react";
 
 export class RoadmapExportUtility {
   /**
    * Downloads the roadmap element as a PDF file, capturing the entire graph bounds.
+   * Uses JPEG at quality 0.85 and pixelRatio 1 to keep file size below 5MB.
    */
   public static async downloadPdf(element: HTMLElement, nodes: any[], filename = "roadmap.pdf") {
     try {
@@ -18,8 +19,8 @@ export class RoadmapExportUtility {
       // Map nodes to add default width/height for bounds calculation
       const nodesWithDimensions = nodes.map((node) => ({
         ...node,
-        width: node.width || 250,
-        height: node.height || 150,
+        width: node.width || 280,
+        height: node.height || 110,
       }));
 
       // Calculate the bounding box of the graph
@@ -40,9 +41,11 @@ export class RoadmapExportUtility {
         padding
       );
 
-      // Generate PNG image of the viewport with custom transform overrides
-      const dataUrl = await toPng(viewport, {
-        backgroundColor: "#09090b", // Match bg-zinc-950 dark theme
+      // Generate JPEG image of the viewport:
+      // - JPEG lossy compression at quality 0.85 shrinks file by ~70-80% vs PNG
+      // - pixelRatio: 1 avoids doubling the bitmap resolution (still sharp at native res)
+      const dataUrl = await toJpeg(viewport, {
+        backgroundColor: "#242424",
         width: imageWidth,
         height: imageHeight,
         style: {
@@ -50,7 +53,8 @@ export class RoadmapExportUtility {
           height: `${imageHeight}px`,
           transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
         },
-        pixelRatio: 2, // High resolution
+        pixelRatio: 1,
+        quality: 0.85, // JPEG quality (0 = worst, 1 = lossless-equivalent)
       });
 
       // Construct PDF matching calculated dimensions
@@ -58,9 +62,10 @@ export class RoadmapExportUtility {
         orientation: imageWidth > imageHeight ? "landscape" : "portrait",
         unit: "px",
         format: [imageWidth, imageHeight],
+        compress: true, // Enable jsPDF's internal compression
       });
 
-      pdf.addImage(dataUrl, "PNG", 0, 0, imageWidth, imageHeight);
+      pdf.addImage(dataUrl, "JPEG", 0, 0, imageWidth, imageHeight, undefined, "FAST");
       pdf.save(filename);
     } catch (err) {
       console.error("Failed to export roadmap to PDF:", err);

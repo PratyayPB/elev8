@@ -4,6 +4,7 @@ import { GeneratedRoadmap, RoadmapRequest } from "@/features/roadmaps/types";
 import { RoadmapPromptService } from "./roadmap-prompt.service";
 import { RoadmapValidator } from "./roadmap-validator";
 import { GeneratedRoadmapSchema } from "./roadmap-schema";
+import { RoadmapDurationService } from "./roadmap-duration.service";
 
 const jsonSchema = zodToJsonSchema(GeneratedRoadmapSchema, {
   name: "GeneratedRoadmap",
@@ -52,10 +53,19 @@ export class RoadmapGenerationService {
         // Validate structure & graph integrity
         const validation = RoadmapValidator.validate(rawText);
         if (validation.isValid && validation.data) {
+          const generatedRoadmap = validation.data;
+
+          // Application-side enrichment: set deterministic timestamp and calculated duration
+          generatedRoadmap.metadata.generatedAt = new Date().toISOString();
+          generatedRoadmap.metadata.estimatedDuration = RoadmapDurationService.calculate(
+            generatedRoadmap.milestones,
+            request.personalization?.profileContext?.weeklyLearningHours
+          );
+
           console.log(
             `[RoadmapGenerationService] Successfully generated & validated roadmap on attempt ${attempt}`
           );
-          return validation.data;
+          return generatedRoadmap;
         } else {
           console.warn(
             `[RoadmapGenerationService] Validation failed on attempt ${attempt}:`,

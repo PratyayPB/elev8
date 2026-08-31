@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { Roadmap } from "@prisma/client";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SearchBar } from "./SearchBar";
 import { FilterPanel } from "./FilterPanel";
 import { RoadmapCard } from "./RoadmapCard";
@@ -12,21 +11,27 @@ import {
   duplicateRoadmapAction,
   deleteRoadmapAction,
 } from "@/features/roadmaps/actions/roadmap-actions";
-import { Compass, Plus, Loader2 } from "lucide-react";
+import { Compass, Plus, Loader2, Globe, User, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard";
+import { LibraryRoadmap } from "@/features/roadmaps/types";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const RoadmapLibrary: React.FC = () => {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
 
+  const tabParam = searchParams.get("tab");
+  const initialSection = tabParam === "global" ? "global" : "mine";
+
+  const [section, setSection] = useState<"mine" | "global">(initialSection);
   const [search, setSearch] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("ALL");
   const [status, setStatus] = useState("ALL");
   const [sort, setSort] = useState<"newest" | "oldest" | "updated" | "alphabetical">("newest");
   const [page, setPage] = useState(1);
 
-  const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
+  const [roadmaps, setRoadmaps] = useState<LibraryRoadmap[]>([]);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -36,13 +41,25 @@ export const RoadmapLibrary: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Delete modal state
-  const [deleteTarget, setDeleteTarget] = useState<Roadmap | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<LibraryRoadmap | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Sync state if URL search param changes
+  useEffect(() => {
+    if (tabParam === "global" && section !== "global") {
+      setSection("global");
+      setPage(1);
+    } else if (tabParam !== "global" && section !== "mine") {
+      setSection("mine");
+      setPage(1);
+    }
+  }, [tabParam]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const res = await fetchUserRoadmaps({
+        section,
         search,
         experienceLevel,
         status,
@@ -53,7 +70,7 @@ export const RoadmapLibrary: React.FC = () => {
       setRoadmaps(res.roadmaps);
       setPagination(res.pagination);
     } catch (err) {
-      console.error("Failed to load user roadmaps:", err);
+      console.error("Failed to load roadmaps:", err);
     } finally {
       setLoading(false);
     }
@@ -61,7 +78,20 @@ export const RoadmapLibrary: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [search, experienceLevel, status, sort, page]);
+  }, [section, search, experienceLevel, status, sort, page]);
+
+  const handleTabChange = (newTab: string) => {
+    const nextSection = newTab as "mine" | "global";
+    setSection(nextSection);
+    setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextSection === "global") {
+      params.set("tab", "global");
+    } else {
+      params.delete("tab");
+    }
+    router.replace(`/dashboard/roadmaps${params.toString() ? `?${params.toString()}` : ""}`);
+  };
 
   const handleDuplicate = async (roadmapId: string) => {
     try {
@@ -86,7 +116,7 @@ export const RoadmapLibrary: React.FC = () => {
     }
   };
 
-  const handleRegenerate = (roadmap: Roadmap) => {
+  const handleRegenerate = (roadmap: LibraryRoadmap) => {
     const role = encodeURIComponent(roadmap.targetRole || "");
     const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
     router.push(`/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`);
@@ -97,7 +127,7 @@ export const RoadmapLibrary: React.FC = () => {
       {/* Header Bar */}
       <PageHeader
         title="Roadmap Library"
-        description="Browse, manage, and explore your AI-generated career roadmaps."
+        description="Browse, manage, and explore both your personalized roadmaps and global career guides."
         section="Learning Paths"
         action={
           <Link
@@ -108,6 +138,32 @@ export const RoadmapLibrary: React.FC = () => {
           </Link>
         }
       />
+
+      {/* Tabs Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-subtle pb-4">
+        <Tabs value={section} onValueChange={handleTabChange} className="w-full sm:w-auto">
+          <TabsList className="grid grid-cols-2 w-full sm:w-[360px] bg-surface-muted p-1 rounded-xl border border-border-subtle">
+            <TabsTrigger
+              value="mine"
+              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-lg data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
+            >
+              <User className="w-3.5 h-3.5" /> My Roadmaps
+            </TabsTrigger>
+            <TabsTrigger
+              value="global"
+              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-lg data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
+            >
+              <Globe className="w-3.5 h-3.5" /> Global Roadmaps
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <p className="text-xs font-sans text-text-secondary">
+          {section === "mine"
+            ? "Personalized career paths tailored to your profile & your generated roadmaps."
+            : "Pre-generated community roadmaps available for instant exploration."}
+        </p>
+      </div>
 
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius)] p-4 shadow-sm">
@@ -126,18 +182,24 @@ export const RoadmapLibrary: React.FC = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-text-muted">
           <Loader2 className="w-8 h-8 animate-spin text-text-primary mb-3" />
-          <p className="text-sm font-sans">Loading your roadmaps...</p>
+          <p className="text-sm font-sans">
+            {section === "mine" ? "Loading your roadmaps..." : "Loading global roadmaps..."}
+          </p>
         </div>
       ) : roadmaps.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] text-center p-8">
           <div className="w-16 h-16 rounded-full bg-surface-muted text-text-primary flex items-center justify-center mb-4 shadow-sm">
-            <Compass className="w-8 h-8" />
+            {section === "mine" ? <Compass className="w-8 h-8" /> : <Globe className="w-8 h-8" />}
           </div>
-          <h3 className="text-xl font-display font-bold text-text-primary">No Roadmaps Found</h3>
+          <h3 className="text-xl font-display font-bold text-text-primary">
+            {section === "mine" ? "No Personal Roadmaps Found" : "No Global Roadmaps Found"}
+          </h3>
           <p className="text-sm font-sans text-text-secondary max-w-sm mt-2 mb-6">
             {search || experienceLevel !== "ALL" || status !== "ALL"
-              ? "No roadmaps matched your filters. Try clearing your search parameters."
-              : "Generate your first personalized AI career roadmap to get started."}
+              ? "No roadmaps matched your search and filter criteria. Try resetting your filters."
+              : section === "mine"
+              ? "Generate your first personalized AI career roadmap or generate a generic role roadmap to get started."
+              : "No pre-generated global roadmaps are available yet. Generate one now to start populating the catalog!"}
           </p>
           <Link
             href="/dashboard/roadmaps/new"

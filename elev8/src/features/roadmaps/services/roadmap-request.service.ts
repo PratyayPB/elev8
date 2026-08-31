@@ -1,4 +1,9 @@
-import { RoadmapRequest, RoadmapRequestSchema, Stage1FormData, Answer } from "../types";
+import {
+  RoadmapRequest,
+  RoadmapRequestSchema,
+  Stage1FormData,
+  ProfileContext,
+} from "../types";
 
 export class RoadmapRequestService {
   /**
@@ -6,15 +11,19 @@ export class RoadmapRequestService {
    */
   static buildRequest(
     stage1Data: Stage1FormData,
-    personalization: { skipped: boolean; answers: Answer[] }
+    personalization: {
+      skipped: boolean;
+      profileContext?: ProfileContext | null;
+    }
   ): RoadmapRequest {
     const rawPayload = {
       role: stage1Data.role.trim(),
-      hoursPerWeek: stage1Data.hoursPerWeek,
       experienceLevel: stage1Data.experienceLevel,
       personalization: {
         skipped: personalization.skipped,
-        answers: personalization.answers,
+        profileContext: personalization.skipped
+          ? null
+          : personalization.profileContext || null,
       },
     };
 

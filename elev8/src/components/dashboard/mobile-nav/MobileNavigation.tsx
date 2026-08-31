@@ -177,15 +177,21 @@ export function MobileNavigation() {
               appearance={{
                 elements: {
                   avatarBox: "h-8 w-8",
+                  userButtonAvatarBox: "h-8 w-8",
                 },
               }}
             />
             <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
               <span className="text-sm font-display font-medium text-foreground truncate">
-                {user?.fullName || "User"}
+                {user?.fullName ||
+                  (user?.firstName && user?.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user?.firstName || user?.username || "User")}
               </span>
               <span className="text-xs font-sans text-muted-foreground truncate">
-                {user?.primaryEmailAddress?.emailAddress || ""}
+                {user?.primaryEmailAddress?.emailAddress ||
+                  user?.emailAddresses?.[0]?.emailAddress ||
+                  ""}
               </span>
             </div>
           </div>

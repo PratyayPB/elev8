@@ -26,23 +26,23 @@ const CustomSkillNode: React.FC<NodeProps> = ({ data }) => {
   const description = String(data?.description || "");
 
   return (
-    <div className="px-4 py-3.5 rounded-xl border border-zinc-800 bg-zinc-900 text-white shadow-2xl min-w-[240px] hover:border-dashboard-metricHighlight transition-all cursor-pointer group">
-      <Handle 
-        type="target" 
-        position={Position.Top} 
-        className="!bg-dashboard-metricHighlight !w-3.5 !h-3.5 !border-2 !border-zinc-900" 
+    <div className="w-[280px] px-4 py-3.5 rounded-xl border border-zinc-700/60 bg-[#333333] text-white shadow-2xl hover:border-dashboard-metricHighlight transition-all cursor-pointer group">
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!bg-[#A7A7A7] !w-3.5 !h-3.5 !border-2 !border-[#333333]"
       />
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <span className="text-[11px] font-display font-bold uppercase tracking-wider text-dashboard-metricHighlight">
+        <span className="text-[11px] font-display font-bold uppercase tracking-wider text-dashboard-metricHighlight truncate">
           {nodeType}
         </span>
         {Boolean(estimatedHours) && (
-          <span className="text-[10px] bg-zinc-800 text-zinc-300 font-display font-medium px-2 py-0.5 rounded-full border border-zinc-700">
+          <span className="text-[10px] bg-[#242424] text-zinc-300 font-display font-medium px-2 py-0.5 rounded-full border border-zinc-700 shrink-0">
             {String(estimatedHours)}h
           </span>
         )}
       </div>
-      <div className="font-display font-bold text-sm text-white group-hover:text-dashboard-metricHighlight transition-colors">
+      <div className="font-display font-bold text-sm text-white group-hover:text-dashboard-metricHighlight transition-colors line-clamp-2">
         {title}
       </div>
       {Boolean(description) && (
@@ -50,28 +50,31 @@ const CustomSkillNode: React.FC<NodeProps> = ({ data }) => {
           {description}
         </div>
       )}
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        className="!bg-dashboard-metricHighlight !w-3.5 !h-3.5 !border-2 !border-zinc-900" 
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!bg-[#A7A7A7] !w-3.5 !h-3.5 !border-2 !border-[#333333]"
       />
     </div>
   );
 };
 
-export const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({ graph, onNodeClick }) => {
+export const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
+  graph,
+  onNodeClick,
+}) => {
   const nodeTypes = useMemo(() => ({ customSkillNode: CustomSkillNode }), []);
 
   const defaultEdgeOptions = useMemo(
     () => ({
-      style: { stroke: "#3f3f46", strokeWidth: 2 },
+      style: { stroke: "#52525b", strokeWidth: 2 },
       animated: true,
     }),
     []
   );
 
   return (
-    <div className="w-full h-[700px] border border-zinc-800 rounded-[var(--card-radius-lg)] bg-zinc-950 overflow-hidden relative shadow-2xl">
+    <div className="w-full h-[700px] border border-zinc-800 rounded-[var(--card-radius-lg)] bg-[#242424] overflow-hidden relative shadow-2xl">
       <ReactFlow
         nodes={graph.nodes}
         edges={graph.edges}
@@ -85,13 +88,13 @@ export const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({ graph, onNodeC
         onNodeClick={(_, node) => onNodeClick?.(node.id, node.data)}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#27272a" gap={20} size={1} />
-        <Controls className="!bg-zinc-900 !border-zinc-800 !text-white fill-white shadow-xl" />
-        <MiniMap
-          nodeColor="#FEF7AF"
-          maskColor="rgba(0, 0, 0, 0.6)"
-          className="!bg-zinc-900 !border-zinc-800"
-        />
+        <Background color="#383838" bgColor="#242424" gap={20} size={1} />
+        <Controls showInteractive={false} className="!bg-[#333333] !border-zinc-700 !text-white fill-white shadow-xl" />
+        {/* <MiniMap
+          nodeColor="#A7A7A7"
+          maskColor="rgba(36, 36, 36, 0.7)"
+          className="!bg-[#333333] !border-zinc-700"
+        /> */}
       </ReactFlow>
     </div>
   );

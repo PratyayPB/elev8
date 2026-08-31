@@ -13,10 +13,15 @@ interface RoadmapViewerPageProps {
 
 export async function generateMetadata({ params }: RoadmapViewerPageProps): Promise<Metadata> {
   const { roadmapId } = await params;
-  const roadmap = await prisma.roadmap.findUnique({
-    where: { id: roadmapId },
-    select: { title: true },
-  });
+  const roadmap =
+    (await prisma.roadmap.findUnique({
+      where: { id: roadmapId },
+      select: { title: true },
+    })) ||
+    (await prisma.globalRoadmap.findUnique({
+      where: { id: roadmapId },
+      select: { title: true },
+    }));
 
   return {
     title: roadmap ? `${roadmap.title} | Elev8 Roadmap` : "Roadmap Viewer | Elev8",

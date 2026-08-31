@@ -3,32 +3,26 @@ import { z } from "zod";
 export type ExperienceLevel = "Beginner" | "Basic" | "Intermediate" | "Advanced";
 export type StudyHours = number | "Flexible";
 
-export const QuestionSchema = z.object({
-  id: z.string(),
-  question: z.string().min(1, "Question text is required"),
-  type: z.enum(["single", "multi"]),
-  options: z.array(z.string()).min(2, "Must provide at least 2 options"),
+export const ExistingSkillSchema = z.object({
+  name: z.string(),
+  proficiency: z.string(),
 });
 
-export const QuestionsListSchema = z
-  .array(QuestionSchema)
-  .max(4, "Maximum of 4 questions allowed");
-
-export type Question = z.infer<typeof QuestionSchema>;
-
-export interface Answer {
-  questionId: string;
-  selectedOptions: string[];
-}
-
-export const AnswerSchema = z.object({
-  questionId: z.string(),
-  selectedOptions: z.array(z.string()),
+export const ProfileContextSchema = z.object({
+  currentStatus: z.string().nullable(),
+  currentRole: z.string().nullable(),
+  yearsOfExperience: z.number().nullable(),
+  highestQualification: z.string().nullable(),
+  fieldOfStudy: z.string().nullable(),
+  targetCompanyType: z.string().nullable(),
+  weeklyLearningHours: z.number().nullable(),
+  existingSkills: z.array(ExistingSkillSchema),
 });
+
+export type ProfileContext = z.infer<typeof ProfileContextSchema>;
 
 export const Stage1Schema = z.object({
   role: z.string().min(1, "Target Role is required"),
-  hoursPerWeek: z.union([z.number().positive(), z.literal("Flexible")]),
   experienceLevel: z.enum(["Beginner", "Basic", "Intermediate", "Advanced"]),
 });
 
@@ -36,11 +30,10 @@ export type Stage1FormData = z.infer<typeof Stage1Schema>;
 
 export const RoadmapRequestSchema = z.object({
   role: z.string().min(1),
-  hoursPerWeek: z.union([z.number().positive(), z.literal("Flexible")]),
   experienceLevel: z.enum(["Beginner", "Basic", "Intermediate", "Advanced"]),
   personalization: z.object({
     skipped: z.boolean(),
-    answers: z.array(AnswerSchema),
+    profileContext: ProfileContextSchema.nullable().optional(),
   }),
 });
 
@@ -115,5 +108,23 @@ export interface GeneratedRoadmap {
     nodes: RoadmapNode[];
     edges: RoadmapEdge[];
   };
+}
+
+import { RoadmapStatus, CareerLevel } from "@prisma/client";
+
+export interface LibraryRoadmap {
+  id: string;
+  title: string;
+  description: string | null;
+  targetRole: string | null;
+  experienceLevel: CareerLevel | null;
+  status: RoadmapStatus;
+  estimatedDuration: string | null;
+  blobUrl: string | null;
+  personalized: boolean;
+  isGlobal: boolean;
+  isOwner: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 

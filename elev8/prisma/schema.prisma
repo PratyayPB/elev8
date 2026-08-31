@@ -193,15 +193,14 @@ enum ModuleCompletionStatus {
   ABANDONED
 }
 
-
 // ==========================================
 // MODELS
 // ==========================================
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String?
+  id      String  @id @default(cuid())
+  clerkId String  @unique
+  email   String?
 
   profile            Profile?
   careerAssessments  CareerAssessment[]
@@ -213,6 +212,7 @@ model User {
   notifications      Notification[]
   jobs               Job[]
   moduleActivities   ModuleActivity[]
+  globalRoadmaps     GlobalRoadmap[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -252,6 +252,7 @@ model Profile {
 
   // Status Flags
   isMandatoryCompleted Boolean @default(false)
+  isCompleted          Boolean @default(false)
 
   // Skills
   skills        ProfileSkill[]
@@ -267,9 +268,9 @@ model Profile {
 }
 
 model ProfileSkill {
-  id             String           @id @default(cuid())
-  profileId      String
-  profile        Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   name           String
   normalizedName String
@@ -281,9 +282,9 @@ model ProfileSkill {
 }
 
 model ProfileDesiredSkill {
-  id             String   @id @default(cuid())
-  profileId      String
-  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   name           String
   normalizedName String
@@ -322,9 +323,9 @@ model CareerAssessment {
 }
 
 model Roadmap {
-  id                String        @id @default(cuid())
-  userId            String
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title             String
   description       String?
@@ -344,6 +345,35 @@ model Roadmap {
   @@index([status])
   @@index([createdAt])
   @@map("roadmaps")
+}
+
+model GlobalRoadmap {
+  id String @id @default(cuid())
+
+  createdByUserId String?
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  title             String
+  description       String?
+  targetRole        String
+  normalizedRole    String
+  experienceLevel   CareerLevel
+  estimatedDuration String?
+
+  blobUrl String?
+
+  status RoadmapStatus @default(COMPLETED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([normalizedRole, experienceLevel])
+  @@index([createdByUserId])
+  @@index([normalizedRole])
+  @@index([experienceLevel])
+  @@index([status])
+  @@index([createdAt])
+  @@map("global_roadmaps")
 }
 
 model ResumeScore {
@@ -394,9 +424,9 @@ model ResumeBuild {
 }
 
 model InterviewTemplate {
-  id                String                @id @default(cuid())
-  userId            String?
-  user              User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   type              InterviewTemplateType
   role              String
@@ -424,9 +454,9 @@ model InterviewTemplate {
 }
 
 model InterviewSession {
-  id         String            @id @default(cuid())
-  userId     String
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   templateId String
   template   InterviewTemplate @relation(fields: [templateId], references: [id])
@@ -503,7 +533,7 @@ model Notification {
 }
 
 model RoleSkillProfile {
-  id              String                 @id @default(cuid())
+  id              String                @id @default(cuid())
   role            String
   normalizedRole  String
   experienceLevel CareerExperienceLevel
@@ -584,20 +614,20 @@ model RecommendationSet {
 }
 
 model Recommendation {
-  id                  String               @id @default(cuid())
+  id                  String            @id @default(cuid())
   recommendationSetId String
-  recommendationSet   RecommendationSet    @relation(fields: [recommendationSetId], references: [id], onDelete: Cascade)
+  recommendationSet   RecommendationSet @relation(fields: [recommendationSetId], references: [id], onDelete: Cascade)
   userId              String
 
-  source   RecommendationSource
-  type     RecommendationType
-  refId    String
-  priority Int
-  score    Float
+  source         RecommendationSource
+  type           RecommendationType
+  refId          String
+  priority       Int
+  score          Float
   scoreBreakdown Json?
-  reason   String
-  context  Json?
-  status   RecommendationStatus @default(PENDING)
+  reason         String
+  context        Json?
+  status         RecommendationStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

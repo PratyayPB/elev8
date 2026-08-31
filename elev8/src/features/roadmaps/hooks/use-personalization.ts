@@ -1,109 +1,61 @@
 "use client";
+
 import { useState, useCallback } from "react";
-import { Question, Answer, ExperienceLevel } from "../types";
-import { fetchPersonalizationQuestions } from "../services/personalization.service";
+import {
+  fetchProfileStatusAction,
+  ProfileStatusResult,
+} from "../actions/profile-status.action";
 
 export function usePersonalization() {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string[]>>({});
-  const [loading, setLoading] = useState<boolean>(false);
   const [skipped, setSkipped] = useState<boolean>(false);
   const [hasOptedIn, setHasOptedIn] = useState<boolean | null>(null);
+  const [profileStatus, setProfileStatus] =
+    useState<ProfileStatusResult | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [lastFetchedKey, setLastFetchedKey] = useState<string>("");
+  const loadProfileStatus = useCallback(async () => {
+    if (profileStatus !== null || loading) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchProfileStatusAction();
+      setProfileStatus(result);
+    } catch (err) {
+      console.error("Failed to fetch profile status:", err);
+      setError("Failed to check profile status.");
+      // Fallback
+      setProfileStatus({ exists: false, isCompleted: false });
+    } finally {
+      setLoading(false);
+    }
+  }, [profileStatus, loading]);
 
   const optIn = useCallback(() => {
     setHasOptedIn(true);
+    setSkipped(false);
   }, []);
 
-  const loadQuestions = useCallback(
-    async (
-      role: string,
-      experienceLevel: ExperienceLevel,
-      hoursPerWeek: number | "Flexible"
-    ) => {
-      const currentKey = `${role.trim().toLowerCase()}-${experienceLevel}-${hoursPerWeek}`;
-      if (currentKey === lastFetchedKey && questions.length > 0) {
-        return;
-      }
-
-      setLastFetchedKey(currentKey);
-      setAnswers({});
-      setQuestions([]);
-      setLoading(true);
-      setError(null);
-      setSkipped(false);
-      try {
-        const result = await fetchPersonalizationQuestions(
-          role,
-          experienceLevel,
-          hoursPerWeek
-        );
-        setQuestions(result);
-      } catch (err) {
-        console.error(err);
-        setError(
-          "Failed to load personalized questions. You can skip this step."
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [lastFetchedKey, questions.length]
-  );
-
-  const toggleOption = (
-    questionId: string,
-    option: string,
-    isSingle: boolean
-  ) => {
-    setAnswers((prev) => {
-      const current = prev[questionId] || [];
-      if (isSingle) {
-        return { ...prev, [questionId]: [option] };
-      } else {
-        const exists = current.includes(option);
-        const updated = exists
-          ? current.filter((o) => o !== option)
-          : [...current, option];
-        return { ...prev, [questionId]: updated };
-      }
-    });
-  };
-
-  const skipAll = () => {
+  const skipAll = useCallback(() => {
     setSkipped(true);
     setHasOptedIn(false);
-  };
+  }, []);
 
-  const unskip = () => {
+  const unskip = useCallback(() => {
     setSkipped(false);
-    setHasOptedIn(true);
-  };
-
-  const getFormattedAnswers = (): Answer[] => {
-    if (skipped) return [];
-    return Object.entries(answers)
-      .filter(([_, selected]) => selected.length > 0)
-      .map(([questionId, selectedOptions]) => ({
-        questionId,
-        selectedOptions,
-      }));
-  };
+    setHasOptedIn(null);
+  }, []);
 
   return {
-    questions,
-    answers,
-    loading,
     skipped,
     hasOptedIn,
+    profileStatus,
+    loading,
     error,
+    loadProfileStatus,
     optIn,
-    loadQuestions,
-    toggleOption,
     skipAll,
     unskip,
-    getFormattedAnswers,
   };
 }

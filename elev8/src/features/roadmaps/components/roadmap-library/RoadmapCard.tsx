@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Roadmap, RoadmapStatus } from "@prisma/client";
 import {
   Compass,
   Clock,
@@ -16,13 +15,16 @@ import {
   Loader2,
   CheckCircle2,
   ArrowRight,
+  Globe,
+  Sparkles,
 } from "lucide-react";
+import { LibraryRoadmap } from "@/features/roadmaps/types";
 
 interface RoadmapCardProps {
-  roadmap: Roadmap;
+  roadmap: LibraryRoadmap;
   onDuplicate: (id: string) => void;
-  onDeleteClick: (roadmap: Roadmap) => void;
-  onRegenerate: (roadmap: Roadmap) => void;
+  onDeleteClick: (roadmap: LibraryRoadmap) => void;
+  onRegenerate: (roadmap: LibraryRoadmap) => void;
 }
 
 export const RoadmapCard: React.FC<RoadmapCardProps> = ({
@@ -33,21 +35,21 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const getStatusBadge = (status: RoadmapStatus) => {
+  const getStatusBadge = (status: LibraryRoadmap["status"]) => {
     switch (status) {
-      case RoadmapStatus.COMPLETED:
+      case "COMPLETED":
         return (
           <span className="inline-flex items-center gap-1 text-xs font-display font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Completed
           </span>
         );
-      case RoadmapStatus.IN_PROGRESS:
+      case "IN_PROGRESS":
         return (
           <span className="inline-flex items-center gap-1 text-xs font-display font-semibold bg-dashboard-metricHighlight/30 text-black border border-dashboard-metricHighlight px-2.5 py-0.5 rounded-full">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> Generating...
           </span>
         );
-      case RoadmapStatus.ARCHIVED:
+      case "ARCHIVED":
         return (
           <span className="inline-flex items-center gap-1 text-xs font-display font-medium bg-surface-muted text-text-muted border border-border-subtle px-2.5 py-0.5 rounded-full">
             Archived
@@ -62,7 +64,7 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -80,9 +82,20 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
               <Compass className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[11px] font-display font-bold uppercase tracking-wider text-text-secondary block">
-                {roadmap.targetRole}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-display font-bold uppercase tracking-wider text-text-secondary block">
+                  {roadmap.targetRole}
+                </span>
+                {roadmap.isGlobal ? (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-display font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 px-1.5 py-0.2 rounded-md">
+                    <Globe className="w-2.5 h-2.5" /> Global
+                  </span>
+                ) : roadmap.personalized ? (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-display font-semibold bg-purple-50 text-purple-700 border border-purple-200/60 px-1.5 py-0.2 rounded-md">
+                    <Sparkles className="w-2.5 h-2.5" /> Personalized
+                  </span>
+                ) : null}
+              </div>
               {roadmap.experienceLevel && (
                 <span className="text-xs font-sans text-text-muted font-medium capitalize">
                   {roadmap.experienceLevel.toLowerCase()}
@@ -131,16 +144,20 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-text-secondary" /> Regenerate
                   </button>
-                  <div className="my-1 border-t border-border-subtle" />
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onDeleteClick(roadmap);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 text-rose-600 font-medium text-left"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </button>
+                  {roadmap.isOwner && (
+                    <>
+                      <div className="my-1 border-t border-border-subtle" />
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onDeleteClick(roadmap);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 text-rose-600 font-medium text-left"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

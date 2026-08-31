@@ -32,7 +32,11 @@ export async function runCandidateGeneratorTests() {
     
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 10,
-    isMandatoryCompleted: true,
+    
+    isMandatoryCompleted: false,
+    isCompleted: false,
+    
+    
     profileVersion: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -43,7 +47,9 @@ export async function runCandidateGeneratorTests() {
   const coldStartCtx: RecommendationContext = {
     userId: "u_test",
     profile: baseProfile,
-    completeness: { score: 0, state: "NOT_STARTED", isComplete: false, isMandatoryCompleted: false, completedFields: [], missingFields: [] },
+    completeness: { score: 0, state: "NOT_STARTED", isComplete: false, isMandatoryCompleted: false, 
+    
+     completedFields: [], missingFields: [] },
     moduleActivity: [],
     recommendationHistory: [],
     mode: "COLD_START",
@@ -63,7 +69,9 @@ export async function runCandidateGeneratorTests() {
       ...baseProfile,
       careerGoals: { primaryGoal: "EXPLORE_CAREERS", targetRole: null },
     },
-    completeness: { score: 40, state: "IN_PROGRESS", isComplete: false, isMandatoryCompleted: true, completedFields: [], missingFields: [] },
+    completeness: { score: 40, state: "IN_PROGRESS", isComplete: false, isMandatoryCompleted: false, 
+    
+     completedFields: [], missingFields: [] },
     moduleActivity: [],
     recommendationHistory: [],
     mode: "PARTIAL_PROFILE",
@@ -78,7 +86,9 @@ export async function runCandidateGeneratorTests() {
   const standardCtx: RecommendationContext = {
     userId: "u_test",
     profile: baseProfile,
-    completeness: { score: 100, state: "COMPLETED", isComplete: true, isMandatoryCompleted: true, completedFields: [], missingFields: [] },
+    completeness: { score: 100, state: "COMPLETED", isComplete: true, isMandatoryCompleted: false, 
+    
+     completedFields: [], missingFields: [] },
     skillGap: {
       status: "SUCCESS",
       targetRole: "Full Stack Developer",

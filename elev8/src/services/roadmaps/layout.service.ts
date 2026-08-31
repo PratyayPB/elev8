@@ -11,8 +11,8 @@ export interface PositionedNode extends RoadmapNode {
 }
 
 export class LayoutService {
-  private static DEFAULT_NODE_WIDTH = 240;
-  private static DEFAULT_NODE_HEIGHT = 90;
+  public static DEFAULT_NODE_WIDTH = 280;
+  public static DEFAULT_NODE_HEIGHT = 110;
 
   /**
    * Computes deterministic top-to-bottom layout for logical roadmap graph using Dagre.
@@ -25,14 +25,14 @@ export class LayoutService {
     const g = new dagre.graphlib.Graph();
     g.setGraph({
       rankdir: direction,
-      nodesep: 60,
-      ranksep: 90,
-      marginx: 40,
-      marginy: 40,
+      nodesep: 100, // Generous horizontal spacing between adjacent sibling nodes to prevent collisions
+      ranksep: 110, // Vertical spacing between ranks/levels
+      marginx: 50,
+      marginy: 50,
     });
     g.setDefaultEdgeLabel(() => ({}));
 
-    // Add nodes to Dagre
+    // Add nodes to Dagre with strict dimensions
     nodes.forEach((node) => {
       g.setNode(node.id, {
         width: this.DEFAULT_NODE_WIDTH,

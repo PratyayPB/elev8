@@ -60,6 +60,7 @@ export async function runProfileMapperTests() {
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 15,
     isMandatoryCompleted: false,
+    isCompleted: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     skills: mockSkills,

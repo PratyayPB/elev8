@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StepIndicator } from "./step-indicator";
 import { RoleSelector } from "./role-selector";
-import { StudyHoursSelector } from "./study-hours-selector";
 import { ExperienceSelector } from "./experience-selector";
 import { PersonalizationStep } from "./personalization-step";
 import { Summary } from "./summary";
@@ -29,17 +28,23 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
   const form = useRoadmapForm();
   const { watch, setValue, formState } = form;
   const role = watch("role");
-  const hoursPerWeek = watch("hoursPerWeek");
   const experienceLevel = watch("experienceLevel");
 
-  // Hook 2: AI Personalization (Stage 2)
+  // Hook 2: Profile-based Personalization (Stage 2)
   const personalization = usePersonalization();
 
   // Hook 3: Payload Builder
   const { request, buildError, generateRequest } = useRoadmapRequest();
 
+  // Fetch profile status as soon as step 2 is active
+  useEffect(() => {
+    if (currentStep === 2) {
+      personalization.loadProfileStatus();
+    }
+  }, [currentStep, personalization]);
+
   const isStage1Valid = Boolean(
-    role && role.trim().length > 0 && hoursPerWeek && experienceLevel
+    role && role.trim().length > 0 && experienceLevel
   );
 
   const triggerGeneration = async (reqPayload: RoadmapRequest) => {
@@ -68,10 +73,13 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
       setCurrentStep(2);
     } else if (currentStep === 2) {
       // Build RoadmapRequest payload
-      const formattedAnswers = personalization.getFormattedAnswers();
+      const profileCtx = personalization.skipped
+        ? null
+        : personalization.profileStatus?.profileContext;
+
       generateRequest(form.getValues(), {
         skipped: personalization.skipped,
-        answers: formattedAnswers,
+        profileContext: profileCtx,
       });
 
       setCurrentStep(3);
@@ -92,7 +100,7 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
     personalization.skipAll();
     generateRequest(form.getValues(), {
       skipped: true,
-      answers: [],
+      profileContext: null,
     });
     setCurrentStep(3);
   };
@@ -122,12 +130,6 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
               error={formState.errors.role?.message}
             />
 
-            <StudyHoursSelector
-              value={hoursPerWeek}
-              onChange={(val) => setValue("hoursPerWeek", val, { shouldValidate: true })}
-              error={formState.errors.hoursPerWeek?.message}
-            />
-
             <ExperienceSelector
               value={experienceLevel}
               onChange={(val) => setValue("experienceLevel", val, { shouldValidate: true })}
@@ -139,18 +141,12 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
         {currentStep === 2 && (
           <div className="animate-in fade-in duration-200">
             <PersonalizationStep
-              role={role}
-              experienceLevel={experienceLevel}
-              hoursPerWeek={hoursPerWeek}
-              questions={personalization.questions}
-              answers={personalization.answers}
-              loading={personalization.loading}
               skipped={personalization.skipped}
               hasOptedIn={personalization.hasOptedIn}
+              profileStatus={personalization.profileStatus}
+              loading={personalization.loading}
               error={personalization.error}
               onOptIn={personalization.optIn}
-              loadQuestions={personalization.loadQuestions}
-              onToggleOption={personalization.toggleOption}
               onSkip={handleSkipPersonalization}
               onUnskip={personalization.unskip}
             />

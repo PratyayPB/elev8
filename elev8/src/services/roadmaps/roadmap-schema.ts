@@ -53,9 +53,9 @@ export const MilestoneSchema = z.object({
 export const RoadmapMetadataSchema = z.object({
   title: z.string(),
   role: z.string(),
-  estimatedDuration: z.string(),
   experienceLevel: z.enum(["Beginner", "Basic", "Intermediate", "Advanced"]),
-  generatedAt: z.string(),
+  estimatedDuration: z.string().optional(),
+  generatedAt: z.string().optional(),
 });
 
 export const LogicalGraphSchema = z.object({

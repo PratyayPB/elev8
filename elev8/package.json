@@ -35,7 +35,7 @@
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tanstack/react-query": "^5.0.0",
-    "@trigger.dev/sdk": "4.5.12",
+    "@trigger.dev/sdk": "4.5.14",
     "@types/dagre": "^0.7.54",
     "@types/pdf-parse": "^1.1.5",
     "@vercel/blob": "^2.6.1",
