@@ -1,50 +1,221 @@
+"use client";
+
+import React from "react";
+import { useRouter } from "next/navigation";
 import { useInterviewPersonalization } from "../../hooks/use-interview-personalization";
-import { useInterviewRequestStore } from "../../hooks/use-interview-request";
-import { DynamicQuestion } from "./dynamic-question";
-import { Navigation } from "./navigation";
-import { Loader2, Sparkles, SkipForward } from "lucide-react";
+import {
+  Sparkles,
+  Loader2,
+  FastForward,
+  UserCheck,
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  ChevronLeft,
+} from "lucide-react";
 
 export function PersonalizationStep() {
-  const { questions, isLoading, hasOptedIn, optIn, handleSkip, handleContinue } = useInterviewPersonalization();
-  const { requestData, updateAnswer, prevStep } = useInterviewRequestStore();
+  const router = useRouter();
+  const {
+    profileStatus,
+    isLoading,
+    error,
+    hasOptedIn,
+    skipped,
+    optIn,
+    handleSkip,
+    handleUnskip,
+    handleContinue,
+    prevStep,
+  } = useInterviewPersonalization();
 
-  if (!hasOptedIn) {
+  if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-          Personalize Your Interview
-        </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-lg mx-auto">
-          Would you like our AI to generate a few quick questions to tailor this interview to your specific background and target companies?
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+        <Loader2 className="w-8 h-8 animate-spin text-text-primary" />
+        <h3 className="text-base font-display font-bold text-text-primary">
+          Checking Profile Status
+        </h3>
+        <p className="text-xs font-sans text-text-secondary max-w-sm">
+          Retrieving your career profile context for interview personalization...
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      </div>
+    );
+  }
+
+  if (skipped) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="bg-surface-muted/60 border border-border-subtle rounded-xl p-8 text-center space-y-4">
+          <FastForward className="w-8 h-8 text-text-muted mx-auto" />
+          <div>
+            <h3 className="text-sm font-display font-bold text-text-primary">
+              Personalization Skipped
+            </h3>
+            <p className="text-xs font-sans text-text-secondary max-w-md mx-auto mt-1">
+              Your interview will be generated based purely on your core inputs
+              without injecting profile background details.
+            </p>
+          </div>
           <button
-            onClick={optIn}
-            className="flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            type="button"
+            onClick={handleUnskip}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 text-xs font-display font-semibold hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all shadow-sm"
           >
-            <Sparkles className="w-5 h-5 mr-2" />
-            Yes, Personalize It
-          </button>
-          
-          <button
-            onClick={handleSkip}
-            className="flex items-center justify-center px-6 py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-          >
-            <SkipForward className="w-5 h-5 mr-2" />
-            Skip & Proceed
+            <Sparkles className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+            Review Personalization Options
           </button>
         </div>
-        
-        <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-start">
+
+        <div className="flex justify-between items-center pt-4 border-t border-border-subtle">
           <button
             type="button"
             onClick={prevStep}
-            className="px-5 py-2.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
           >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasOptedIn === true) {
+    const ctx = profileStatus?.profileContext;
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 space-y-6 shadow-sm">
+          <div className="flex items-center gap-3 border-b border-border-subtle pb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-display font-bold text-text-primary">
+                Profile Personalization Enabled
+              </h3>
+              <p className="text-xs font-sans text-text-secondary mt-0.5">
+                The following profile attributes will be used to tailor your questions:
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+              <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+                Current Role
+              </span>
+              <span className="text-xs font-medium text-text-primary mt-1 block truncate">
+                {ctx?.currentRole || "Not specified"}
+              </span>
+            </div>
+            <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+              <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+                Experience
+              </span>
+              <span className="text-xs font-medium text-text-primary mt-1 block">
+                {ctx?.yearsOfExperience != null
+                  ? `${ctx.yearsOfExperience} yrs`
+                  : "Not specified"}
+              </span>
+            </div>
+            <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+              <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+                Primary Goal
+              </span>
+              <span className="text-xs font-medium text-text-primary mt-1 block truncate">
+                {ctx?.primaryGoal || "Not specified"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="text-xs font-display font-semibold text-text-secondary hover:text-text-primary underline underline-offset-2"
+            >
+              Disable Profile Personalization
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center pt-4 border-t border-border-subtle">
+          <button
+            type="button"
+            onClick={prevStep}
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Awaiting decision: check if profile is completed
+  const isProfileComplete = profileStatus?.isCompleted === true;
+
+  if (isProfileComplete) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 text-center space-y-6 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-dashboard-metricHighlight/30 text-text-primary border border-dashboard-metricHighlight flex items-center justify-center mx-auto shadow-inner">
+            <UserCheck className="w-6 h-6" />
+          </div>
+          <div className="max-w-md mx-auto space-y-2">
+            <h3 className="text-lg font-display font-bold text-text-primary">
+              Personalize with Profile Data (Optional)
+            </h3>
+            <p className="text-xs font-sans text-text-secondary leading-relaxed">
+              Your career profile is complete! Would you like us to personalize
+              your interview questions based on your career background, current role,
+              and experience?
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={optIn}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm"
+            >
+              <Sparkles className="w-4 h-4 text-dashboard-metricHighlight" />
+              Yes, Use Profile Data
+            </button>
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+            >
+              <FastForward className="w-4 h-4 text-text-muted" />
+              Skip & Proceed
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-start pt-4 border-t border-border-subtle">
+          <button
+            type="button"
+            onClick={prevStep}
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
             Back
           </button>
         </div>
@@ -52,59 +223,60 @@ export function PersonalizationStep() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
-        <p className="text-lg font-medium">Generating personalization questions...</p>
-      </div>
-    );
-  }
-
-  // All questions must have at least one answer to be considered complete
-  const allAnswered = questions.every((q) => {
-    const ans = requestData.personalization?.answers.find((a) => a.questionId === q.id);
-    return ans && ans.selectedOptions.length > 0;
-  });
-
+  // Profile is incomplete
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Personalize Your Interview
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Answer these optional questions to help us tailor the interview to your background and goals. You can skip this step entirely.
-        </p>
-      </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 text-center space-y-6 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto shadow-inner">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <div className="max-w-md mx-auto space-y-2">
+          <h3 className="text-lg font-display font-bold text-text-primary">
+            Complete Profile for Tailored Personalization
+          </h3>
+          <p className="text-xs font-sans text-text-secondary leading-relaxed">
+            Your career profile is not yet fully completed. Completing your
+            profile enables rich AI personalization based on your current role,
+            career transition goals, and background.
+          </p>
+        </div>
 
-      <div className="space-y-6">
-        {questions.length === 0 ? (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 text-center text-gray-500 dark:text-gray-400">
-            No additional personalization questions needed at this time.
+        {error && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs font-sans text-amber-800 max-w-md mx-auto">
+            {error}
           </div>
-        ) : (
-          questions.map((q) => {
-            const initialAns = requestData.personalization?.answers.find((a) => a.questionId === q.id)?.selectedOptions || [];
-            return (
-              <DynamicQuestion
-                key={q.id}
-                question={q}
-                initialAnswers={initialAns}
-                onChange={(selected) => updateAnswer(q.id, selected)}
-              />
-            );
-          })
         )}
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/profile")}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm"
+          >
+            <span>Complete Profile</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+          >
+            <FastForward className="w-4 h-4 text-text-muted" />
+            Skip for now
+          </button>
+        </div>
       </div>
 
-      <Navigation
-        onBack={prevStep}
-        onSkip={questions.length > 0 ? handleSkip : undefined}
-        onNext={handleContinue}
-        nextLabel="Continue"
-        isNextDisabled={questions.length > 0 && !allAnswered}
-      />
+      <div className="flex justify-start pt-4 border-t border-border-subtle">
+        <button
+          type="button"
+          onClick={prevStep}
+          className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
     </div>
   );
 }

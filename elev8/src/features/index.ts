@@ -6,8 +6,7 @@ export type {
   ResumeExperienceLevel,
   ResumeUpload,
   ResumePersonalization,
-  ResumeQuestion,
-  ResumeAnswer,
+  ResumeProfileContext,
 } from "./resume";
 export {
   RESUME_EXPERIENCE_LEVELS,

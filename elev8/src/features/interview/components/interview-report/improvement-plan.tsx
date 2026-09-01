@@ -18,16 +18,39 @@ export function ImprovementPlan({ overallScores }: ImprovementPlanProps) {
         <div className="p-5 bg-dashboard-metricHighlight/10 rounded-2xl border border-dashboard-metricHighlight/30">
           <h4 className="font-display font-bold text-text-primary text-base mb-3 flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-text-primary" />
-            Recommended Topics
+            Recommended Learning & Focus Areas
           </h4>
-          <ul className="space-y-2.5">
-            {overallScores.recommendedLearning.map((topic, i) => (
-              <li key={i} className="text-sm font-sans text-text-secondary flex items-start gap-2 leading-relaxed">
-                <span className="font-bold text-text-primary">•</span>
-                <span>{topic}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-3">
+            {overallScores.recommendedLearning.map((item, i) => {
+              const isStructured = typeof item === "object" && item !== null && "title" in item;
+              const title = isStructured ? item.title : (item as string);
+              const description = isStructured ? item.description : "";
+              const priority = isStructured ? item.priority : "MEDIUM";
+
+              const getPriorityBadge = (p: "HIGH" | "MEDIUM" | "LOW") => {
+                switch (p) {
+                  case "HIGH":
+                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-rose-500/15 text-rose-600 border border-rose-500/20">High Priority</span>;
+                  case "MEDIUM":
+                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-dashboard-metricHighlight/20 text-text-primary border border-dashboard-metricHighlight/30">Medium</span>;
+                  case "LOW":
+                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-surface-muted text-text-secondary border border-border-subtle">Low</span>;
+                }
+              };
+
+              return (
+                <div key={i} className="p-3 bg-surface-elevated/70 border border-border-subtle rounded-xl space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-display font-bold text-sm text-text-primary">{title}</span>
+                    {getPriorityBadge(priority)}
+                  </div>
+                  {description && (
+                    <p className="text-xs font-sans text-text-secondary leading-relaxed">{description}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Suggested Next Steps */}

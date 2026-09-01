@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton, useUser } from "@clerk/nextjs";
 import { DASHBOARD_NAVIGATION } from "@/constants/navigation";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -15,9 +14,11 @@ import {
   TrendingUp,
   User,
   Settings,
+  PanelLeftClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "../theme-toggle/ThemeToggle";
+import { useDashboardStore } from "@/store/dashboard.store";
 
 const ICONS: Record<string, React.ElementType> = {
   [ROUTES.DASHBOARD]: LayoutDashboard,
@@ -32,7 +33,7 @@ const ICONS: Record<string, React.ElementType> = {
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { isSidebarOpen, toggleSidebar } = useDashboardStore();
 
   const mainNav = DASHBOARD_NAVIGATION.filter(
     (item) => item.href !== ROUTES.SETTINGS
@@ -44,9 +45,23 @@ export function DashboardSidebar() {
   };
 
   return (
-    <aside className="w-[var(--sidebar-width)] bg-card dark:bg-[#111111] border-r border-border h-screen flex-col hidden md:flex sticky top-0 shrink-0 select-none">
+    <aside
+      className={cn(
+        "bg-card dark:bg-[#111111] border-r border-border h-screen flex-col hidden md:flex sticky top-0 shrink-0 select-none transition-all duration-300 ease-in-out overflow-hidden relative",
+        isSidebarOpen ? "w-[var(--sidebar-width)]" : "w-0 border-r-0"
+      )}
+    >
+      {/* Collapse Button */}
+      <button
+        onClick={toggleSidebar}
+        className="absolute right-4 top-4 p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors z-10"
+        title="Collapse Sidebar"
+      >
+        <PanelLeftClose className="w-5 h-5" />
+      </button>
+
       {/* Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-border">
+      <div className="h-16 flex items-center px-6 shrink-0">
         <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-base shadow-sm group-hover:scale-105 transition-transform">
             E
@@ -58,7 +73,7 @@ export function DashboardSidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-1 w-[var(--sidebar-width)]">
         {mainNav.map((item) => {
           const Icon = ICONS[item.href] || LayoutDashboard;
           const active = isActive(item.href);
@@ -86,8 +101,8 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      {/* Footer Area: Theme Toggle, Settings, & User Profile */}
-      <div className="p-3 border-t border-border space-y-3 bg-card dark:bg-[#111111]">
+      {/* Footer Area: Theme Toggle, Settings */}
+      <div className="p-3 border-t border-border space-y-3 bg-card dark:bg-[#111111] shrink-0 w-[var(--sidebar-width)]">
         {/* Theme Selector */}
         <div className="px-1">
           <ThemeToggle />
@@ -112,31 +127,6 @@ export function DashboardSidebar() {
             />
             <span>Settings</span>
           </Link>
-        </div>
-
-        {/* User Account */}
-        <div className="flex items-center gap-3 px-2 py-1.5 rounded-xl bg-secondary/50 dark:bg-[#242424] border border-border/50">
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: "h-8 w-8",
-                userButtonAvatarBox: "h-8 w-8",
-              },
-            }}
-          />
-          <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-            <span className="text-sm font-display font-medium text-foreground truncate">
-              {user?.fullName ||
-                (user?.firstName && user?.lastName
-                  ? `${user.firstName} ${user.lastName}`
-                  : user?.firstName || user?.username || "User")}
-            </span>
-            <span className="text-xs font-sans text-muted-foreground truncate">
-              {user?.primaryEmailAddress?.emailAddress ||
-                user?.emailAddresses?.[0]?.emailAddress ||
-                ""}
-            </span>
-          </div>
         </div>
       </div>
     </aside>

@@ -20,8 +20,8 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
 
   if (!hasResumes) {
     return (
-      <div className="p-8 text-center bg-gray-50 border border-gray-200 border-dashed rounded-xl my-6">
-        <p className="text-sm text-gray-500">No resumes match your filter criteria.</p>
+      <div className="p-8 text-center bg-surface-muted border border-border-subtle border-dashed rounded-2xl my-6">
+        <p className="text-sm text-text-secondary">No resumes match your filter criteria.</p>
       </div>
     );
   }
@@ -30,7 +30,7 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
     <div className="space-y-8 my-6">
       {processing.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-700 mb-3 flex items-center">
+          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-3 flex items-center">
             <span className="w-2 h-2 rounded-full bg-amber-500 mr-2 animate-pulse" />
             Processing Assessment ({processing.length})
           </h3>
@@ -44,7 +44,7 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
 
       {completed.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-3">
+          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-primary mb-3">
             Completed Assessments ({completed.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -57,7 +57,7 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
 
       {archived.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-3">
+          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-muted mb-3">
             Archived ({archived.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">

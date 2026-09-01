@@ -14,6 +14,7 @@ import { usePersonalization } from "../../hooks/use-personalization";
 import { useRoadmapRequest } from "../../hooks/use-roadmap-request";
 import { RoadmapRequest } from "../../types";
 import { generateRoadmapAction } from "../../actions/roadmap-actions";
+import { toast } from "sonner";
 
 interface RoadmapWizardProps {
   onComplete?: (request: RoadmapRequest) => void;
@@ -54,6 +55,9 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
         onComplete(reqPayload);
       }
       const res = await generateRoadmapAction(reqPayload);
+      toast.success("Roadmap generation started!", {
+        description: `Generating your ${reqPayload.role} roadmap...`,
+      });
       if (res?.roadmapId) {
         router.push(`/dashboard/roadmaps/${res.roadmapId}`);
       } else {
@@ -61,7 +65,9 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
       }
     } catch (err) {
       console.error("Failed to trigger roadmap generation:", err);
-      alert("Failed to start roadmap generation task. Please try again.");
+      toast.error("Generation failed", {
+        description: "Failed to start roadmap generation task. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -18,15 +18,19 @@ export const AssessResumeTaskSchema = z.object({
   roleDescription: z.string().optional(),
   experienceLevel: z.string(),
   originalPdfBlobUrl: z.string(),
-  personalization: z.object({
-    skipped: z.boolean(),
-    answers: z.array(
-      z.object({
-        questionId: z.string(),
-        selectedOptions: z.array(z.string()),
-      })
-    ),
-  }),
+  profile: z
+    .object({
+      currentRole: z.string().nullable().optional(),
+      currentStatus: z.string().nullable().optional(),
+      yearsOfExperience: z.number().nullable().optional(),
+      highestQualification: z.string().nullable().optional(),
+      fieldOfStudy: z.string().nullable().optional(),
+      primaryGoal: z.string().nullable().optional(),
+      targetCompanyType: z.string().nullable().optional(),
+      skills: z.array(z.string()).nullable().optional(),
+      desiredSkills: z.array(z.string()).nullable().optional(),
+    })
+    .optional(),
 });
 
 export const assessResumeTask = schemaTask({
@@ -39,7 +43,7 @@ export const assessResumeTask = schemaTask({
     maxTimeoutInMs: 10000,
   },
   run: async (payload, { ctx }) => {
-    const { resumeId, jobId, userId, role, roleDescription, experienceLevel, originalPdfBlobUrl, personalization } =
+    const { resumeId, jobId, userId, role, roleDescription, experienceLevel, originalPdfBlobUrl, profile } =
       payload;
 
     try {
@@ -71,7 +75,8 @@ export const assessResumeTask = schemaTask({
         parsedResume,
         role,
         experienceLevel,
-        personalization
+        roleDescription,
+        profile
       );
 
       // Step 5: 75% - Generating Overall Assessment
@@ -82,7 +87,9 @@ export const assessResumeTask = schemaTask({
       const overallAssessment = await OverallAssessmentService.assessOverall(
         sectionAssessment,
         role,
-        experienceLevel
+        experienceLevel,
+        roleDescription,
+        profile
       );
 
       // Step 6: 90% - Uploading Artifact

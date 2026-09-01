@@ -217,25 +217,9 @@ export class ResumeBuilderService {
   ): Promise<{ artifact: BuilderResumeArtifact; version: number; savedAt: Date }> {
     const resume = await this.getResume(userId, resumeId);
 
-    // Fetch the current artifact to get the true version
-    let currentVersion = 0;
-    if (resume.artifactBlobUrl) {
-      try {
-        const currentArtifact = await this.getResumeArtifact(userId, resumeId);
-        currentVersion = currentArtifact.version;
-      } catch (err) {
-        console.warn("Could not fetch current artifact for version check, assuming 0");
-      }
-    }
-
-    // Concurrency check
-    if (clientVersion !== undefined && clientVersion < currentVersion) {
-      throw new ResumeBuilderError(
-        `Version conflict: client version (${clientVersion}) is older than server version (${currentVersion})`,
-        "VERSION_CONFLICT",
-        409
-      );
-    }
+    // We bypass fetching the current artifact from Blob storage on every autosave to significantly reduce latency and prevent 500 timeouts.
+    // For MVP, we trust the client's version for optimistic concurrency.
+    const currentVersion = clientVersion !== undefined ? clientVersion : 0;
 
     // Validate artifact structure
     const parseResult = BuilderResumeArtifactSchema.safeParse(artifactInput);

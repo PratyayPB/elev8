@@ -8,7 +8,7 @@ interface StepIndicatorProps {
 
 const steps = [
   { number: 1, title: "Upload & Role" },
-  { number: 2, title: "AI Personalization" },
+  { number: 2, title: "Add Profile Data" },
   { number: 3, title: "Review & Submit" },
 ];
 

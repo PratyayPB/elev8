@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkAuthProvider } from "@/providers/clerk-provider";
 import { ThemeProvider } from "@/providers";
+import { Toaster } from "@/components/ui/sonner";
 import { Albert_Sans, Geist } from "next/font/google";
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster position="top-right" richColors closeButton />
           </ThemeProvider>
         </body>
       </html>

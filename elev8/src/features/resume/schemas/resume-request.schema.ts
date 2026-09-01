@@ -1,9 +1,16 @@
 import { z } from "zod";
 import { RESUME_EXPERIENCE_LEVELS, MAX_FILE_SIZE_BYTES, SUPPORTED_FILE_TYPES } from "../constants";
 
-export const ResumeAnswerSchema = z.object({
-  questionId: z.string(),
-  selectedOptions: z.array(z.string()),
+export const ResumeProfileContextSchema = z.object({
+  currentRole: z.string().nullable().optional(),
+  currentStatus: z.string().nullable().optional(),
+  yearsOfExperience: z.number().nullable().optional(),
+  highestQualification: z.string().nullable().optional(),
+  fieldOfStudy: z.string().nullable().optional(),
+  primaryGoal: z.string().nullable().optional(),
+  targetCompanyType: z.string().nullable().optional(),
+  skills: z.array(z.string()).nullable().optional(),
+  desiredSkills: z.array(z.string()).nullable().optional(),
 });
 
 export const ResumeStage1Schema = z.object({
@@ -28,26 +35,8 @@ export const ResumeStage1Schema = z.object({
 });
 
 export const ResumeRequestSchema = ResumeStage1Schema.extend({
-  personalization: z
-    .object({
-      skipped: z.boolean(),
-      answers: z.array(ResumeAnswerSchema),
-    })
-    .superRefine((data, ctx) => {
-      if (!data.skipped) {
-        data.answers.forEach((ans, index) => {
-          if (!ans.selectedOptions || ans.selectedOptions.length === 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.too_small,
-              minimum: 1,
-              type: "array",
-              inclusive: true,
-              exact: false,
-              message: "Please select at least one option",
-              path: ["answers", index, "selectedOptions"],
-            });
-          }
-        });
-      }
-    }),
+  personalization: z.object({
+    skipped: z.boolean(),
+    profile: ResumeProfileContextSchema.nullable().optional(),
+  }),
 });

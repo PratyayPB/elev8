@@ -37,6 +37,11 @@ export class RoadmapPromptService {
       sections.push(situationLines.join("\n"));
     }
 
+    // Career Goals
+    if (context.primaryGoal) {
+      sections.push(`Primary Career Goal: ${context.primaryGoal}`);
+    }
+
     // Education
     const educationLines: string[] = [];
     if (context.highestQualification) {

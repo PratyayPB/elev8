@@ -18,7 +18,7 @@ export const GeneratedQuestionSchema = z.object({
   question: z.string().min(1, "Question text is required"),
   difficulty: z.enum(DIFFICULTY_LEVELS),
   expectedTopics: z.array(z.string()).min(1, "At least one expected topic required"),
-  estimatedAnswerTime: z.string().min(1, "Estimated answer time required"),
+  estimatedTimeSeconds: z.number().int().positive("Estimated time must be a positive integer"),
 });
 
 export const GeneratedQuestionsListSchema = z.array(GeneratedQuestionSchema);

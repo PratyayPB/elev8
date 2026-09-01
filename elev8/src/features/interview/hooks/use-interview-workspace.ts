@@ -1,11 +1,30 @@
-import { useState, useMemo } from "react";
-import { InterviewSession } from "@prisma/client";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { InterviewSession, InterviewStatus } from "@prisma/client";
 
 export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [sortOption, setSortOption] = useState<string>("NEWEST");
+
+  // Auto-refresh when any interview is in GENERATING state or being assessed
+  useEffect(() => {
+    const hasActiveJob = initialInterviews.some(
+      (i) =>
+        i.status === InterviewStatus.GENERATING ||
+        (i.status === InterviewStatus.COMPLETED && (i.overallScore === null || i.overallScore === undefined))
+    );
+
+    if (!hasActiveJob) return;
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [initialInterviews, router]);
 
   const filteredInterviews = useMemo(() => {
     return initialInterviews.filter((item) => {

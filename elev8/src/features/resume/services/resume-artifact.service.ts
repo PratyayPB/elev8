@@ -1,5 +1,6 @@
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { prisma } from "@/lib/prisma";
+import { ResumeScoreStatus } from "@prisma/client";
 import {
   ParsedResume,
   ResumeSectionAssessment,
@@ -97,7 +98,7 @@ export class ResumeArtifactService {
         artifactBlobUrl,
         ovrScore: overallAssessment.overallScore,
         atsScore: overallAssessment.atsScore,
-        status: "COMPLETED",
+        status: ResumeScoreStatus.COMPLETED,
       },
     });
 

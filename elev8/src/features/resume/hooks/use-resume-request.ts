@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ResumeAssessmentRequest, Answer } from "../types";
+import { ResumeAssessmentRequest, ResumeProfileContext } from "../types";
 
 interface ResumeWizardState {
   currentStep: number;
@@ -10,8 +10,8 @@ interface ResumeWizardState {
   requestData: Partial<ResumeAssessmentRequest>;
   updateRequestData: (data: Partial<ResumeAssessmentRequest>) => void;
 
-  updateAnswer: (questionId: string, selectedOptions: string[]) => void;
   setSkipped: (skipped: boolean) => void;
+  setProfile: (profile: ResumeProfileContext | null) => void;
 
   reset: () => void;
 }
@@ -25,7 +25,7 @@ const initialState = {
     uploadedFile: null,
     personalization: {
       skipped: false,
-      answers: [],
+      profile: null,
     },
   },
 };
@@ -42,41 +42,30 @@ export const useResumeRequestStore = create<ResumeWizardState>((set) => ({
       requestData: { ...state.requestData, ...data },
     })),
 
-  updateAnswer: (questionId, selectedOptions) =>
-    set((state) => {
-      const currentAnswers = state.requestData.personalization?.answers || [];
-      const existingIdx = currentAnswers.findIndex((a) => a.questionId === questionId);
-
-      let newAnswers = [...currentAnswers];
-      if (selectedOptions.length === 0) {
-        newAnswers = newAnswers.filter((a) => a.questionId !== questionId);
-      } else if (existingIdx >= 0) {
-        newAnswers[existingIdx] = { questionId, selectedOptions };
-      } else {
-        newAnswers.push({ questionId, selectedOptions });
-      }
-
-      return {
-        requestData: {
-          ...state.requestData,
-          personalization: {
-            ...state.requestData.personalization!,
-            answers: newAnswers,
-          },
-        },
-      };
-    }),
-
   setSkipped: (skipped) =>
     set((state) => ({
       requestData: {
         ...state.requestData,
         personalization: {
+          ...state.requestData.personalization,
           skipped,
-          answers: skipped ? [] : state.requestData.personalization?.answers || [],
+          profile: skipped ? null : state.requestData.personalization?.profile || null,
+        },
+      },
+    })),
+
+  setProfile: (profile) =>
+    set((state) => ({
+      requestData: {
+        ...state.requestData,
+        personalization: {
+          ...state.requestData.personalization,
+          skipped: false,
+          profile,
         },
       },
     })),
 
   reset: () => set(initialState),
 }));
+

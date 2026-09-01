@@ -1,9 +1,9 @@
-import { Award, Code2, MessageSquare, Zap, Target } from "lucide-react";
+import { Award, Code2, MessageSquare, Zap, Target, Layers } from "lucide-react";
 
 interface ScoreCardProps {
   label: string;
   score: number;
-  type: "overall" | "technical" | "communication" | "confidence" | "problemSolving";
+  type: "overall" | "technical" | "communication" | "confidence" | "problemSolving" | "practicalDepth";
 }
 
 export function ScoreCard({ label, score, type }: ScoreCardProps) {
@@ -14,6 +14,7 @@ export function ScoreCard({ label, score, type }: ScoreCardProps) {
       case "communication": return <MessageSquare className="w-4 h-4 text-text-primary" />;
       case "confidence": return <Zap className="w-4 h-4 text-text-primary" />;
       case "problemSolving": return <Target className="w-4 h-4 text-text-primary" />;
+      case "practicalDepth": return <Layers className="w-4 h-4 text-text-primary" />;
     }
   };
 

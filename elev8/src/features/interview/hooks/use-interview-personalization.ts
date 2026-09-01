@@ -1,38 +1,34 @@
 import { useState, useEffect } from "react";
-import { Question } from "../types";
 import { useInterviewRequestStore } from "./use-interview-request";
-import { fetchInterviewPersonalizationQuestions } from "../services/interview-personalization.service";
+import {
+  fetchInterviewProfileStatusAction,
+  InterviewProfileStatusResult,
+} from "../actions/profile-status.action";
 
 export function useInterviewPersonalization() {
-  const { requestData, nextStep, setSkipped } = useInterviewRequestStore();
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasOptedIn, setHasOptedIn] = useState(false);
+  const { requestData, nextStep, prevStep, setSkipped, setProfile } = useInterviewRequestStore();
+  const [profileStatus, setProfileStatus] = useState<InterviewProfileStatusResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasOptedIn, setHasOptedIn] = useState<boolean | null>(
+    requestData.personalization?.skipped ? false : requestData.personalization?.profile ? true : null
+  );
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadQuestions() {
-      if (!hasOptedIn) return;
-
-      if (!requestData.role || !requestData.experienceLevel || !requestData.difficulty || !requestData.interviewType) {
-        setIsLoading(false);
-        return;
-      }
-
+    async function checkProfile() {
       setIsLoading(true);
+      setError(null);
       try {
-        const fetchedQuestions = await fetchInterviewPersonalizationQuestions(
-          requestData.role,
-          requestData.experienceLevel,
-          requestData.difficulty,
-          requestData.interviewType
-        );
+        const res = await fetchInterviewProfileStatusAction();
         if (isMounted) {
-          setQuestions(fetchedQuestions);
+          setProfileStatus(res);
         }
-      } catch (error) {
-        console.error("Failed to load personalization questions", error);
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err?.message || "Failed to load profile context.");
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -40,26 +36,50 @@ export function useInterviewPersonalization() {
       }
     }
 
-    loadQuestions();
+    checkProfile();
 
     return () => {
       isMounted = false;
     };
-  }, [hasOptedIn, requestData.role, requestData.experienceLevel, requestData.difficulty, requestData.interviewType]);
+  }, []);
+
+  const optIn = () => {
+    setHasOptedIn(true);
+    if (profileStatus?.profileContext) {
+      setProfile(profileStatus.profileContext);
+    }
+  };
 
   const handleSkip = () => {
+    setHasOptedIn(false);
     setSkipped(true);
     nextStep();
   };
 
-  const handleContinue = () => {
+  const handleUnskip = () => {
+    setHasOptedIn(null);
     setSkipped(false);
+  };
+
+  const handleContinue = () => {
+    if (hasOptedIn && profileStatus?.profileContext) {
+      setProfile(profileStatus.profileContext);
+    } else {
+      setSkipped(true);
+    }
     nextStep();
   };
 
-  const optIn = () => {
-    setHasOptedIn(true);
+  return {
+    profileStatus,
+    isLoading,
+    error,
+    hasOptedIn,
+    skipped: requestData.personalization?.skipped ?? false,
+    optIn,
+    handleSkip,
+    handleUnskip,
+    handleContinue,
+    prevStep,
   };
-
-  return { questions, isLoading, hasOptedIn, optIn, handleSkip, handleContinue };
 }

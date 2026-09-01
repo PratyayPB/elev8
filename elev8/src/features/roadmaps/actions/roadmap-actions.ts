@@ -91,19 +91,57 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
     }
 
     // Cache miss: Create GlobalRoadmap placeholder
-    const targetId = `rm_global_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const globalRoadmap = await prisma.globalRoadmap.create({
-      data: {
-        id: targetId,
-        createdByUserId: user.id,
-        title: `${requestPayload.role} Roadmap`,
-        description: `Generic career roadmap for ${requestPayload.role} (${requestPayload.experienceLevel} level).`,
-        targetRole: requestPayload.role,
-        normalizedRole,
-        experienceLevel,
-        status: RoadmapStatus.IN_PROGRESS,
-      },
-    });
+    let globalRoadmap;
+    try {
+      const targetId = `rm_global_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      globalRoadmap = await prisma.globalRoadmap.create({
+        data: {
+          id: targetId,
+          createdByUserId: user.id,
+          title: `${requestPayload.role} Roadmap`,
+          description: `Generic career roadmap for ${requestPayload.role} (${requestPayload.experienceLevel} level).`,
+          targetRole: requestPayload.role,
+          normalizedRole,
+          experienceLevel,
+          status: RoadmapStatus.IN_PROGRESS,
+        },
+      });
+    } catch (err: any) {
+      if (err?.code === "P2002") {
+        const raceGlobal = await prisma.globalRoadmap.findUnique({
+          where: {
+            normalizedRole_experienceLevel: {
+              normalizedRole,
+              experienceLevel,
+            },
+          },
+        });
+        if (raceGlobal) {
+          if (raceGlobal.status === RoadmapStatus.COMPLETED) {
+            return {
+              success: true,
+              roadmapId: raceGlobal.id,
+              jobId: null,
+              isExisting: true,
+            };
+          }
+          const activeJob = await prisma.job.findFirst({
+            where: {
+              artifactId: raceGlobal.id,
+              status: JobStatus.RUNNING,
+            },
+            orderBy: { createdAt: "desc" },
+          });
+          return {
+            success: true,
+            roadmapId: raceGlobal.id,
+            jobId: activeJob?.id || null,
+            isExisting: true,
+          };
+        }
+      }
+      throw err;
+    }
 
     const job = await prisma.job.create({
       data: {

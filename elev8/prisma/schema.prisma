@@ -113,9 +113,9 @@ enum InterviewType {
   GENERAL
 }
 
-enum InterviewTemplateType {
-  PREDEFINED
-  AI_GENERATED
+enum InterviewTemplateSource {
+  USER_CREATED
+  GLOBAL
 }
 
 enum InterviewTemplateStatus {
@@ -213,6 +213,7 @@ model User {
   jobs               Job[]
   moduleActivities   ModuleActivity[]
   globalRoadmaps     GlobalRoadmap[]
+  globalInterviewTemplates GlobalInterviewTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -428,7 +429,6 @@ model InterviewTemplate {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type              InterviewTemplateType
   role              String
   experienceLevel   CareerExperienceLevel
   interviewType     InterviewType
@@ -448,9 +448,39 @@ model InterviewTemplate {
   interviews InterviewSession[]
 
   @@index([userId])
-  @@index([type])
   @@index([status])
   @@map("interview_templates")
+}
+
+model GlobalInterviewTemplate {
+  id String @id @default(cuid())
+
+  createdByUserId String?
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  role              String
+  normalizedRole    String
+  experienceLevel   CareerExperienceLevel
+  interviewType     InterviewType
+  questionCount     Int
+  estimatedDuration String?
+
+  templateBlobUrl String
+
+  status InterviewTemplateStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interviews InterviewSession[]
+
+  @@unique([normalizedRole, experienceLevel, interviewType])
+  @@index([createdByUserId])
+  @@index([normalizedRole])
+  @@index([experienceLevel])
+  @@index([interviewType])
+  @@index([status])
+  @@map("global_interview_templates")
 }
 
 model InterviewSession {
@@ -458,8 +488,13 @@ model InterviewSession {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  templateId String
-  template   InterviewTemplate @relation(fields: [templateId], references: [id])
+  interviewTemplateId String?
+  interviewTemplate   InterviewTemplate? @relation(fields: [interviewTemplateId], references: [id], onDelete: SetNull)
+
+  globalInterviewTemplateId String?
+  globalInterviewTemplate   GlobalInterviewTemplate? @relation(fields: [globalInterviewTemplateId], references: [id], onDelete: SetNull)
+
+  templateSource InterviewTemplateSource @default(GLOBAL)
 
   // Historical snapshot
   role              String
@@ -483,7 +518,9 @@ model InterviewSession {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([templateId])
+  @@index([interviewTemplateId])
+  @@index([globalInterviewTemplateId])
+  @@index([templateSource])
   @@index([status])
   @@index([createdAt])
   @@map("interviews")

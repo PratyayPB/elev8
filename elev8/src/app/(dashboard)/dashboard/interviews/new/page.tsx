@@ -2,13 +2,13 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { isProfileComplete } from "@/lib/profile";
-import { PredefinedInterviewSelector } from "@/features/interview/components/predefined-interview";
+import { InterviewWizard } from "@/features/interview/components/interview-wizard";
 import { Metadata } from "next";
 import { PageHeader } from "@/components/dashboard";
 
 export const metadata: Metadata = {
   title: "Generate Interview | Elev8",
-  description: "Create a personalized interview simulation.",
+  description: "Create a mock interview simulation.",
 };
 
 export default async function NewInterviewPage() {
@@ -25,11 +25,12 @@ export default async function NewInterviewPage() {
     <div className="space-y-8 pb-10">
       <PageHeader
         section="Mock Configuration"
-        title="Start Predefined Interview"
-        description="Select a role, interview type, and difficulty to begin your mock practice session."
+        title="Generate Interview"
+        description="Select a role, interview type, and difficulty, or personalize with your profile context to begin practice."
       />
-      
-      <PredefinedInterviewSelector />
+
+      <InterviewWizard />
     </div>
   );
 }
+

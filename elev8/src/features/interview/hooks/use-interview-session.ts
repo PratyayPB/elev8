@@ -32,7 +32,9 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
     // Determine initial index based on what's answered
     let nextUnanswered = 0;
     if (artifact.answers && artifact.questions) {
-      const answeredIds = new Set(artifact.answers.map(a => a.questionId));
+      const answeredIds = new Set(
+        artifact.answers.filter((a) => a.answerText && a.answerText.trim().length > 0).map((a) => a.questionId)
+      );
       for (let i = 0; i < artifact.questions.length; i++) {
         if (!answeredIds.has(artifact.questions[i].id)) {
           nextUnanswered = i;
@@ -46,7 +48,7 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
       blobUrl,
       durationSeconds,
       currentQuestionIndex: nextUnanswered,
-      status: "IN_PROGRESS"
+      status: "IN_PROGRESS",
     });
   },
 
@@ -82,9 +84,16 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
 
     const newAnswers = [...existingAnswers];
     if (answerIndex > -1) {
-      newAnswers[answerIndex] = { ...newAnswers[answerIndex], answerText };
+      newAnswers[answerIndex] = {
+        ...newAnswers[answerIndex],
+        answerText,
+      };
     } else {
-      newAnswers.push({ questionId, answerText });
+      newAnswers.push({
+        questionId,
+        answerText,
+        actualTimeSeconds: 0,
+      });
     }
 
     set({
@@ -98,9 +107,39 @@ export const useInterviewSessionStore = create<InterviewSessionState>((set, get)
   setBlobUrl: (url) => set({ blobUrl: url }),
 
   incrementDuration: () => {
-    const { status, durationSeconds } = get();
+    const { status, durationSeconds, artifact, currentQuestionIndex } = get();
     if (status === "IN_PROGRESS") {
-      set({ durationSeconds: durationSeconds + 1 });
+      let updatedArtifact = artifact;
+      if (artifact && artifact.questions && artifact.questions[currentQuestionIndex]) {
+        const currentQId = artifact.questions[currentQuestionIndex].id;
+        const existingAnswers = artifact.answers || [];
+        const answerIndex = existingAnswers.findIndex((a) => a.questionId === currentQId);
+        const newAnswers = [...existingAnswers];
+
+        if (answerIndex > -1) {
+          const prevTime = newAnswers[answerIndex].actualTimeSeconds || 0;
+          newAnswers[answerIndex] = {
+            ...newAnswers[answerIndex],
+            actualTimeSeconds: prevTime + 1,
+          };
+        } else {
+          newAnswers.push({
+            questionId: currentQId,
+            answerText: "",
+            actualTimeSeconds: 1,
+          });
+        }
+
+        updatedArtifact = {
+          ...artifact,
+          answers: newAnswers,
+        };
+      }
+
+      set({
+        durationSeconds: durationSeconds + 1,
+        artifact: updatedArtifact,
+      });
     }
   },
 }));

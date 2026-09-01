@@ -79,11 +79,7 @@ export function CertificationsEditor({
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this certification?")) {
-                        onRemove(entry.id);
-                      }
-                    }}
+                    onClick={() => onRemove(entry.id)}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
                     title="Delete Entry"
                   >

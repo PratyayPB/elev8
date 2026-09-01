@@ -59,7 +59,7 @@ export function Stage1Step() {
       <Navigation
         onNext={nextStep}
         isNextDisabled={!isFormValid}
-        nextLabel="Continue to Personalization"
+        nextLabel="Continue"
       />
     </div>
   );

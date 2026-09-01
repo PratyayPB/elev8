@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { DIFFICULTY_LEVELS, EXPERIENCE_LEVELS } from "../constants/index";
 
-export const AnswerSchema = z.object({
-  questionId: z.string(),
-  selectedOptions: z.array(z.string()),
+export const InterviewProfileContextSchema = z.object({
+  currentStatus: z.string().nullable().optional(),
+  currentRole: z.string().nullable().optional(),
+  yearsOfExperience: z.number().nullable().optional(),
+  highestQualification: z.string().nullable().optional(),
+  fieldOfStudy: z.string().nullable().optional(),
+  primaryGoal: z.string().nullable().optional(),
+  targetCompanyType: z.string().nullable().optional(),
 });
 
 export const InterviewRequestStage1Schema = z.object({
@@ -26,26 +31,9 @@ export const InterviewRequestStage1Schema = z.object({
 });
 
 export const InterviewRequestSchema = InterviewRequestStage1Schema.extend({
-  questionCount: z.number().min(5).max(20),
+  questionCount: z.number().min(1).max(30).optional(),
   personalization: z.object({
     skipped: z.boolean(),
-    answers: z.array(AnswerSchema),
-  }).superRefine((data, ctx) => {
-    // Only enforce at least 1 option per answer if personalization is NOT skipped
-    if (!data.skipped) {
-      data.answers.forEach((ans, index) => {
-        if (!ans.selectedOptions || ans.selectedOptions.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.too_small,
-            minimum: 1,
-            type: "array",
-            inclusive: true,
-            exact: false,
-            message: "Please select at least one option",
-            path: ["answers", index, "selectedOptions"],
-          });
-        }
-      });
-    }
+    profile: InterviewProfileContextSchema.nullable().optional(),
   }),
 });

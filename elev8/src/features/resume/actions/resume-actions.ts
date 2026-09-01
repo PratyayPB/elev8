@@ -2,10 +2,20 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { JobType, JobStatus, ResumeScoreStatus } from "@prisma/client";
+import { JobType, JobStatus, ResumeScoreStatus, CareerExperienceLevel } from "@prisma/client";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { assessResumeTask } from "@/trigger/assess-resume";
+
+function mapExperienceLevel(level: string): CareerExperienceLevel {
+  const upper = level.toUpperCase();
+  if (upper === "BEGINNER" || upper === "ENTRY") return CareerExperienceLevel.ENTRY;
+  if (upper === "BASIC" || upper === "JUNIOR") return CareerExperienceLevel.JUNIOR;
+  if (upper === "INTERMEDIATE" || upper === "MID") return CareerExperienceLevel.MID;
+  if (upper === "ADVANCED" || upper === "SENIOR") return CareerExperienceLevel.SENIOR;
+  if (upper === "LEAD" || upper === "EXPERT") return CareerExperienceLevel.LEAD;
+  return CareerExperienceLevel.MID;
+}
 
 export async function createResumeAssessmentJob(formData: FormData) {
   const { userId: clerkId } = await auth();
@@ -26,15 +36,39 @@ export async function createResumeAssessmentJob(formData: FormData) {
   const role = formData.get("role") as string | null;
   const roleDescription = (formData.get("roleDescription") as string | null) || undefined;
   const experienceLevel = formData.get("experienceLevel") as string | null;
-  const personalizationRaw = formData.get("personalization") as string | null;
+  const includeProfileRaw = formData.get("includeProfile") as string | null;
 
   if (!file || !role || !experienceLevel) {
     throw new Error("Missing required resume request fields (file, role, experienceLevel).");
   }
 
-  const personalization = personalizationRaw
-    ? JSON.parse(personalizationRaw)
-    : { skipped: true, answers: [] };
+  const includeProfile = includeProfileRaw === "true";
+
+  // Fetch approved profile data server-side if user opted in
+  let profileContext = undefined;
+  if (includeProfile) {
+    const profile = await prisma.profile.findUnique({
+      where: { userId: dbUser.id },
+      include: {
+        skills: true,
+        desiredSkills: true,
+      },
+    });
+
+    if (profile && profile.isCompleted) {
+      profileContext = {
+        currentStatus: profile.currentStatus,
+        currentRole: profile.currentRole,
+        yearsOfExperience: profile.yearsOfExperience,
+        highestQualification: profile.highestQualification,
+        fieldOfStudy: profile.fieldOfStudy,
+        primaryGoal: profile.primaryGoal,
+        targetCompanyType: profile.targetCompanyType,
+        skills: profile.skills ? profile.skills.map((s) => s.name) : [],
+        desiredSkills: profile.desiredSkills ? profile.desiredSkills.map((s) => s.name) : [],
+      };
+    }
+  }
 
   // 1. Upload original PDF to Vercel Blob
   const arrayBuffer = await file.arrayBuffer();
@@ -52,7 +86,7 @@ export async function createResumeAssessmentJob(formData: FormData) {
       userId: dbUser.id,
       role,
       roleDesc: roleDescription,
-      expLevel: experienceLevel as any,
+      expLevel: mapExperienceLevel(experienceLevel),
       status: ResumeScoreStatus.PROCESSING,
     },
   });
@@ -81,7 +115,7 @@ export async function createResumeAssessmentJob(formData: FormData) {
       roleDescription,
       experienceLevel,
       originalPdfBlobUrl,
-      personalization,
+      profile: profileContext,
     });
     triggerRunId = handle.id;
 

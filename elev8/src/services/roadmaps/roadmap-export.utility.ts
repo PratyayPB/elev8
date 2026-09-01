@@ -3,6 +3,7 @@
 import { toJpeg } from "html-to-image";
 import jsPDF from "jspdf";
 import { getNodesBounds, getViewportForBounds } from "@xyflow/react";
+import { toast } from "sonner";
 
 export class RoadmapExportUtility {
   /**
@@ -67,9 +68,12 @@ export class RoadmapExportUtility {
 
       pdf.addImage(dataUrl, "JPEG", 0, 0, imageWidth, imageHeight, undefined, "FAST");
       pdf.save(filename);
+      toast.success("PDF exported successfully!");
     } catch (err) {
       console.error("Failed to export roadmap to PDF:", err);
-      alert("Failed to export PDF file. Please try again.");
+      toast.error("Export failed", {
+        description: "Failed to export PDF file. Please try again.",
+      });
     }
   }
 }

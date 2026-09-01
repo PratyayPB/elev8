@@ -2,7 +2,9 @@
 
 import { ResumeReport } from "../../types";
 import { ScoreCard } from "./score-card";
-import { Award, Target, Calendar, CheckCircle, AlertTriangle, Cpu, Briefcase, FileCode2, GraduationCap } from "lucide-react";
+import { ResumeRadarChart } from "./resume-radar-chart";
+import { SectionScoreChart } from "./section-score-chart";
+import { Calendar, CheckCircle, AlertTriangle, Cpu, Briefcase, FileCode2, GraduationCap } from "lucide-react";
 
 interface OverviewCardProps {
   report: ResumeReport;
@@ -80,6 +82,12 @@ export function OverviewCard({ report }: OverviewCardProps) {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Recharts Visualizations Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ResumeRadarChart overallAssessment={overallAssessment} />
+        <SectionScoreChart sectionAssessment={sectionAssessment} />
       </div>
 
       {/* Grid of score metrics */}

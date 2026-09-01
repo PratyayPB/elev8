@@ -8,8 +8,6 @@ import { FiltersAndSearch } from "./filters-and-search";
 import { InterviewCard } from "./interview-card";
 import { TrendCharts } from "./trend-charts";
 import { RecommendedActions } from "./recommended-actions";
-import { PredefinedLibrary } from "./predefined-library";
-import { PredefinedInterviewSummary } from "../../types/predefined-interview";
 import { PlusCircle, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard";
@@ -23,10 +21,9 @@ interface WorkspaceContainerProps {
     averageScore: number;
     highestScore: number;
   };
-  predefinedCatalog: PredefinedInterviewSummary[];
 }
 
-export function WorkspaceContainer({ initialInterviews, stats, predefinedCatalog }: WorkspaceContainerProps) {
+export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContainerProps) {
   const {
     search,
     setSearch,
@@ -136,11 +133,9 @@ export function WorkspaceContainer({ initialInterviews, stats, predefinedCatalog
         </div>
       )}
 
-      {/* Predefined Practice Library */}
-      <PredefinedLibrary catalog={predefinedCatalog} />
-
       {/* Recommended Actions */}
       <RecommendedActions />
     </div>
   );
 }
+

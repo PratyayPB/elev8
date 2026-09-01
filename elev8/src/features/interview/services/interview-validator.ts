@@ -49,6 +49,10 @@ export class InterviewValidator {
         throw new Error(`Duplicate question ID detected: ${q.id}`);
       }
       seenIds.add(q.id);
+
+      if (!q.estimatedTimeSeconds || q.estimatedTimeSeconds <= 0) {
+        throw new Error(`Invalid estimatedTimeSeconds for question ${q.id}: ${q.estimatedTimeSeconds}`);
+      }
     }
 
     return questions;

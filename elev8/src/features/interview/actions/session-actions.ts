@@ -55,8 +55,11 @@ export async function saveSessionProgress(
 
   if (!interview) throw new Error("Interview not found or unauthorized");
 
+  const isTemplateBlob = currentBlobUrl.includes("interview-templates/");
+  const oldBlobToDelete = isTemplateBlob ? "" : currentBlobUrl;
+
   const newBlobUrl = await BlobStorageService.replaceJson(
-    currentBlobUrl,
+    oldBlobToDelete,
     `interviews/${interviewId}.json`,
     artifact
   );
@@ -94,9 +97,12 @@ export async function submitInterview(
 
   if (!interview) throw new Error("Interview not found or unauthorized");
 
+  const isTemplateBlob = currentBlobUrl.includes("interview-templates/");
+  const oldBlobToDelete = isTemplateBlob ? "" : currentBlobUrl;
+
   // Save the final version to Blob
   const newBlobUrl = await BlobStorageService.replaceJson(
-    currentBlobUrl,
+    oldBlobToDelete,
     `interviews/${interviewId}.json`,
     artifact
   );

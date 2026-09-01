@@ -5,6 +5,7 @@ import Link from "next/link";
 import { InterviewSession, InterviewStatus } from "@prisma/client";
 import { PlayCircle, Eye, RefreshCw, Trash2, Calendar, HelpCircle, Loader2 } from "lucide-react";
 import { deleteInterview } from "../../actions/workspace-actions";
+import { toast } from "sonner";
 
 interface InterviewCardProps {
   interview: InterviewSession;
@@ -15,13 +16,13 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete the ${interview.role} interview?`)) return;
     setIsDeleting(true);
     try {
       await deleteInterview(interview.id);
+      toast.success("Interview deleted successfully");
       if (onDeleted) onDeleted();
     } catch (e) {
-      alert("Failed to delete interview.");
+      toast.error("Failed to delete interview");
     } finally {
       setIsDeleting(false);
     }
@@ -29,6 +30,8 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
 
   const getStatusBadge = () => {
     switch (interview.status) {
+      case InterviewStatus.READY:
+        return <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-display font-semibold rounded-full">Ready</span>;
       case InterviewStatus.COMPLETED:
         if (interview.overallScore === null || interview.overallScore === undefined) {
           return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 text-xs font-display font-semibold rounded-full animate-pulse">Assessing...</span>;
@@ -37,7 +40,7 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
       case InterviewStatus.IN_PROGRESS:
         return <span className="px-2.5 py-0.5 bg-dashboard-metricHighlight/40 text-black border border-dashboard-metricHighlight/60 text-xs font-display font-semibold rounded-full animate-pulse">In Progress</span>;
       case InterviewStatus.GENERATING:
-        return <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-700 border border-zinc-200 text-xs font-display font-semibold rounded-full">Generating</span>;
+        return <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-display font-semibold rounded-full">Generating</span>;
       case InterviewStatus.FAILED:
         return <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-200 text-xs font-display font-semibold rounded-full">Failed</span>;
       default:
@@ -62,6 +65,10 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         </h3>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-sans text-text-secondary mb-4">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-semibold bg-surface-muted border border-border-subtle text-text-secondary">
+            {interview.personalized ? "Personalized" : "Global"}
+          </span>
+          <span>•</span>
           <span>{interview.experienceLevel}</span>
           <span>•</span>
           <span>{interview.interviewType}</span>
@@ -73,6 +80,16 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         </div>
 
         {/* Primary Action Button */}
+        {interview.status === InterviewStatus.READY && (
+          <Link
+            href={`/dashboard/interviews/${interview.id}/session`}
+            className="w-full py-2 bg-text-primary text-white dark:text-brand-primary-900 text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
+          >
+            <PlayCircle className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+            Start Interview
+          </Link>
+        )}
+
         {interview.status === InterviewStatus.COMPLETED && (
           interview.overallScore === null || interview.overallScore === undefined ? (
             <div className="w-full py-2 bg-surface-muted text-text-secondary border border-border-subtle text-center font-display font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 mb-4">
@@ -102,7 +119,7 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
 
         {interview.status === InterviewStatus.GENERATING && (
           <div className="w-full py-2 bg-surface-muted text-text-secondary border border-border-subtle text-center font-display font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 mb-4">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-text-secondary" />
             Generating...
           </div>
         )}

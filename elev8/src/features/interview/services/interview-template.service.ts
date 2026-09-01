@@ -1,14 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
-import { TemplateBlobSchema, TemplateBlob } from "../schemas/predefined-interview.schema";
 import { InterviewTemplate } from "@prisma/client";
+import { InterviewArtifact } from "../types";
 
 export class InterviewTemplateService {
   /**
-   * Lists all available interview templates from Prisma.
+   * Lists all available interview templates for a user.
    */
-  public static async listTemplates(): Promise<InterviewTemplate[]> {
+  public static async listUserTemplates(userId: string): Promise<InterviewTemplate[]> {
     return prisma.interviewTemplate.findMany({
+      where: { userId },
       orderBy: [
         { role: "asc" },
         { interviewType: "asc" },
@@ -17,7 +18,7 @@ export class InterviewTemplateService {
   }
 
   /**
-   * Finds a template by its deterministic ID.
+   * Finds a template by its ID.
    */
   public static async findTemplateById(id: string): Promise<InterviewTemplate | null> {
     return prisma.interviewTemplate.findUnique({
@@ -26,46 +27,10 @@ export class InterviewTemplateService {
   }
 
   /**
-   * Finds a template by role and type.
+   * Fetches the template JSON artifact from Vercel Blob storage using the blob URL.
    */
-  public static async findTemplate(
-    role: string,
-    type: string,
-    experienceLevel?: any
-  ): Promise<InterviewTemplate | null> {
-    return prisma.interviewTemplate.findFirst({
-      where: {
-        role,
-        ...(experienceLevel && { experienceLevel }),
-      },
-    });
-  }
-
-  /**
-   * Fetches the template JSON blob from Vercel Blob storage using the blob URL and validates its structure.
-   */
-  public static async fetchTemplateBlob(templateBlobUrl: string): Promise<TemplateBlob> {
-    const rawData = await BlobStorageService.fetchJson<unknown>(templateBlobUrl);
-    return this.validateTemplateBlob(rawData);
-  }
-
-  /**
-   * Fetches template JSON blob directly by template ID.
-   */
-  public static async fetchTemplateBlobById(id: string): Promise<{ template: InterviewTemplate; blob: TemplateBlob }> {
-    const template = await this.findTemplateById(id);
-    if (!template) {
-      throw new Error(`Interview template '${id}' not found in database.`);
-    }
-
-    const blob = await this.fetchTemplateBlob(template.templateBlobUrl);
-    return { template, blob };
-  }
-
-  /**
-   * Validates template JSON against the TemplateBlobSchema.
-   */
-  public static validateTemplateBlob(data: unknown): TemplateBlob {
-    return TemplateBlobSchema.parse(data);
+  public static async fetchTemplateBlob(templateBlobUrl: string): Promise<InterviewArtifact> {
+    return BlobStorageService.fetchJson<InterviewArtifact>(templateBlobUrl);
   }
 }
+

@@ -16,6 +16,7 @@ export const ProfileContextSchema = z.object({
   fieldOfStudy: z.string().nullable(),
   targetCompanyType: z.string().nullable(),
   weeklyLearningHours: z.number().nullable(),
+  primaryGoal: z.string().nullable().optional(),
   existingSkills: z.array(ExistingSkillSchema),
 });
 

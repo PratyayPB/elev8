@@ -40,10 +40,10 @@ export function ResumeWorkspace({ initialResumes }: ResumeWorkspaceProps) {
   const latestResumeId = resumes.length > 0 ? resumes[0].id : undefined;
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-6 max-w-7xl text-text-primary">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Resume Workspace</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-3xl font-display font-bold tracking-tight text-text-primary">Resume Workspace</h1>
+        <p className="text-text-secondary text-sm mt-1">
           Track your resume evaluations, monitor ATS improvements, and jumpstart your career preparation.
         </p>
       </div>
@@ -56,9 +56,9 @@ export function ResumeWorkspace({ initialResumes }: ResumeWorkspaceProps) {
         <>
           <PerformanceOverview performance={performance} />
 
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-8">
+          <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-xl p-6 shadow-sm mb-8">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Resume Library</h2>
+              <h2 className="text-lg font-display font-semibold text-text-primary">Resume Library</h2>
               <ResumeSearch value={filters.searchQuery} onChange={setSearchQuery} />
             </div>
 

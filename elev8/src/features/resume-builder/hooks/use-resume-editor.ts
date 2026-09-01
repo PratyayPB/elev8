@@ -49,12 +49,6 @@ export function useResumeEditor({
   }, []);
 
   const save = useCallback(async () => {
-    // Clear any pending debounced save
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
-    }
-
     setSaveStatus("saving");
     setSaveError(null);
 
@@ -94,15 +88,9 @@ export function useResumeEditor({
     }
   }, [resumeId]);
 
-  const triggerAutosave = useCallback(() => {
+  const markDirty = useCallback(() => {
     setSaveStatus("dirty");
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      save();
-    }, 2000);
-  }, [save]);
+  }, []);
 
   const updatePersonalInformation = useCallback(
     (info: Partial<PersonalInformation>) => {
@@ -113,9 +101,9 @@ export function useResumeEditor({
           ...info,
         },
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const updateSummary = useCallback(
@@ -124,9 +112,9 @@ export function useResumeEditor({
         ...prev,
         professionalSummary: summary,
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const addEntry = useCallback(
@@ -138,9 +126,9 @@ export function useResumeEditor({
         ...prev,
         [section]: [...(prev[section] as any[]), entry],
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const updateEntry = useCallback(
@@ -155,9 +143,9 @@ export function useResumeEditor({
           item.id === id ? { ...item, ...data } : item
         ),
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const removeEntry = useCallback(
@@ -169,9 +157,9 @@ export function useResumeEditor({
         ...prev,
         [section]: (prev[section] as any[]).filter((item) => item.id !== id),
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const moveEntryUp = useCallback(
@@ -183,9 +171,9 @@ export function useResumeEditor({
         ...prev,
         [section]: moveUp(prev[section] as any[], id),
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const moveEntryDown = useCallback(
@@ -197,9 +185,9 @@ export function useResumeEditor({
         ...prev,
         [section]: moveDown(prev[section] as any[], id),
       }));
-      triggerAutosave();
+      markDirty();
     },
-    [triggerAutosave]
+    [markDirty]
   );
 
   const updateTemplate = useCallback(

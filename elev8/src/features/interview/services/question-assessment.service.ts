@@ -22,6 +22,8 @@ export class QuestionAssessmentService {
         question: q.question,
         expectedTopics: q.expectedTopics,
         difficulty: q.difficulty,
+        estimatedTimeSeconds: q.estimatedTimeSeconds,
+        actualTimeSeconds: answer?.actualTimeSeconds ?? null,
         userAnswer: answer ? answer.answerText : "",
       };
     });

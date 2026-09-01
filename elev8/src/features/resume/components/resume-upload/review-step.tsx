@@ -33,7 +33,8 @@ export function ReviewStep() {
         formData.append("roleDescription", finalRequest.roleDescription);
       }
       formData.append("experienceLevel", finalRequest.experienceLevel);
-      formData.append("personalization", JSON.stringify(finalRequest.personalization));
+      const includeProfile = !finalRequest.personalization.skipped && Boolean(finalRequest.personalization.profile);
+      formData.append("includeProfile", includeProfile ? "true" : "false");
 
       // 3. Trigger Server Action to upload PDF & start Trigger.dev pipeline
       const response = await createResumeAssessmentJob(formData);
@@ -50,7 +51,7 @@ export function ReviewStep() {
     }
   };
 
-  const answeredCount = requestData.personalization?.answers.length || 0;
+  const hasProfile = Boolean(requestData.personalization?.profile) && !requestData.personalization?.skipped;
   const file = requestData.uploadedFile;
 
   return (
@@ -141,11 +142,23 @@ export function ReviewStep() {
           </button>
         </div>
 
-        <p className="text-sm font-sans font-semibold text-text-primary">
-          {requestData.personalization?.skipped
-            ? "Skipped Personalization"
-            : `${answeredCount} Personalization Questions Answered`}
-        </p>
+        <div className="flex items-center gap-2">
+          {hasProfile ? (
+            <>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <p className="text-sm font-sans font-semibold text-text-primary">
+                Profile Personalization Enabled
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-zinc-400" />
+              <p className="text-sm font-sans font-medium text-text-secondary">
+                Skipped — No Profile Data
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
       {error && (

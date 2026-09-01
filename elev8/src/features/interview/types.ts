@@ -1,7 +1,7 @@
 import {
   InterviewType,
   InterviewStatus,
-  InterviewTemplateType,
+  InterviewTemplateSource,
   InterviewTemplateStatus,
   CareerExperienceLevel,
 } from "@prisma/client";
@@ -9,7 +9,7 @@ import {
 export {
   InterviewType,
   InterviewStatus,
-  InterviewTemplateType,
+  InterviewTemplateSource,
   InterviewTemplateStatus,
   CareerExperienceLevel,
 };
@@ -42,15 +42,25 @@ export interface Answer {
   selectedOptions: string[];
 }
 
+export interface InterviewProfileContext {
+  currentStatus?: string | null;
+  currentRole?: string | null;
+  yearsOfExperience?: number | null;
+  highestQualification?: string | null;
+  fieldOfStudy?: string | null;
+  primaryGoal?: string | null;
+  targetCompanyType?: string | null;
+}
+
 export interface InterviewRequest {
   role: string;
   experienceLevel: ExperienceLevel;
   difficulty: Difficulty;
   interviewType: InterviewType | InterviewTypeOption | string;
-  questionCount: number;
+  questionCount?: number;
   personalization: {
     skipped: boolean;
-    answers: Answer[];
+    profile?: InterviewProfileContext | null;
   };
 }
 
@@ -75,7 +85,7 @@ export interface GeneratedQuestion {
   question: string;
   difficulty: Difficulty;
   expectedTopics: string[];
-  estimatedAnswerTime: string;
+  estimatedTimeSeconds: number;
 }
 
 export interface InterviewMetadata {
@@ -88,9 +98,9 @@ export interface InterviewMetadata {
   estimatedDuration: string;
   generatedAt: string;
   generatorVersion: string;
-  source?: "PREDEFINED" | "AI_GENERATED" | "ROADMAP" | "CUSTOM";
-  templateId?: string;
-  predefinedInterviewId?: string;
+  templateSource?: InterviewTemplateSource;
+  interviewTemplateId?: string;
+  globalInterviewTemplateId?: string;
 }
 
 // ====================================================
@@ -99,12 +109,26 @@ export interface InterviewMetadata {
 
 export interface QuestionFeedback {
   score: number;
+  technicalAccuracy: number;
+  communication: number;
+  depthScore: number;
   strengths: string[];
   weaknesses: string[];
+  coveredTopics?: string[];
   missedTopics: string[];
-  communication: number;
-  technicalAccuracy: number;
   feedback: string;
+}
+
+export interface TopicMasteryItem {
+  topic: string;
+  score: number;
+  status: "STRONG" | "SATISFACTORY" | "NEEDS_IMPROVEMENT";
+}
+
+export interface RecommendedLearningItem {
+  title: string;
+  description: string;
+  priority: "HIGH" | "MEDIUM" | "LOW";
 }
 
 export interface OverallAssessment {
@@ -113,19 +137,23 @@ export interface OverallAssessment {
   communicationScore: number;
   confidenceScore: number;
   problemSolvingScore: number;
+  practicalDepthScore: number;
   strengths: string[];
   weaknesses: string[];
-  recommendedLearning: string[];
+  topicMastery?: TopicMasteryItem[];
+  recommendedLearning: RecommendedLearningItem[];
   nextSteps: string[];
   summary: string;
 }
 
 export interface Analytics {
   averageAnswerTimeMs: number | null;
+  totalInterviewTimeSeconds: number;
   questionsAttempted: number;
   completionPercentage: number;
   totalWords: number;
   averageWordsPerAnswer: number;
+  pacingEfficiencyRating: "OPTIMAL" | "FAST" | "DELIBERATE" | "VARIABLE";
 }
 
 export interface AssessmentReport {
@@ -147,6 +175,7 @@ export interface InterviewArtifact {
     questionId: string;
     answerText: string;
     audioBlobUrl?: string;
+    actualTimeSeconds?: number;
   }>;
   assessment: AssessmentReport | null;
   status?: string; // Optional field used during session tracking

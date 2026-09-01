@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useInterviewSessionStore } from "../../hooks/use-interview-session";
 import { useAutosave } from "../../hooks/use-autosave";
 import { submitInterview } from "../../actions/session-actions";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { SessionToolbar } from "./session-toolbar";
 import { ProgressBar } from "./progress-bar";
 import { QuestionView } from "./question-view";
@@ -25,11 +26,17 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     updateAnswer, 
     prevQuestion, 
     nextQuestion,
+    jumpToQuestion,
     incrementDuration,
     durationSeconds
   } = useInterviewSessionStore();
   
-  const { status: autosaveStatus, save, debouncedSave } = useAutosave(interviewId);
+  const { status: autosaveStatus, save } = useAutosave(interviewId);
+  const saveRef = useRef(save);
+
+  useEffect(() => {
+    saveRef.current = save;
+  }, [save]);
 
   const [isPauseOpen, setIsPauseOpen] = useState(false);
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
@@ -43,17 +50,16 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     return () => clearInterval(timer);
   }, [incrementDuration]);
 
-  // Auto-save on unmount
+  // Save on tab close / browser beforeunload
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      save(); // Best effort synchronous save
+    const handleBeforeUnload = () => {
+      saveRef.current();
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      save();
     };
-  }, [save]);
+  }, []);
 
   if (!artifact) return null;
 
@@ -66,17 +72,22 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
 
   const handleAnswerChange = (text: string) => {
     updateAnswer(currentQuestion.id, text);
-    debouncedSave();
   };
 
-  const handlePrev = async () => {
-    await save();
+  const handlePrev = () => {
+    save();
     prevQuestion();
   };
 
-  const handleNext = async () => {
-    await save();
+  const handleNext = () => {
+    save();
     nextQuestion();
+  };
+
+  const handleJumpQuestion = (index: number) => {
+    if (index === currentQuestionIndex) return;
+    save();
+    jumpToQuestion(index);
   };
 
   const handlePauseConfirm = async () => {
@@ -97,13 +108,16 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
         // Trigger final submit action
         await submitInterview(interviewId, blobUrl, artifact, durationSeconds);
         setIsSubmitOpen(false);
-        // Redirect to assessment progress page (Phase 3.4 will handle this view, for now library)
-        alert("Interview submitted successfully! Redirecting...");
+        toast.success("Interview submitted successfully!", {
+          description: "Generating your assessment report...",
+        });
         router.push("/dashboard/interviews");
       }
     } catch (error) {
       console.error("Submission failed:", error);
-      alert("Failed to submit interview. Please try again.");
+      toast.error("Submission failed", {
+        description: "Failed to submit interview. Please try again.",
+      });
     } finally {
       setIsProcessingAction(false);
     }
@@ -119,7 +133,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
       />
 
       <main className="flex-1 w-full mx-auto flex flex-col gap-6">
-        <ProgressBar />
+        <ProgressBar onJumpQuestion={handleJumpQuestion} />
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-5">
@@ -130,7 +144,6 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
             <AnswerEditor 
               value={currentAnswer} 
               onChange={handleAnswerChange}
-              onBlur={save}
             />
             
             <div className="flex justify-between items-center mt-6">

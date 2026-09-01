@@ -110,9 +110,8 @@ export function Stage1Step() {
                 <div className={clsx("font-semibold mb-1", currentType === type.label ? "text-blue-700 dark:text-blue-400" : "text-gray-900 dark:text-gray-200")}>
                   {type.label}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   <span>{type.description}</span>
-                  <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">{type.count} Qs</span>
                 </div>
               </button>
             ))}

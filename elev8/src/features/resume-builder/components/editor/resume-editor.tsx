@@ -17,6 +17,7 @@ import { SkillsEditor } from "./skills-editor";
 import { CertificationsEditor } from "./certifications-editor";
 import { AchievementsEditor } from "./achievements-editor";
 import { ResumePreview } from "../resume-preview/resume-preview";
+import { toast } from "sonner";
 
 interface ResumeEditorProps {
   resume: BuilderResumeRecord;
@@ -78,8 +79,11 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+      toast.success("PDF downloaded successfully!");
     } catch (err: unknown) {
-      alert("Unable to generate PDF. Please try again.");
+      toast.error("Unable to generate PDF", {
+        description: "An error occurred while creating the PDF. Please try again.",
+      });
       console.error("PDF download error:", err);
     } finally {
       setIsPdfGenerating(false);

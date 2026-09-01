@@ -1,24 +1,20 @@
 export type ResumeExperienceLevel = "Beginner" | "Basic" | "Intermediate" | "Advanced";
 
-export interface ResumeAnswer {
-  questionId: string;
-  selectedOptions: string[];
+export interface ResumeProfileContext {
+  currentRole?: string | null;
+  currentStatus?: string | null;
+  yearsOfExperience?: number | null;
+  highestQualification?: string | null;
+  fieldOfStudy?: string | null;
+  primaryGoal?: string | null;
+  targetCompanyType?: string | null;
+  skills?: string[] | null;
+  desiredSkills?: string[] | null;
 }
-
-export type Answer = ResumeAnswer;
-
-export interface ResumeQuestion {
-  id: string;
-  question: string;
-  type: "single" | "multi";
-  options: string[];
-}
-
-export type Question = ResumeQuestion;
 
 export interface ResumePersonalization {
   skipped: boolean;
-  answers: ResumeAnswer[];
+  profile?: ResumeProfileContext | null;
 }
 
 export interface ResumeAssessmentRequest {

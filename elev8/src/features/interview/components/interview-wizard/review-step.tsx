@@ -5,6 +5,7 @@ import { createInterviewJob } from "../../actions/interview-actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function ReviewStep() {
   const { requestData, prevStep, setStep } = useInterviewRequestStore();
@@ -22,8 +23,10 @@ export function ReviewStep() {
       // 2. Trigger background generation job via server action
       const { interviewId } = await createInterviewJob(finalRequest);
 
-      // 3. Redirect user (or show progress)
-      alert(`Interview generation started successfully! (ID: ${interviewId})`);
+      // 3. Notify user and redirect
+      toast.success("Interview generation started!", {
+        description: `Your ${finalRequest.role} interview is being generated.`,
+      });
       router.push(`/dashboard/interviews`);
     } catch (err: any) {
       console.error(err);
@@ -33,7 +36,6 @@ export function ReviewStep() {
     }
   };
 
-  const answeredCount = requestData.personalization?.answers.length || 0;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -73,7 +75,7 @@ export function ReviewStep() {
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Interview Type</dt>
             <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">
-              {requestData.interviewType} <span className="text-gray-400 font-normal">({requestData.questionCount} Qs)</span>
+              {requestData.interviewType}
             </dd>
           </div>
         </dl>
@@ -92,8 +94,8 @@ export function ReviewStep() {
         
         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {requestData.personalization?.skipped 
-            ? "Skipped Personalization" 
-            : `${answeredCount} Questions Answered`}
+            ? "Skipped Profile Personalization" 
+            : "Personalized with Profile Data"}
         </p>
       </div>
 

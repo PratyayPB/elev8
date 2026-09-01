@@ -1,6 +1,10 @@
 import { useInterviewSessionStore } from "../../hooks/use-interview-session";
 
-export function ProgressBar() {
+interface ProgressBarProps {
+  onJumpQuestion?: (index: number) => void;
+}
+
+export function ProgressBar({ onJumpQuestion }: ProgressBarProps) {
   const { artifact, currentQuestionIndex } = useInterviewSessionStore();
 
   if (!artifact) return null;
@@ -32,16 +36,24 @@ export function ProgressBar() {
           const isAnswered = artifact.answers.some(a => a.questionId === q.id && a.answerText.trim().length > 0);
           const isCurrent = currentQuestionIndex === idx;
           
-          let markerClass = "h-1.5 flex-1 rounded-full transition-all ";
+          let markerClass = "h-2 flex-1 rounded-full transition-all cursor-pointer hover:opacity-80 ";
           if (isCurrent) {
-            markerClass += "bg-text-primary ring-2 ring-text-primary/10";
+            markerClass += "bg-text-primary ring-2 ring-text-primary/20";
           } else if (isAnswered) {
             markerClass += "bg-emerald-600";
           } else {
             markerClass += "bg-border-subtle";
           }
           
-          return <div key={q.id} className={markerClass} />;
+          return (
+            <button
+              key={q.id}
+              onClick={() => onJumpQuestion?.(idx)}
+              className={markerClass}
+              title={`Question ${idx + 1}${isAnswered ? " (Answered)" : ""}`}
+              type="button"
+            />
+          );
         })}
       </div>
     </div>

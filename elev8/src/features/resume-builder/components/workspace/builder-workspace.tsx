@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileText, Plus, Calendar, Layout, MoreVertical, Copy, Edit3, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { BUILDER_ROUTES, BUILDER_API } from "../../constants/builder-routes";
 import { BuilderResumeRecord } from "../../types";
+import { toast } from "sonner";
 
 interface BuilderWorkspaceProps {
   initialResumes: BuilderResumeRecord[];
@@ -47,8 +48,11 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
       }
       const data = await res.json();
       setResumes((prev) => [data.resume, ...prev]);
+      toast.success("Resume duplicated successfully");
     } catch (err: unknown) {
-      alert((err as Error).message || "Something went wrong.");
+      toast.error("Duplication failed", {
+        description: (err as Error).message || "Something went wrong.",
+      });
     } finally {
       setActionLoadingId(null);
     }
@@ -88,8 +92,11 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
       
       const data = await res.json();
       setResumes((prev) => prev.map((r) => (r.id === data.resume.id ? data.resume : r)));
+      toast.success("Resume renamed successfully");
     } catch (err: unknown) {
-      alert((err as Error).message || "Failed to rename.");
+      toast.error("Rename failed", {
+        description: (err as Error).message || "Failed to rename resume.",
+      });
     } finally {
       setActionLoadingId(null);
       setResumeToRename(null);
@@ -116,8 +123,11 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
       if (!res.ok) throw new Error("Failed to delete resume.");
       
       setResumes((prev) => prev.filter((r) => r.id !== resumeToDelete.id));
+      toast.success("Resume deleted successfully");
     } catch (err: unknown) {
-      alert((err as Error).message || "Failed to delete.");
+      toast.error("Delete failed", {
+        description: (err as Error).message || "Failed to delete resume.",
+      });
     } finally {
       setActionLoadingId(null);
       setResumeToDelete(null);

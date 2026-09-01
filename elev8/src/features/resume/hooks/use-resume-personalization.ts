@@ -1,35 +1,34 @@
 import { useState, useEffect } from "react";
-import { Question } from "../types";
 import { useResumeRequestStore } from "./use-resume-request";
-import { fetchResumePersonalizationQuestions } from "../services/resume-personalization.service";
+import {
+  fetchResumeProfileStatusAction,
+  ResumeProfileStatusResult,
+} from "../actions/profile-status.action";
 
 export function useResumePersonalization() {
-  const { requestData, nextStep, setSkipped } = useResumeRequestStore();
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasOptedIn, setHasOptedIn] = useState(false);
+  const { requestData, nextStep, prevStep, setSkipped, setProfile } = useResumeRequestStore();
+  const [profileStatus, setProfileStatus] = useState<ResumeProfileStatusResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasOptedIn, setHasOptedIn] = useState<boolean | null>(
+    requestData.personalization?.skipped ? false : requestData.personalization?.profile ? true : null
+  );
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadQuestions() {
-      if (!hasOptedIn) return;
-      if (!requestData.role || !requestData.experienceLevel) {
-        setIsLoading(false);
-        return;
-      }
-
+    async function checkProfile() {
       setIsLoading(true);
+      setError(null);
       try {
-        const fetchedQuestions = await fetchResumePersonalizationQuestions(
-          requestData.role,
-          requestData.experienceLevel
-        );
+        const res = await fetchResumeProfileStatusAction();
         if (isMounted) {
-          setQuestions(fetchedQuestions);
+          setProfileStatus(res);
         }
-      } catch (err) {
-        console.error("Failed to load resume personalization questions", err);
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err?.message || "Failed to load profile context.");
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -37,26 +36,50 @@ export function useResumePersonalization() {
       }
     }
 
-    loadQuestions();
+    checkProfile();
 
     return () => {
       isMounted = false;
     };
-  }, [hasOptedIn, requestData.role, requestData.experienceLevel]);
+  }, []);
+
+  const optIn = () => {
+    setHasOptedIn(true);
+    if (profileStatus?.profileContext) {
+      setProfile(profileStatus.profileContext);
+    }
+  };
 
   const handleSkip = () => {
+    setHasOptedIn(false);
     setSkipped(true);
     nextStep();
   };
 
-  const handleContinue = () => {
+  const handleUnskip = () => {
+    setHasOptedIn(null);
     setSkipped(false);
+  };
+
+  const handleContinue = () => {
+    if (hasOptedIn && profileStatus?.profileContext) {
+      setProfile(profileStatus.profileContext);
+    } else {
+      setSkipped(true);
+    }
     nextStep();
   };
 
-  const optIn = () => {
-    setHasOptedIn(true);
+  return {
+    profileStatus,
+    isLoading,
+    error,
+    hasOptedIn,
+    skipped: requestData.personalization?.skipped ?? false,
+    optIn,
+    handleSkip,
+    handleUnskip,
+    handleContinue,
+    prevStep,
   };
-
-  return { questions, isLoading, hasOptedIn, optIn, handleSkip, handleContinue };
 }

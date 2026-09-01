@@ -1,16 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
-import { ResumeOverallAssessment, ResumeSectionAssessment } from "../types";
+import { ResumeOverallAssessment, ResumeProfileContext, ResumeSectionAssessment } from "../types";
 import { RESUME_OVERALL_ASSESSMENT_PROMPT } from "../constants/resume-prompts";
 import { ResumeValidator } from "./resume-validator";
 
 export class OverallAssessmentService {
   /**
-   * Generates overall resume assessment and ATS analysis based ONLY on structured section evaluations.
+   * Generates overall resume assessment and ATS analysis based on structured section evaluations and target context.
    */
   public static async assessOverall(
     sectionAssessment: ResumeSectionAssessment,
     role: string,
-    experienceLevel: string
+    experienceLevel: string,
+    roleDescription?: string,
+    profile?: ResumeProfileContext
   ): Promise<ResumeOverallAssessment> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -20,12 +22,16 @@ export class OverallAssessmentService {
     const ai = new GoogleGenAI({ apiKey });
 
     const contextPayload = {
-      targetRole: role,
-      experienceLevel,
+      target: {
+        role,
+        experienceLevel,
+        ...(roleDescription ? { jobDescription: roleDescription } : {}),
+      },
+      profile: profile || null,
       sectionAssessment,
     };
 
-    const prompt = `${RESUME_OVERALL_ASSESSMENT_PROMPT}\n\nSECTION EVALUATIONS:\n${JSON.stringify(contextPayload, null, 2)}`;
+    const prompt = `${RESUME_OVERALL_ASSESSMENT_PROMPT}\n\nEVALUATION CONTEXT:\n${JSON.stringify(contextPayload, null, 2)}`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",

@@ -1,6 +1,8 @@
 export { ResumeHubContainer } from "./hub-container";
 export { OverviewCard } from "./overview-card";
 export { ScoreCard } from "./score-card";
+export { ResumeRadarChart } from "./resume-radar-chart";
+export { SectionScoreChart } from "./section-score-chart";
 export { ResumeHealthComponent } from "./resume-health";
 export { SectionBreakdown } from "./section-breakdown";
 export { SectionCard } from "./section-card";

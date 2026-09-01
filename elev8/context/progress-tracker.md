@@ -89,6 +89,56 @@ Phase 7.2: Release & Production Verification
   - Implemented responsive `Tabs` in `RoadmapLibrary.tsx` with URL synchronization (`?tab=global`), contextual empty states, and status badges.
   - Wrapped roadmaps page in `<Suspense>` boundary.
   - Verified 100% type safety and clean production build.
+- [x] **Global Interview Template Architecture & Predefined Removal (`elev8-interview-global-template-architecture.md`)**:
+  - Replaced predefined interviews with dual-entity template architecture: `InterviewTemplate` (user-owned, personalized) and `GlobalInterviewTemplate` (shared, reusable, generic).
+  - Completely excised `InterviewTemplateType` enum and `PREDEFINED` data files, services, actions, schemas, types, and UI components across the repository.
+  - Added `InterviewTemplateSource` enum (`USER_CREATED`, `GLOBAL`) with dual nullable foreign keys on `InterviewSession`.
+  - Added `GlobalInterviewTemplateService` with role normalization and triplet dedup matching (`normalizedRole`, `experienceLevel`, `interviewType`).
+  - Implemented instant template reuse in `createInterviewJob` when matching generic templates exist (zero LLM latency and no background trigger).
+  - Updated Trigger.dev generation task and artifact service to create and store immutable global templates.
+  - Replaced `/dashboard/interviews/new` with `InterviewWizard` and removed predefined catalog library from interview workspace.
+  - Verified 100% type safety (`npx tsc --noEmit`) and successful production build (`npm run build`).
+- [x] **Global Resource Generation Blocker (`elev8-global-resource-generation-blocker.md`)**:
+  - Implemented authoritative backend blocker in `generateRoadmapAction` and `createInterviewJob` to eliminate redundant LLM calls and background tasks for equivalent generic requests.
+  - Handled concurrency race conditions safely via Prisma `P2002` conflict trapping and canonical record fallback.
+  - Implemented direct blob reuse for cached global interview templates, eliminating eager artifact cloning.
+  - Implemented Copy-on-Write (CoW) in `session-actions.ts` (`saveSessionProgress` and `submitInterview`) to protect shared template blobs from accidental deletion when users save interview answers.
+  - Updated Trigger.dev `generate-interview` task to populate pre-created global template records without creating duplicate session blobs during generation.
+  - Verified 100% type-checking (`npx tsc --noEmit`) and successful Next.js production build.
+- [x] **Interview Personalization & Timing Updates (`interview-personalization-and-timing-updates.md`)**:
+  - Removed user-facing question-count inputs from the interview creation wizard and schemas, making count strictly backend-configured (default 10).
+  - Reworked Interview Step 2 personalization to mirror Roadmap profile integration: prompts users with complete profiles to opt-in or skip, and users with incomplete profiles to complete profile or skip.
+  - Filtered profile context down strictly to the 7 approved attributes (`currentStatus`, `currentRole`, `yearsOfExperience`, `highestQualification`, `fieldOfStudy`, `primaryGoal`, `targetCompanyType`) fetched securely server-side.
+  - Updated LLM generation prompts to enforce exact question count and generate `estimatedTimeSeconds` (positive integer) per question.
+  - Updated Interview Session store to track `actualTimeSeconds` per question in real-time across text and speech inputs, surviving re-renders and pausing/resuming cleanly.
+  - Integrated `actualTimeSeconds` and `estimatedTimeSeconds` into autosave Blob mutations, final submissions, deterministic analytics (`averageAnswerTimeMs`), and the AI assessment pipeline as a balanced supporting signal.
+  - Verified with `npx tsc --noEmit` and production build `npm run build`.
+- [x] **Interview Assessment Visualizations & Quantitative Metrics (`interview-assessment-visualizations-and-quantitative-metrics.md`)**:
+  - Integrated `recharts` v3 (`^3.10.1`) for interactive visual reporting.
+  - Extended assessment schema to support 6 core competency dimensions: Overall, Technical Accuracy, Communication Clarity, Problem Solving, Confidence, and Practical Depth.
+  - Enhanced QuestionFeedback with `depthScore`, `coveredTopics`, and `missedTopics` for granular question analysis.
+  - Updated AI assessment prompts to generate structured topic mastery scores and prioritized learning recommendations (`HIGH`, `MEDIUM`, `LOW`).
+  - Added 4 interactive visual report components: `CompetencyRadarChart`, `PacingComparisonChart`, `PerformanceTrajectoryChart`, and `TopicMasteryCard`.
+  - Overhauled `ReportContainer`, `ScoreCard`, `ImprovementPlan`, `QuestionCard`, and `AnalyticsDashboard` with telemetry for pacing efficiency and total session duration.
+  - Verified with clean TypeScript checks (`npx tsc --noEmit`) and successful Next.js production build (`npm run build`).
+- [x] **Resume Scoring Profile Personalization Refactor (`resume-scoring-1-personalization.md`)**:
+  - Completely replaced the LLM-generated-question personalization flow with the standardized **Add Profile Data** pattern matching Roadmap and Interview modules.
+  - Added `fetchResumeProfileStatusAction` server action to securely fetch approved Profile fields server-side (`currentRole`, `currentStatus`, `yearsOfExperience`, `highestQualification`, `fieldOfStudy`, `primaryGoal`, `targetCompanyType`, `skills`, `desiredSkills`).
+  - Added `ResumeProfileContext` type and updated store, schema, and `useResumePersonalization` hook with 4-state UI handling (loading, opted-in preview, profile-complete offer, profile-incomplete alert).
+  - Preserved distinction between role-specific `target.experienceLevel` and overall career `profile.yearsOfExperience`.
+  - Updated `RESUME_SECTION_ASSESSMENT_PROMPT` and `RESUME_OVERALL_ASSESSMENT_PROMPT` with job description semantics and aspirational `desiredSkills` rules.
+  - Updated Trigger.dev `assess-resume` task schema and execution pipeline to consume `profile` context.
+  - Cleaned up obsolete question answering components (`DynamicQuestion`) and mock service.
+  - Verified 100% type-checking (`npx tsc --noEmit`) and successful Next.js production build (`npm run build`).
+- [x] **Resume Assessment Visualizations & Quantitative Metrics**:
+  - Created `ResumeRadarChart` with 5 competency axes (Overall Score, ATS Readiness, Technical Strength, Project Quality, Experience Depth) with custom Tooltip and theme awareness.
+  - Created `SectionScoreChart` bar visualization for granular benchmarking across CV sections (Summary, Skills, Projects, Experience, Education, Certifications) with dynamic quality coloring.
+  - Integrated charts into `OverviewCard` and `AnalyticsDashboard` in `src/features/resume/components/resume-improvement-hub/`.
+  - Maintained complete light/dark theme adaptability and portal tooltip styling parity with the interview assessment module.
+  - Fixed `CareerExperienceLevel` Prisma enum mapping in `createResumeAssessmentJob` server action.
+  - Fixed `ResumeScoreStatus` mapping, automatic `router.refresh()` background polling, state syncing in `useResumeWorkspace`, and fixed the status badge rendering in `ResumeCard`.
+  - Verified 100% type safety with `npx tsc --noEmit`.
+
 
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**

@@ -13,6 +13,7 @@ export interface RoadmapProfileContext {
   fieldOfStudy: string | null;
   targetCompanyType: string | null;
   weeklyLearningHours: number | null;
+  primaryGoal?: string | null;
   existingSkills: RoadmapExistingSkill[];
 }
 
@@ -47,6 +48,7 @@ export class RoadmapProfileContextService {
       fieldOfStudy: profile.fieldOfStudy ?? null,
       targetCompanyType: profile.targetCompanyType ?? null,
       weeklyLearningHours: profile.weeklyLearningHours ?? null,
+      primaryGoal: profile.primaryGoal ?? null,
       existingSkills,
     };
   }
