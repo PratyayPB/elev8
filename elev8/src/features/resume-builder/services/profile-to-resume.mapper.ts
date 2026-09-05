@@ -58,3 +58,47 @@ export function profileToResumeArtifact(
 
   return artifact;
 }
+
+/**
+ * Merges profile data into an existing resume artifact, updating personalInformation, education, and skills,
+ * while preserving other sections (experience, projects, certifications, achievements, summary).
+ */
+export function mergeProfileIntoResumeArtifact(
+  currentArtifact: BuilderResumeArtifact,
+  profile: ProfileWithSkills | null,
+  userEmail?: string | null
+): BuilderResumeArtifact {
+  if (!profile) {
+    return currentArtifact;
+  }
+
+  const profileArtifact = profileToResumeArtifact(
+    currentArtifact.resumeId,
+    profile,
+    userEmail
+  );
+
+  return {
+    ...currentArtifact,
+    personalInformation: {
+      ...currentArtifact.personalInformation,
+      ...(profileArtifact.personalInformation.fullName
+        ? { fullName: profileArtifact.personalInformation.fullName }
+        : {}),
+      ...(profileArtifact.personalInformation.email
+        ? { email: profileArtifact.personalInformation.email }
+        : {}),
+      ...(profileArtifact.personalInformation.location
+        ? { location: profileArtifact.personalInformation.location }
+        : {}),
+    },
+    education:
+      profileArtifact.education.length > 0
+        ? profileArtifact.education
+        : currentArtifact.education,
+    skills:
+      profileArtifact.skills.length > 0
+        ? profileArtifact.skills
+        : currentArtifact.skills,
+  };
+}

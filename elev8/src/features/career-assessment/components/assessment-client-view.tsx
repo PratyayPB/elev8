@@ -8,6 +8,8 @@ import {
 } from "../types";
 import { createAssessmentAction } from "../services/actions";
 import { AssessmentReadinessScore } from "./assessment-readiness-score";
+import { CareerCompetencyRadar } from "./career-competency-radar";
+import { AssessmentMetricsChart } from "./assessment-metrics-chart";
 import { AssessmentStrengths } from "./assessment-strengths";
 import { AssessmentGaps } from "./assessment-gaps";
 import { AssessmentFocusAreas } from "./assessment-focus-areas";
@@ -120,6 +122,12 @@ export function AssessmentClientView({
           {/* Assessment Content Sections */}
           <div className="space-y-8">
             <AssessmentReadinessScore score={assessment!.readinessScore} />
+
+            {/* Visual Analytics Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CareerCompetencyRadar assessment={assessment!} />
+              <AssessmentMetricsChart assessment={assessment!} />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <AssessmentStrengths strengths={assessment!.strengths} />

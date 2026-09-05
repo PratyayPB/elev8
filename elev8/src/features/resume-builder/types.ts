@@ -31,12 +31,13 @@ export interface BuilderState {
   validationStatus: ValidationState;
 }
 
-import { ResumeBuildStatus, ResumeBuilderTemplate } from "@prisma/client";
+import { ResumeBuildStatus, ResumeCompanyType } from "@prisma/client";
 
-export { ResumeBuildStatus, ResumeBuilderTemplate };
+export { ResumeBuildStatus, ResumeCompanyType };
 
 export type BuilderResumeStatus = ResumeBuildStatus;
-export type BuilderResumeTemplate = ResumeBuilderTemplate;
+export type BuilderResumeTemplate = string;
+export type ResumeBuilderTemplate = string;
 
 export interface PersonalInformation {
   fullName: string;
@@ -123,6 +124,14 @@ export interface BuilderResumeRecord {
   template: ResumeBuilderTemplate;
   artifactBlobUrl?: string | null;
   status: ResumeBuildStatus;
+  targetJobTitle?: string | null;
+  jobDescription?: string | null;
+  targetCompany?: string | null;
+  targetCompanyType?: ResumeCompanyType | null;
+  isAiGenerated?: boolean;
+  aiGeneratedAt?: Date | string | null;
+  aiModel?: string | null;
+  aiPromptVersion?: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }

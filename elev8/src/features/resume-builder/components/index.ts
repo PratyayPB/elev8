@@ -8,6 +8,3 @@ export * from "./empty-builder/empty-builder";
 export * from "./create-resume-form";
 export * from "./editor/resume-editor";
 export * from "./templates/resume-template-renderer";
-export * from "./templates/classic-template";
-export * from "./templates/modern-template";
-export * from "./templates/minimal-template";

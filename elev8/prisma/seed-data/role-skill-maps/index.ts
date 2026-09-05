@@ -1,31 +1,22 @@
 import { PrismaClient } from "@prisma/client";
-import { ENGINEERING_ROLE_PROFILES } from "./engineering-roles";
-import { DATA_AI_ROLE_PROFILES } from "./data-ai-roles";
-import { CLOUD_DEVOPS_ROLE_PROFILES } from "./cloud-devops-roles";
-import { PRODUCT_DESIGN_BUSINESS_ROLE_PROFILES } from "./product-design-business-roles";
-import { RoleProfileSeedEntry } from "./types";
+import { GENERATED_CANONICAL_ROLES } from "./generated-canonical-roles";
 import { normalizeSkillForLookup } from "../../../src/features/skill-gap/utils/skill-normalizer";
 
-export const ALL_ROLE_PROFILES: RoleProfileSeedEntry[] = [
-  ...ENGINEERING_ROLE_PROFILES,
-  ...DATA_AI_ROLE_PROFILES,
-  ...CLOUD_DEVOPS_ROLE_PROFILES,
-  ...PRODUCT_DESIGN_BUSINESS_ROLE_PROFILES,
-];
-
 export async function seedRoleSkillMaps(prisma: PrismaClient) {
-  console.log(`[Seed] Seeding ${ALL_ROLE_PROFILES.length} RoleSkillProfiles across 20 canonical roles...`);
+  console.log(`[Seed] Wiping existing RoleSkillProfile and RoleSkillRequirement records...`);
+  
+  await prisma.roleSkillRequirement.deleteMany({});
+  await prisma.roleSkillProfile.deleteMany({});
+
+  console.log(`[Seed] Seeding ${GENERATED_CANONICAL_ROLES.length} canonical RoleSkillProfiles...`);
 
   let profilesCreated = 0;
   let requirementsCreated = 0;
 
-  for (const entry of ALL_ROLE_PROFILES) {
+  for (const entry of GENERATED_CANONICAL_ROLES) {
     const profile = await prisma.roleSkillProfile.upsert({
       where: {
-        normalizedRole_experienceLevel: {
-          normalizedRole: entry.normalizedRole,
-          experienceLevel: entry.experienceLevel,
-        },
+        normalizedRole: entry.normalizedRole,
       },
       update: {
         role: entry.role,
@@ -33,7 +24,6 @@ export async function seedRoleSkillMaps(prisma: PrismaClient) {
       create: {
         role: entry.role,
         normalizedRole: entry.normalizedRole,
-        experienceLevel: entry.experienceLevel,
       },
     });
 
@@ -51,16 +41,16 @@ export async function seedRoleSkillMaps(prisma: PrismaClient) {
         },
         update: {
           name: skill.name,
-          minimumProficiency: skill.minimumProficiency,
-          importance: skill.importance,
+          minimumProficiency: skill.minimumProficiency as any,
+          importance: skill.importance as any,
           estimatedHours: skill.estimatedHours,
         },
         create: {
           roleSkillProfileId: profile.id,
           name: skill.name,
           normalizedName,
-          minimumProficiency: skill.minimumProficiency,
-          importance: skill.importance,
+          minimumProficiency: skill.minimumProficiency as any,
+          importance: skill.importance as any,
           estimatedHours: skill.estimatedHours,
         },
       });
@@ -70,6 +60,6 @@ export async function seedRoleSkillMaps(prisma: PrismaClient) {
   }
 
   console.log(
-    `[Seed] Successfully seeded ${profilesCreated} RoleSkillProfiles with ${requirementsCreated} RoleSkillRequirements.`
+    `[Seed] Successfully seeded ${profilesCreated} canonical RoleSkillProfiles with ${requirementsCreated} RoleSkillRequirements.`
   );
 }

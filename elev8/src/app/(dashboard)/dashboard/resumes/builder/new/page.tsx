@@ -35,7 +35,7 @@ export default async function NewResumePage() {
           Create New Resume
         </h1>
         <p className="text-sm font-sans text-text-secondary mt-1">
-          Provide basic metadata for your new resume. The builder will initialize the resume with data from your profile.
+          Provide basic metadata for your new resume. You can customize details and import your profile data anytime from the editor header.
         </p>
       </div>
 

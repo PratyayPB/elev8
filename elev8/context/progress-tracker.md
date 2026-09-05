@@ -58,6 +58,12 @@ Phase 7.2: Release & Production Verification
   - Replaced obsolete enums (`CurrentStatus` -> `CareerStatus`, `ResumeStatus` -> `ResumeScoreStatus`, `BuilderResumeStatus` -> `ResumeBuildStatus`, `BuilderResumeTemplate` -> `ResumeBuilderTemplate`, `InterviewCategory` -> `InterviewType`, removed `InterviewDifficulty`).
   - Added new enums (`InterviewType`, `InterviewTemplateType`, `InterviewTemplateStatus`, `ModuleCompletionStatus`).
   - Retained `InterviewStatus.GENERATING` to maintain operational continuity across interview creation and UI workflows.
+- [x] **Resume Builder: Profile Import Feature**:
+  - Removed automatic profile prefill upon resume creation in `ResumeBuilderService.createResume`. Fresh resumes now initialize strictly empty (`createEmptyResumeArtifact`).
+  - Added "Import Profile Data" button to the header of the resume builder page, located to the left of the template selector dropdown.
+  - Implemented profile completion check (`Profile.isCompleted === true`). If false, displays an actionable modal prompting the user to complete their profile with options to "Go to Profile" or "Skip".
+  - Implemented `mergeProfileIntoResumeArtifact` and `POST /api/builder/resumes/[resumeId]/import-profile` to merge `personalInformation`, `education`, and `skills` from the user's profile on demand while preserving existing sections (`experience`, `projects`, `summary`, etc.).
+  - Added comprehensive unit tests in `profile-to-resume.mapper.test.ts`.
   - Updated model fields: `Profile.currentStatus` (`CareerStatus`), `ResumeScore.status` (`ResumeScoreStatus`), `ResumeBuild.status` (`ResumeBuildStatus`), `ResumeBuild.template` (`ResumeBuilderTemplate`), `InterviewTemplate.type` (`InterviewTemplateType`), `InterviewTemplate.status` (`InterviewTemplateStatus`), `InterviewTemplate.interviewType` (`InterviewType`), `InterviewSession.interviewType` (`InterviewType`), `ModuleActivity.completionStatus` (`ModuleCompletionStatus`).
   - Applied migration `20260821223350_enum_updates` and regenerated Prisma Client.
   - Updated all downstream TypeScript types, schemas, services, actions, and UI components.
@@ -138,6 +144,28 @@ Phase 7.2: Release & Production Verification
   - Fixed `CareerExperienceLevel` Prisma enum mapping in `createResumeAssessmentJob` server action.
   - Fixed `ResumeScoreStatus` mapping, automatic `router.refresh()` background polling, state syncing in `useResumeWorkspace`, and fixed the status badge rendering in `ResumeCard`.
   - Verified 100% type safety with `npx tsc --noEmit`.
+- [x] **Resume Builder Static Template Previews (`resume-builder-static-template-previews.md`)**:
+  - Added `previewImage` attribute to `ResumeTemplate` Prisma schema.
+  - Created `public/resume-templates/` directory for developer-supplied `.webp` screenshots.
+  - Updated database seed script (`prisma/seed-data/resume-templates.ts`) to populate `previewImage` paths for all 17 templates across 4 categories (`ATS_FRIENDLY`, `MINIMAL_MODERN`, `TWO_COLUMN`, `CREATIVE`).
+  - Updated `TemplateGallery` component with static images, error fallback placeholder handling, category labels, and optional selection handler without invoking `POST /api/builder/preview`.
+  - Increased real-time live preview debounce in `ResumeTemplateRenderer` from 500ms to 1200ms while keeping autosave debounce independent.
+  - Preserved actual JSON Resume rendering, iframe previews, and Puppeteer PDF export pipeline.
+- [x] **Dashboard Y-Scroll Isolation**: Confined `DashboardShell` to `h-screen overflow-hidden` with isolated `overflow-y-auto` on `<main>`, preventing window-level scrolling and keeping the sidebar stationary across all `/dashboard/*` routes.
+- [x] **Resume Editor Tabbed Form View**: Modified `ResumeEditor` to conditionally render only the active section corresponding to the selected sidebar tab instead of all sections simultaneously, removing redundant scroll spying.
+- [x] **Resume Editor Header Alignment**: Fixed the structural gap between the global `DashboardHeader` and the `EditorHeader` by transforming `DashboardShell` into a Client Component to conditionally remove the `<main>` wrapper padding on builder routes, allowing edge-to-edge flush alignment without `sticky` offset conflicts.
+- [x] **Phase 8 Spec 38: AI Resume Build Implementation (`38-ai-resume-build-spec.md`)**:
+  - Extended `ResumeBuild` Prisma model with `targetJobTitle`, `jobDescription`, `targetCompany`, `targetCompanyType`, `isAiGenerated`, `aiGeneratedAt`, `aiModel`, and `aiPromptVersion`. Added `ResumeCompanyType` enum.
+  - Implemented `AiResumeBuildService` and dedicated REST API endpoints `GET/POST /api/builder/resumes/[resumeId]/ai-build` and `GET /api/builder/resumes/[resumeId]/ai-build/status`.
+  - Created Trigger.dev background task `build-ai-resume.ts` (`gemini-2.5-flash`, `resume-build-v1` prompt) with strict "No Fabrication Policy", structured JSON output, schema validation against `BuilderResumeArtifactSchema`, and atomic persistence to Blob storage.
+  - Implemented `AiBuildDialog` supporting Profile completion verification blocker, mandatory Job Title and Job Description inputs, optional Company and Company Type selectors, replacement confirmation safeguard, live step progress tracking with Trigger.dev polling, and error recovery preserving existing artifacts.
+  - Added "Build Resume using AI" trigger button to `EditorHeader` and wired artifact replacement & live preview reloading in `ResumeEditor`.
+- [x] **Career Assessment UI Visuals & Quantitative Charts**:
+  - Refactored `AssessmentReadinessScore` to integrate an interactive Recharts `RadialBarChart` circular gauge color-coded to the score band (`#10B981`, `#FFDB00`, `#3B82F6`) with central indicator.
+  - Implemented `CareerCompetencyRadar` with a 5-axis `RadarChart` (Readiness Index, Core Strengths, Skill Inventory, Gap Coverage, Study Velocity) with custom tooltip and styling parity with Interview and Resume radar charts.
+  - Implemented `AssessmentMetricsChart` with a comparative multi-signal `BarChart` and telemetry status pills for strengths, gaps, focus topics, and study bandwidth.
+  - Integrated charts into `AssessmentClientView` in a responsive 2-column layout.
+  - Verified 100% type safety and successful Next.js production build (`next build`).
 
 
 ## In Progress

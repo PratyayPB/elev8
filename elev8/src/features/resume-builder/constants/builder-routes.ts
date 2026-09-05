@@ -10,4 +10,5 @@ export const BUILDER_API = {
   RESUME: (resumeId: string) => `/api/builder/resumes/${resumeId}`,
   ARTIFACT: (resumeId: string) => `/api/builder/resumes/${resumeId}/artifact`,
   PDF: (resumeId: string) => `/api/builder/resumes/${resumeId}/pdf`,
+  IMPORT_PROFILE: (resumeId: string) => `/api/builder/resumes/${resumeId}/import-profile`,
 };

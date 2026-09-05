@@ -14,15 +14,11 @@ export class RoleSkillMapService {
    * Fetches a RoleSkillProfile with its associated RoleSkillRequirements from the database.
    */
   public static async getRoleSkillProfile(
-    normalizedRole: string,
-    experienceLevel: CareerExperienceLevel
+    normalizedRole: string
   ) {
     return prisma.roleSkillProfile.findUnique({
       where: {
-        normalizedRole_experienceLevel: {
-          normalizedRole,
-          experienceLevel,
-        },
+        normalizedRole,
       },
       include: {
         skills: true,

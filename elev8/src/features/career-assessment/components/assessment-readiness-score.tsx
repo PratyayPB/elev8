@@ -1,7 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Target, Info } from "lucide-react";
+import {
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+  ResponsiveContainer,
+} from "recharts";
 
 interface AssessmentReadinessScoreProps {
   score: number;
@@ -12,13 +18,27 @@ export function AssessmentReadinessScore({
   score,
   className = "",
 }: AssessmentReadinessScoreProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const getScoreBand = (val: number) => {
-    if (val >= 80) return { label: "High Preparedness", color: "text-emerald-700 bg-emerald-100" };
-    if (val >= 60) return { label: "Moderate Readiness", color: "text-amber-700 bg-amber-100" };
-    return { label: "Foundational Phase", color: "text-blue-700 bg-blue-100" };
+    if (val >= 80) return { label: "High Preparedness", color: "text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800" };
+    if (val >= 60) return { label: "Moderate Readiness", color: "text-amber-800 dark:text-yellow-400 bg-amber-100 dark:bg-yellow-950/50 border-amber-300 dark:border-yellow-800" };
+    return { label: "Foundational Phase", color: "text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/50 border-blue-300 dark:border-blue-800" };
+  };
+
+  const getGaugeColor = (val: number) => {
+    if (val >= 80) return "#10B981"; // Emerald
+    if (val >= 60) return "#FFDB00"; // Signature Gold / Yellow
+    return "#3B82F6"; // Blue
   };
 
   const band = getScoreBand(score);
+  const gaugeColor = getGaugeColor(score);
+  const chartData = [{ name: "Readiness", value: score, fill: gaugeColor }];
 
   return (
     <div
@@ -30,7 +50,7 @@ export function AssessmentReadinessScore({
             Overall Readiness Signal
           </span>
           <span
-            className={`text-[11px] px-2.5 py-0.5 rounded-full font-display font-semibold ${band.color}`}
+            className={`text-[11px] px-2.5 py-0.5 rounded-full font-display font-semibold border ${band.color}`}
           >
             {band.label}
           </span>
@@ -61,9 +81,44 @@ export function AssessmentReadinessScore({
           </span>
         </div>
 
-        {/* Circular / Progress Indicator */}
-        <div className="w-16 h-16 rounded-full bg-surface-muted border-4 border-dashboard-metricHighlight flex items-center justify-center text-text-primary">
-          <Target className="h-7 w-7" />
+        {/* Dynamic Recharts Circular Gauge */}
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center shrink-0">
+          {mounted ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="74%"
+                outerRadius="100%"
+                barSize={9}
+                data={chartData}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <PolarAngleAxis
+                  type="number"
+                  domain={[0, 100]}
+                  angleAxisId={0}
+                  tick={false}
+                />
+                <RadialBar
+                  background={{ fill: "currentColor" }}
+                  className="text-border-subtle"
+                  dataKey="value"
+                  cornerRadius={10}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-20 h-20 rounded-full border-4 border-border-subtle flex items-center justify-center" />
+          )}
+
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <Target className="h-5 w-5 text-text-primary" />
+            <span className="text-[10px] font-display font-bold text-text-secondary mt-0.5">
+              {score}%
+            </span>
+          </div>
         </div>
       </div>
 
@@ -71,3 +126,4 @@ export function AssessmentReadinessScore({
     </div>
   );
 }
+

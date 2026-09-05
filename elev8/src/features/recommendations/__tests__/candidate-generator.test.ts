@@ -92,7 +92,6 @@ export async function runCandidateGeneratorTests() {
     skillGap: {
       status: "SUCCESS",
       targetRole: "Full Stack Developer",
-      experienceLevel: "ENTRY",
       matchedSkills: [],
       underqualifiedSkills: [
         {

@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { BuilderResumeArtifact, ResumeBuilderTemplate, PersonalInformation } from "../types";
 import { moveUp, moveDown } from "../utils/editor-utils";
+import { toast } from "sonner";
 import { BUILDER_API } from "../constants/builder-routes";
+import { getPopulatedBuilderSections } from "../adapters/section-mapping";
 
 export type SaveStatus = "clean" | "dirty" | "saving" | "saved" | "error";
 
@@ -91,6 +93,25 @@ export function useResumeEditor({
   const markDirty = useCallback(() => {
     setSaveStatus("dirty");
   }, []);
+
+  const replaceArtifact = useCallback(
+    (newArtifact: BuilderResumeArtifact, newVersion?: number, savedAt?: Date) => {
+      setArtifact(newArtifact);
+      if (newVersion !== undefined) {
+        setCurrentVersion(newVersion);
+      }
+      if (savedAt) {
+        setLastSavedAt(savedAt);
+        setSaveStatus("saved");
+        setTimeout(() => {
+          setSaveStatus((prev) => (prev === "saved" ? "clean" : prev));
+        }, 3000);
+      } else {
+        markDirty();
+      }
+    },
+    [markDirty]
+  );
 
   const updatePersonalInformation = useCallback(
     (info: Partial<PersonalInformation>) => {
@@ -192,32 +213,70 @@ export function useResumeEditor({
 
   const updateTemplate = useCallback(
     async (newTemplate: ResumeBuilderTemplate) => {
-      setIsTemplateUpdating(true);
       try {
+        setIsTemplateUpdating(true);
+        
+        // Fetch metadata to check supported sections
+        try {
+          const res = await fetch(`/api/builder/templates/${newTemplate}`);
+          if (res.ok) {
+            const templateMeta = await res.json();
+            const populated = getPopulatedBuilderSections(artifact);
+            const BUILDER_TO_JSON_RESUME_SECTION: Record<string, string> = {
+              personalInformation: "basics",
+              professionalSummary: "basics",
+              experience: "work",
+              education: "education",
+              projects: "projects",
+              skills: "skills",
+              certifications: "certificates",
+              achievements: "awards",
+            };
+            
+            const unsupported: string[] = [];
+            for (const p of populated) {
+              const mapped = BUILDER_TO_JSON_RESUME_SECTION[p];
+              if (mapped && !templateMeta.supportedSections.includes(mapped)) {
+                unsupported.push(p);
+              }
+            }
+            
+            if (unsupported.length > 0) {
+              toast.warning(`You switched to ${templateMeta.name}.`, {
+                description: `This template does not support: ${unsupported.join(", ")}. Your data will remain saved but will not appear in this template.`,
+                duration: 6000,
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching template metadata", e);
+        }
+
         const response = await fetch(BUILDER_API.RESUME(resumeId), {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ template: newTemplate }),
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to update template");
-        }
+        if (!response.ok) throw new Error("Failed to update template");
 
         setCurrentTemplate(newTemplate);
+        toast.success("Template updated successfully");
       } catch (err: unknown) {
-        console.error("Failed to update template:", err);
+        toast.error("Unable to update template", {
+          description: "An error occurred while switching templates.",
+        });
+        console.error(err);
       } finally {
         setIsTemplateUpdating(false);
       }
     },
-    [resumeId]
+    [resumeId, artifact]
   );
 
   return {
     artifact,
+    currentVersion,
     currentTemplate,
     isTemplateUpdating,
     updateTemplate,
@@ -226,6 +285,7 @@ export function useResumeEditor({
     lastSavedAt,
     isDirty: saveStatus === "dirty" || saveStatus === "saving" || saveStatus === "error",
     save,
+    replaceArtifact,
     updatePersonalInformation,
     updateSummary,
     addEntry,

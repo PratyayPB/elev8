@@ -9,8 +9,7 @@ export { SkillImportance, SkillProficiency, CareerExperienceLevel };
 export type GapStatus =
   | "SUCCESS"
   | "NO_TARGET_ROLE"
-  | "ROLE_NOT_SUPPORTED"
-  | "ROLE_LEVEL_NOT_SUPPORTED";
+  | "ROLE_NOT_SUPPORTED";
 
 export interface MatchedSkill {
   name: string;
@@ -37,7 +36,6 @@ export interface MissingSkill {
 export interface GapAnalysis {
   status: GapStatus;
   targetRole: string | null;
-  experienceLevel: CareerExperienceLevel;
   matchedSkills: MatchedSkill[];
   underqualifiedSkills: UnderqualifiedSkill[];
   missingSkills: MissingSkill[];

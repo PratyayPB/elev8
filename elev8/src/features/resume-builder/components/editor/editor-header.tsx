@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Save, CheckCircle2, AlertCircle, Download, LayoutTemplate } from "lucide-react";
+import { ArrowLeft, Loader2, Save, CheckCircle2, AlertCircle, Download, LayoutTemplate, UserCheck, Sparkles } from "lucide-react";
 import { SaveStatus } from "../../hooks/use-resume-editor";
 import { BUILDER_ROUTES } from "../../constants/builder-routes";
 import { ResumeBuilderTemplate } from "../../types";
@@ -17,6 +17,9 @@ interface EditorHeaderProps {
   isTemplateUpdating?: boolean;
   onDownloadPdf: () => void;
   isPdfGenerating?: boolean;
+  onImportProfile?: () => void;
+  isImportingProfile?: boolean;
+  onAiBuild?: () => void;
 }
 
 export function EditorHeader({
@@ -31,7 +34,21 @@ export function EditorHeader({
   isTemplateUpdating = false,
   onDownloadPdf,
   isPdfGenerating = false,
+  onImportProfile,
+  isImportingProfile = false,
+  onAiBuild,
 }: EditorHeaderProps) {
+  const [templates, setTemplates] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    fetch("/api/builder/templates")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setTemplates(data);
+      })
+      .catch(err => console.error("Failed to load templates", err));
+  }, []);
+
   const getStatusBadge = () => {
     switch (saveStatus) {
       case "saving":
@@ -77,11 +94,11 @@ export function EditorHeader({
   return (
     <header className="sticky top-0 z-20 w-full border-b border-border bg-dashboard-card backdrop-blur-sm supports-[backdrop-filter]:bg-dashboard-card/90">
       <div className="flex h-16 items-center justify-between px-6">
-        {/* Left Section: Back link & Title */}
+        {/* Left Section: Back link, Title & AI Build Button */}
         <div className="flex items-center gap-4 min-w-0">
           <Link
             href={BUILDER_ROUTES.HOME}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-dashboard-card text-text-secondary hover:text-text-primary transition-colors"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-dashboard-card text-text-secondary hover:text-text-primary transition-colors shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -98,22 +115,76 @@ export function EditorHeader({
               )}
             </div>
           </div>
+
+          {/* Build Resume using AI Button */}
+          {onAiBuild && (
+            <button
+              type="button"
+              onClick={onAiBuild}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-primary-500/30 bg-brand-primary-500/10 hover:bg-brand-primary-500/20 text-brand-primary-600 dark:text-brand-primary-400 font-display font-semibold text-xs transition-all shrink-0 ml-1"
+              title="Build or tailor your resume using AI"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-brand-primary-500" />
+              <span className="whitespace-nowrap font-medium">Build Resume using AI</span>
+            </button>
+          )}
         </div>
 
         {/* Right Section: Template Selector, Download PDF & Save */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Import Profile Data Button */}
+          <button
+            type="button"
+            onClick={onImportProfile}
+            disabled={isImportingProfile || !onImportProfile}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-surface-muted hover:bg-border-subtle text-text-primary font-display font-semibold text-xs transition-all disabled:opacity-50 shrink-0"
+            title="Import personal information, education, and skills from your profile"
+          >
+            {isImportingProfile ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-text-primary" />
+            ) : (
+              <UserCheck className="h-3.5 w-3.5 text-text-primary" />
+            )}
+            <span className="whitespace-nowrap font-medium">
+              {isImportingProfile ? "Importing..." : "Import Profile Data"}
+            </span>
+          </button>
+
           {/* Template Selector */}
           <div className="relative flex items-center">
             <LayoutTemplate className="h-3.5 w-3.5 text-text-secondary absolute left-3 pointer-events-none" />
             <select
               value={currentTemplate}
-              disabled={isTemplateUpdating}
+              disabled={isTemplateUpdating || templates.length === 0}
               onChange={(e) => onTemplateChange(e.target.value as ResumeBuilderTemplate)}
-              className="pl-8 pr-8 py-2 rounded-xl bg-surface-muted border border-border text-xs font-semibold text-text-primary focus:outline-none focus:border-text-primary transition-all cursor-pointer disabled:opacity-50 appearance-none"
+              className="pl-8 pr-8 py-2 rounded-xl bg-surface-muted border border-border text-xs font-semibold text-text-primary focus:outline-none focus:border-text-primary transition-all cursor-pointer disabled:opacity-50 appearance-none max-w-[200px] truncate"
             >
-              <option value="CLASSIC">Classic Template</option>
-              <option value="MODERN">Modern Template</option>
-              <option value="MINIMAL">Minimal Template</option>
+              {templates.length === 0 ? (
+                <option value={currentTemplate}>Loading templates...</option>
+              ) : (
+                <>
+                  <optgroup label="ATS Friendly">
+                    {templates.filter(t => t.category === "ATS_FRIENDLY").map(t => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Minimal & Modern">
+                    {templates.filter(t => t.category === "MINIMAL_MODERN").map(t => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="2 Column">
+                    {templates.filter(t => t.category === "TWO_COLUMN").map(t => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Creative">
+                    {templates.filter(t => t.category === "CREATIVE").map(t => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                </>
+              )}
             </select>
             {isTemplateUpdating && (
               <Loader2 className="h-3 w-3 animate-spin text-text-secondary absolute right-2.5 pointer-events-none" />

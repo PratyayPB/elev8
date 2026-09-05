@@ -14,6 +14,5 @@ export interface RoleSkillRequirementSeed {
 export interface RoleProfileSeedEntry {
   role: string;
   normalizedRole: string;
-  experienceLevel: CareerExperienceLevel;
   skills: RoleSkillRequirementSeed[];
 }

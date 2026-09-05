@@ -90,11 +90,7 @@ enum ResumeBuildStatus {
   ARCHIVED
 }
 
-enum ResumeBuilderTemplate {
-  CLASSIC
-  MODERN
-  MINIMAL
-}
+
 
 enum InterviewStatus {
   GENERATING
@@ -149,11 +145,23 @@ enum JobStatus {
   CANCELLED
 }
 
+enum ResumeCompanyType {
+  STARTUP
+  PRODUCT_COMPANY
+  CONSULTING
+  FAANG_ENTERPRISE
+  GOVERNMENT
+  NON_PROFIT
+  AGENCY
+  OTHER
+}
+
 enum JobType {
   ROADMAP
   CAREER_GUIDANCE
   INTERVIEW
   RESUME_ANALYSIS
+  RESUME_BUILD
   EXPORT
 }
 
@@ -411,9 +419,19 @@ model ResumeBuild {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title           String
-  template        ResumeBuilderTemplate @default(CLASSIC)
+  template        String                @default("academic-cv-lite")
   artifactBlobUrl String?
   status          ResumeBuildStatus     @default(DRAFT)
+
+  targetJobTitle    String?
+  jobDescription    String?
+  targetCompany     String?
+  targetCompanyType ResumeCompanyType?
+
+  isAiGenerated   Boolean   @default(false)
+  aiGeneratedAt   DateTime?
+  aiModel         String?
+  aiPromptVersion String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -422,6 +440,27 @@ model ResumeBuild {
   @@index([status])
   @@index([createdAt])
   @@map("resume_builds")
+}
+
+enum ResumeTemplateCategory {
+  ATS_FRIENDLY
+  MINIMAL_MODERN
+  TWO_COLUMN
+  CREATIVE
+}
+
+model ResumeTemplate {
+  id                String                 @id
+  name              String
+  slug              String                 @unique
+  category          ResumeTemplateCategory
+  supportedSections String[]
+  previewImage      String                 @default("")
+
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@map("resume_templates")
 }
 
 model InterviewTemplate {
@@ -573,14 +612,13 @@ model RoleSkillProfile {
   id              String                @id @default(cuid())
   role            String
   normalizedRole  String
-  experienceLevel CareerExperienceLevel
 
   skills RoleSkillRequirement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([normalizedRole, experienceLevel])
+  @@unique([normalizedRole])
   @@index([normalizedRole])
   @@map("role_skill_profiles")
 }

@@ -1,17 +1,17 @@
 import assert from "node:assert";
-import { profileToResumeArtifact } from "../services/profile-to-resume.mapper";
+import {
+  profileToResumeArtifact,
+  mergeProfileIntoResumeArtifact,
+} from "../services/profile-to-resume.mapper";
 import {
   Profile,
   ProfileSkill,
   CareerStatus,
-  PrimaryGoal,
   SkillProficiency,
-  CareerExperienceLevel,
-  TargetCompanyType,
 } from "@prisma/client";
 
 export async function runProfileMapperTests() {
-  console.log("Running profileToResumeArtifact mapper tests...");
+  console.log("Running profileToResumeArtifact and mergeProfileIntoResumeArtifact mapper tests...");
 
   const resumeId = "test_resume_id";
 
@@ -95,12 +95,83 @@ export async function runProfileMapperTests() {
   assert.deepStrictEqual(mappedArtifact.certifications, []);
   assert.deepStrictEqual(mappedArtifact.achievements, []);
 
-  console.log("All profileToResumeArtifact mapper tests passed!");
+  // Test 3: mergeProfileIntoResumeArtifact preserves non-profile sections
+  const existingArtifact = {
+    ...emptyArtifact,
+    personalInformation: {
+      ...emptyArtifact.personalInformation,
+      phone: "+1 234 567 8900",
+      linkedin: "https://linkedin.com/in/johndoe",
+    },
+    professionalSummary: "Existing professional summary that must not be lost.",
+    experience: [
+      {
+        id: "exp_1",
+        company: "Tech Corp",
+        jobTitle: "Software Engineer",
+        startDate: "2023-01",
+        currentlyWorking: true,
+        achievements: ["Built scalable services"],
+      },
+    ],
+    projects: [
+      {
+        id: "proj_1",
+        name: "Elev8 Portfolio",
+        description: "Portfolio builder app",
+        highlights: [],
+      },
+    ],
+    certifications: [
+      {
+        id: "cert_1",
+        name: "AWS Certified Developer",
+        issuer: "Amazon",
+      },
+    ],
+    achievements: [
+      {
+        id: "ach_1",
+        title: "Hackathon Winner",
+      },
+    ],
+  };
+
+  const mergedArtifact = mergeProfileIntoResumeArtifact(
+    existingArtifact,
+    mockProfile,
+    "john.doe@example.com"
+  );
+
+  // Profile data was imported
+  assert.strictEqual(mergedArtifact.personalInformation.fullName, "John Doe");
+  assert.strictEqual(mergedArtifact.personalInformation.email, "john.doe@example.com");
+  assert.strictEqual(mergedArtifact.personalInformation.location, "United States");
+  // Existing personal info preserved
+  assert.strictEqual(mergedArtifact.personalInformation.phone, "+1 234 567 8900");
+  assert.strictEqual(mergedArtifact.personalInformation.linkedin, "https://linkedin.com/in/johndoe");
+
+  // Education and Skills imported
+  assert.strictEqual(mergedArtifact.education.length, 1);
+  assert.strictEqual(mergedArtifact.education[0].degree, "Bachelor of Science");
+  assert.strictEqual(mergedArtifact.skills.length, 2);
+
+  // Other sections preserved completely
+  assert.strictEqual(
+    mergedArtifact.professionalSummary,
+    "Existing professional summary that must not be lost."
+  );
+  assert.strictEqual(mergedArtifact.experience.length, 1);
+  assert.strictEqual(mergedArtifact.experience[0].company, "Tech Corp");
+  assert.strictEqual(mergedArtifact.projects.length, 1);
+  assert.strictEqual(mergedArtifact.projects[0].name, "Elev8 Portfolio");
+  assert.strictEqual(mergedArtifact.certifications.length, 1);
+  assert.strictEqual(mergedArtifact.achievements.length, 1);
+
+  console.log("All profileToResumeArtifact and mergeProfileIntoResumeArtifact mapper tests passed!");
 }
 
-if (require.main === module) {
-  runProfileMapperTests().catch((err) => {
-    console.error("Test failure:", err);
-    process.exit(1);
-  });
-}
+runProfileMapperTests().catch((err) => {
+  console.error("Test failure:", err);
+  process.exit(1);
+});

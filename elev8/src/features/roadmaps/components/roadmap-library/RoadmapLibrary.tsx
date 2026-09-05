@@ -21,7 +21,7 @@ export const RoadmapLibrary: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const tabParam = searchParams.get("tab");
+  const tabParam = searchParams?.get("tab");
   const initialSection = tabParam === "global" ? "global" : "mine";
 
   const [section, setSection] = useState<"mine" | "global">(initialSection);
@@ -84,7 +84,7 @@ export const RoadmapLibrary: React.FC = () => {
     const nextSection = newTab as "mine" | "global";
     setSection(nextSection);
     setPage(1);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() || "");
     if (nextSection === "global") {
       params.set("tab", "global");
     } else {

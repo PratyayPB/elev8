@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
-import { profileToResumeArtifact } from "./profile-to-resume.mapper";
+import { profileToResumeArtifact, mergeProfileIntoResumeArtifact } from "./profile-to-resume.mapper";
+import { createEmptyResumeArtifact } from "../utils/create-empty-resume";
 import {
   BuilderResumeArtifact,
   BuilderResumeRecord,
@@ -44,21 +45,8 @@ export class ResumeBuilderService {
 
     const resumeId = dummyRecord.id;
 
-    // Fetch user profile to prefill the resume
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        profile: {
-          include: { skills: true },
-        },
-      },
-    });
-
-    const initialArtifact = profileToResumeArtifact(
-      resumeId,
-      user?.profile || null,
-      user?.email
-    );
+    // Resumes start with an empty artifact; profile data is imported on-demand via the "Import Profile Data" button
+    const initialArtifact = createEmptyResumeArtifact(resumeId);
     const pathname = `resumes/${userId}/${resumeId}/artifact.json`;
 
     try {
@@ -324,5 +312,65 @@ export class ResumeBuilderService {
         500
       );
     }
+  }
+
+  /**
+   * Checks profile completion and imports profile data into an existing resume artifact.
+   * Merges personalInformation, education, and skills while preserving other sections.
+   */
+  public static async importProfileData(
+    userId: string,
+    resumeId: string,
+    clientArtifact?: BuilderResumeArtifact,
+    clientVersion?: number
+  ): Promise<{
+    isCompleted: boolean;
+    artifact?: BuilderResumeArtifact;
+    version?: number;
+    savedAt?: Date;
+  }> {
+    // 1. Validate resume ownership
+    await this.getResume(userId, resumeId);
+
+    // 2. Fetch user and profile with skills
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: {
+          include: { skills: true },
+        },
+      },
+    });
+
+    if (!user?.profile || !user.profile.isCompleted) {
+      return {
+        isCompleted: false,
+      };
+    }
+
+    // 3. Determine base artifact: prefer client's active state to preserve unsaved local changes
+    const baseArtifact =
+      clientArtifact || (await this.getResumeArtifact(userId, resumeId));
+
+    const mergedArtifact = mergeProfileIntoResumeArtifact(
+      baseArtifact,
+      user.profile,
+      user.email
+    );
+
+    // 4. Persist merged artifact
+    const { version, savedAt } = await this.updateResumeArtifact(
+      userId,
+      resumeId,
+      mergedArtifact,
+      clientVersion ?? baseArtifact.version
+    );
+
+    return {
+      isCompleted: true,
+      artifact: mergedArtifact,
+      version,
+      savedAt,
+    };
   }
 }

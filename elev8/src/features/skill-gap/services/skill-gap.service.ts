@@ -27,7 +27,6 @@ export interface CalculateGapParams {
     estimatedHours?: number | null;
   }>;
   targetRole: string;
-  experienceLevel: CareerExperienceLevel;
 }
 
 export class SkillGapService {
@@ -122,9 +121,8 @@ export class SkillGapService {
       estimatedHours?: number | null;
     }>;
     targetRole: string;
-    experienceLevel: CareerExperienceLevel;
   }): GapAnalysis {
-    const { userSkills, requiredSkills, targetRole, experienceLevel } = params;
+    const { userSkills, requiredSkills, targetRole } = params;
 
     const userSkillMap = resolveUserSkillsToCanonical(userSkills);
     const matchedSkills: MatchedSkill[] = [];
@@ -201,7 +199,6 @@ export class SkillGapService {
     return {
       status: "SUCCESS",
       targetRole,
-      experienceLevel,
       matchedSkills,
       underqualifiedSkills,
       missingSkills,
@@ -281,7 +278,6 @@ export class SkillGapService {
     profile: ProfileData
   ): Promise<GapAnalysis> {
     const targetRole = profile.careerGoals?.targetRole;
-    const experienceLevel = profile.yearsOfExperience && profile.yearsOfExperience > 3 ? (profile.yearsOfExperience > 7 ? "SENIOR" : "MID") : "ENTRY";
     const userSkills = (profile.skills || []).map((s) => ({
       name: s.name,
       proficiency: s.proficiency,
@@ -292,7 +288,6 @@ export class SkillGapService {
       return {
         status: "NO_TARGET_ROLE",
         targetRole: null,
-        experienceLevel,
         matchedSkills: [],
         underqualifiedSkills: [],
         missingSkills: [],
@@ -307,20 +302,13 @@ export class SkillGapService {
 
     // 3. Query Database for RoleSkillProfile
     const roleProfile = await RoleSkillMapService.getRoleSkillProfile(
-      normalizedRole,
-      experienceLevel
+      normalizedRole
     );
 
     if (!roleProfile) {
-      const isRoleKnown = await RoleSkillMapService.isRoleSupported(normalizedRole);
-      const status: GapStatus = isRoleKnown
-        ? "ROLE_LEVEL_NOT_SUPPORTED"
-        : "ROLE_NOT_SUPPORTED";
-
       return {
-        status,
+        status: "ROLE_NOT_SUPPORTED",
         targetRole,
-        experienceLevel,
         matchedSkills: [],
         underqualifiedSkills: [],
         missingSkills: [],
@@ -335,7 +323,6 @@ export class SkillGapService {
       userSkills,
       requiredSkills: roleProfile.skills,
       targetRole: roleProfile.role,
-      experienceLevel,
     });
   }
 }

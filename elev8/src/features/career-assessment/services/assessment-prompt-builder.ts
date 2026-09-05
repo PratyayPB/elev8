@@ -70,8 +70,7 @@ No specific target role is currently defined. Do not invent one. Provide broader
     }
 
     if (
-      gapAnalysis?.status === "ROLE_NOT_SUPPORTED" ||
-      gapAnalysis?.status === "ROLE_LEVEL_NOT_SUPPORTED"
+      gapAnalysis?.status === "ROLE_NOT_SUPPORTED"
     ) {
       return `### SKILL GAP CONTEXT:
 The user is targeting the role: "${targetRole}". Evaluate their background generally against typical industry expectations for this title without inventing unverified facts.`;
@@ -103,7 +102,7 @@ The user is targeting the role: "${targetRole}". Evaluate their background gener
           : "None";
 
       return `### DETERMINISTIC SKILL GAP ANALYSIS:
-Target Role Benchmark: "${gapAnalysis.targetRole}" (${gapAnalysis.experienceLevel} Level)
+Target Role Benchmark: "${gapAnalysis.targetRole}"
 Computed Gap Severity: ${gapAnalysis.severity.toFixed(2)} (on a 0.0 - 1.0 scale)
 Estimated Remediation Effort: ~${gapAnalysis.estimatedLearningHours} hours
 

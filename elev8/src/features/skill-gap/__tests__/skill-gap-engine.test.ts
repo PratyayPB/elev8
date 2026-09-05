@@ -80,7 +80,6 @@ export async function runSkillGapEngineTests() {
       { name: "Node.js", minimumProficiency: "BASIC", importance: "IMPORTANT", estimatedHours: 30 },
     ],
     targetRole: "Full Stack Developer",
-    experienceLevel: "ENTRY",
   });
 
   assert.strictEqual(gapResult.status, "SUCCESS");

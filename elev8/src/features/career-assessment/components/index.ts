@@ -1,4 +1,6 @@
 export * from "./assessment-readiness-score";
+export * from "./career-competency-radar";
+export * from "./assessment-metrics-chart";
 export * from "./assessment-strengths";
 export * from "./assessment-gaps";
 export * from "./assessment-focus-areas";

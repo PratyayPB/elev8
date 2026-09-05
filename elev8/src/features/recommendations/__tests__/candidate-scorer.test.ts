@@ -88,7 +88,6 @@ export async function runCandidateScorerTests() {
     skillGap: {
       status: "SUCCESS",
       targetRole: "Full Stack Developer",
-      experienceLevel: "ENTRY",
       matchedSkills: [],
       underqualifiedSkills: [],
       missingSkills: [{ name: "Node.js", requiredProficiency: "BASIC", importance: "CORE" }],

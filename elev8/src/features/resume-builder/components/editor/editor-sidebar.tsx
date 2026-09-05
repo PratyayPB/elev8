@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import React from "react";
 import { User, FileText, GraduationCap, Briefcase, Code, Sparkles, Award, Trophy } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SectionItem {
   id: string;
@@ -24,34 +33,32 @@ export function EditorSidebar({ activeSection, onSectionClick }: EditorSidebarPr
     { id: "achievements", label: "Achievements", icon: <Trophy className="h-4 w-4" /> },
   ];
 
-  const handleSectionClick = (id: string) => {
-    onSectionClick(id);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const handleValueChange = (val: string) => {
+    onSectionClick(val);
   };
 
+  const activeItem = sections.find((s) => s.id === activeSection) || sections[0];
+
   return (
-    <nav className="flex md:flex-col overflow-x-auto md:overflow-x-visible gap-2 pb-4 md:pb-0 scrollbar-none sticky top-20 z-10 bg-surface md:bg-transparent">
-      {sections.map((sec) => {
-        const isActive = activeSection === sec.id;
-        return (
-          <button
-            key={sec.id}
-            type="button"
-            onClick={() => handleSectionClick(sec.id)}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
-              isActive
-                ? "bg-text-primary text-white dark:text-brand-primary-900 shadow-sm"
-                : "text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 border border-transparent"
-            }`}
-          >
-            {sec.icon}
-            <span>{sec.label}</span>
-          </button>
-        );
-      })}
-    </nav>
+    <div className="w-full bg-dashboard-card rounded-xl border border-border shadow-sm p-2 mb-6">
+      <Select value={activeItem.id} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full h-12 bg-surface text-base font-semibold border-none focus:ring-0 focus:ring-offset-0">
+          <div className="flex items-center gap-3">
+            {activeItem.icon}
+            <span>{activeItem.label}</span>
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          {sections.map((sec) => (
+            <SelectItem key={sec.id} value={sec.id} className="py-2.5">
+              <div className="flex items-center gap-3 font-medium">
+                {sec.icon}
+                <span>{sec.label}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
