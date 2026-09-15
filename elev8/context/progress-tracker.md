@@ -165,8 +165,24 @@ Phase 7.2: Release & Production Verification
   - Implemented `CareerCompetencyRadar` with a 5-axis `RadarChart` (Readiness Index, Core Strengths, Skill Inventory, Gap Coverage, Study Velocity) with custom tooltip and styling parity with Interview and Resume radar charts.
   - Implemented `AssessmentMetricsChart` with a comparative multi-signal `BarChart` and telemetry status pills for strengths, gaps, focus topics, and study bandwidth.
   - Integrated charts into `AssessmentClientView` in a responsive 2-column layout.
-  - Verified 100% type safety and successful Next.js production build (`next build`).
-
+- [x] **Phase 8 Spec 40: Elev8 Progress Tracker MVP Implementation (`40-elev8-progress-tracker-mvp-implementation.md`)**:
+  - Overhauled `ModuleActivity` into an append-only event ledger with `eventType` (`ModuleActivityEventType`), `entityId`, optional `completionStatus`, and dropped `updatedAt`.
+  - Refactored `Progress` into a true current-state projection tracking 5 module statuses (`ModuleProgressStatus`), progress percentages (0-100), and JSON metadata caches (`careerAssessmentMetadata`, `roadmapMetadata`, etc.).
+  - Centralized `ModuleActivityService` in `src/features/progress/services/` with built-in idempotency deduplication and real-time `Progress` state updates on every event.
+  - Implemented deterministic `RecommendationService` (`NextBestAction`) prioritizing mandatory Profile completion (100) -> Career Assessment (95) -> Ready submissions (90) -> In-progress modules (88-80) -> Low score improvements (78-76) -> Connected module progressions (74-70).
+  - Integrated all 5 modules (Career Assessment, Roadmaps, Interview Practice, Resume Builder, Resume Score) to log structured activity events.
+  - Added partial-state persistence for mock interview autosaves (`INTERVIEW_QUESTION_ANSWERED` / `INTERVIEW_ALL_QUESTIONS_ANSWERED`) and interview submissions (`INTERVIEW_SUBMITTED`).
+  - Extended Interview generation pipeline to optionally capture multi-source entity context (`profileId`, `resumeId`, `roadmapId`).
+  - Redesigned the `/dashboard/progress` page with `NextBestActionCard`, `ModuleProgressGrid`, and `ActivityLedgerTimeline` with date groupings.
+  - Created automated unit tests for `RecommendationService` (11 deterministic scenarios) and `ModuleActivityService` state projection formulas with 100% pass rate.
+- [x] **Manual Fix: Module Activity Logging Hooks (`elev8-module-activity-logging-hooks.md`)**:
+  - Repaired roadmap generation activity logging and removed a malformed Prisma create-time activity call.
+  - Added lifecycle hooks for roadmap generation start/stage/success/failure, cache-hit reuse, viewer started/viewed, and final roadmap completion.
+  - Added Career Assessment start/submitted/generation-started/generation-failed/viewed hooks while keeping completed logging intact.
+  - Added Interview evaluation-started, failed, and viewed hooks across session actions and Trigger.dev tasks; preserved question-answer discriminator metadata.
+  - Added Resume Score started/failed/viewed hooks across upload actions, assessment task failures, and report fetches.
+  - Added Resume Build update/template/view/PDF and AI resume build requested/started/completed/failed hooks.
+  - Expanded progress projection handling and activity timeline copy for newly produced event types.
 
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**

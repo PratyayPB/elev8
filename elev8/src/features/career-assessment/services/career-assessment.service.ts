@@ -9,6 +9,12 @@ import {
 } from "../types";
 import { ASSESSMENT_PROMPT_VERSION } from "../constants";
 import { CareerAssessmentLLMService } from "./career-assessment-llm.service";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleActivityEventType,
+  ModuleCompletionStatus,
+} from "@/features/progress/types";
 
 export class CareerAssessmentService {
   /**
@@ -107,12 +113,52 @@ export class CareerAssessmentService {
       );
     }
 
-    const { output, model, processingDurationMs } =
-      await CareerAssessmentLLMService.generateAssessment(
+    try {
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.CAREER_ASSESSMENT,
+        eventType: ModuleActivityEventType.ASSESSMENT_GENERATION_STARTED,
+        completionStatus: ModuleCompletionStatus.STARTED,
+        entityId: userId,
+        metadata: {
+          source: "CAREER_ASSESSMENT_SERVICE",
+          profileVersion: profile.profileVersion,
+        },
+      });
+    } catch (err) {
+      console.warn("[CareerAssessmentService] Failed to record generation start:", err);
+    }
+
+    let output;
+    let model;
+    let processingDurationMs;
+    try {
+      const result = await CareerAssessmentLLMService.generateAssessment(
         profile,
         activity,
         gapAnalysis
       );
+      output = result.output;
+      model = result.model;
+      processingDurationMs = result.processingDurationMs;
+    } catch (err) {
+      try {
+        await ModuleActivityService.recordActivity({
+          userId,
+          module: ModuleType.CAREER_ASSESSMENT,
+          eventType: ModuleActivityEventType.ASSESSMENT_GENERATION_FAILED,
+          entityId: userId,
+          metadata: {
+            source: "CAREER_ASSESSMENT_SERVICE",
+            profileVersion: profile.profileVersion,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        });
+      } catch (activityErr) {
+        console.warn("[CareerAssessmentService] Failed to record generation failure:", activityErr);
+      }
+      throw err;
+    }
 
     const record = await prisma.careerAssessment.create({
       data: {
@@ -135,11 +181,17 @@ export class CareerAssessmentService {
 
     // Record ModuleActivity (non-blocking)
     try {
-      await prisma.moduleActivity.create({
-        data: {
-          userId,
-          module: "CAREER_ASSESSMENT",
-          completionStatus: "COMPLETED",
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.CAREER_ASSESSMENT,
+        eventType: ModuleActivityEventType.ASSESSMENT_COMPLETED,
+        completionStatus: ModuleCompletionStatus.COMPLETED,
+        entityId: record.id,
+        metadata: {
+          assessmentId: record.id,
+          readinessScore: record.readinessScore,
+          strengthsCount: output.strengths.length,
+          gapsCount: output.gaps.length,
         },
       });
     } catch (err) {

@@ -5,9 +5,11 @@ import { RoadmapGenerationService } from "@/services/roadmaps/roadmap-generation
 import { RoadmapArtifactService } from "@/services/roadmaps/roadmap-artifact.service";
 import { JobService } from "@/services/jobs/job.service";
 import { prisma } from "@/lib/prisma";
-import { RoadmapStatus, CareerLevel } from "@prisma/client";
+import { RoadmapStatus } from "@prisma/client";
 
 import { parseCareerLevel, normalizeRole } from "@/features/roadmaps/utils";
+import { ModuleActivityService } from "@/features/progress/services";
+import { ModuleActivityEventType, ModuleType } from "@/features/progress/types";
 
 export const GenerateRoadmapTaskSchema = RoadmapRequestSchema.extend({
   jobId: z.string().optional(),
@@ -29,10 +31,26 @@ export const generateRoadmapTask = schemaTask({
   run: async (payload, { ctx }) => {
     const jobId = payload.jobId;
     const userId = payload.userId;
+    const recordStage = async (stageNumber: number, stage: string, entityId?: string) => {
+      if (!userId || !entityId) return;
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.ROADMAP,
+        eventType: ModuleActivityEventType.ROADMAP_GENERATION_STAGE_CHANGED,
+        entityId,
+        metadata: {
+          source: "GENERATE_ROADMAP_TASK",
+          roadmapId: entityId,
+          stage,
+          stageNumber,
+          totalStages: 4,
+        },
+      }).catch((error) =>
+        console.warn(`[RoadmapActivity] Stage ${stageNumber} log failed:`, error)
+      );
+    };
 
     try {
-      // Step 1: Building Prompt
-      metadata.set("status", "Preparing Prompt");
       metadata.set("progress", 10);
       if (jobId) await JobService.updateProgress(jobId, 10, "Preparing Prompt", ctx.run.id);
 
@@ -40,6 +58,7 @@ export const generateRoadmapTask = schemaTask({
       metadata.set("status", "Generating Roadmap");
       metadata.set("progress", 25);
       if (jobId) await JobService.updateProgress(jobId, 25, "Generating Roadmap");
+      await recordStage(1, "Generating Roadmap", payload.roadmapId);
 
       const generatedRoadmap = await RoadmapGenerationService.generate(payload);
 
@@ -52,6 +71,7 @@ export const generateRoadmapTask = schemaTask({
       metadata.set("status", "Computing Layout");
       metadata.set("progress", 65);
       if (jobId) await JobService.updateProgress(jobId, 65, "Computing Layout");
+      await recordStage(2, "Computing Layout", payload.roadmapId);
 
       const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
 
@@ -59,6 +79,7 @@ export const generateRoadmapTask = schemaTask({
       metadata.set("status", "Uploading Artifact");
       metadata.set("progress", 80);
       if (jobId) await JobService.updateProgress(jobId, 80, "Uploading Artifact");
+      await recordStage(3, "Uploading Artifact", payload.roadmapId);
 
       const targetId = payload.roadmapId || `rm_${Date.now()}`;
       const blobUrl = await RoadmapArtifactService.uploadArtifact(targetId, artifact);
@@ -67,6 +88,7 @@ export const generateRoadmapTask = schemaTask({
       metadata.set("status", "Saving Metadata");
       metadata.set("progress", 95);
       if (jobId) await JobService.updateProgress(jobId, 95, "Saving Metadata");
+      await recordStage(4, "Saving Metadata", payload.roadmapId);
 
       let finalRoadmapId = targetId;
 
@@ -152,6 +174,15 @@ export const generateRoadmapTask = schemaTask({
 
       console.log("[Trigger.dev] Roadmap post-processing pipeline finished successfully!");
 
+      // Record successful roadmap generation
+      if (userId) await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.ROADMAP,
+        eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+        entityId: finalRoadmapId,
+        metadata: { source: "GENERATE_ROADMAP_TASK", roadmapId: finalRoadmapId },
+      }).catch((e) => console.warn("[RoadmapActivity] Generation completed log failed:", e));
+
       return {
         success: true,
         roadmapId: finalRoadmapId,
@@ -164,6 +195,13 @@ export const generateRoadmapTask = schemaTask({
       if (jobId) {
         await JobService.failJob(jobId, errorMsg);
       }
+      if (userId) await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.ROADMAP,
+        eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
+        entityId: payload.roadmapId,
+        metadata: { source: "GENERATE_ROADMAP_TASK", roadmapId: payload.roadmapId, error: errorMsg },
+      }).catch((e) => console.warn('[RoadmapActivity] Generation failed log error:', e));
       throw err;
     }
   },

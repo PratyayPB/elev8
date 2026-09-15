@@ -6,6 +6,11 @@ import { InterviewArtifact, AssessmentReport } from "@/features/interview/types"
 import { QuestionAssessmentService } from "@/features/interview/services/question-assessment.service";
 import { OverallAssessmentService } from "@/features/interview/services/overall-assessment.service";
 import { AssessmentArtifactService } from "@/features/interview/services/assessment-artifact.service";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleType,
+} from "@/features/progress/types";
 
 export const assessInterviewJob = task({
   id: "assess-interview",
@@ -103,12 +108,26 @@ export const assessInterviewJob = task({
       }
 
       try {
-        await prisma.interviewSession.update({
+        const failedInterview = await prisma.interviewSession.update({
           where: { id: interviewId },
           data: {
             status: InterviewStatus.FAILED,
           },
         });
+        await ModuleActivityService.recordActivity({
+          userId: failedInterview.userId,
+          module: ModuleType.INTERVIEW_PRACTICE,
+          eventType: ModuleActivityEventType.INTERVIEW_FAILED,
+          entityId: interviewId,
+          metadata: {
+            source: "ASSESS_INTERVIEW_TASK",
+            interviewId,
+            jobId,
+            error: error?.message || "Assessment failed",
+          },
+        }).catch((activityError) =>
+          console.warn("[AssessInterviewJob] Failed to record failure activity:", activityError)
+        );
       } catch (interviewErr) {
         console.error("Failed to update interview status on error:", interviewErr);
       }

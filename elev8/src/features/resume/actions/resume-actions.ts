@@ -6,6 +6,11 @@ import { JobType, JobStatus, ResumeScoreStatus, CareerExperienceLevel } from "@p
 import { tasks } from "@trigger.dev/sdk/v3";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { assessResumeTask } from "@/trigger/assess-resume";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleType,
+} from "@/features/progress/types";
 
 function mapExperienceLevel(level: string): CareerExperienceLevel {
   const upper = level.toUpperCase();
@@ -104,6 +109,22 @@ export async function createResumeAssessmentJob(formData: FormData) {
     },
   });
 
+  await ModuleActivityService.recordActivity({
+    userId: dbUser.id,
+    module: ModuleType.RESUME_SCORE,
+    eventType: ModuleActivityEventType.RESUME_SCORE_STARTED,
+    entityId: resume.id,
+    metadata: {
+      source: "CREATE_RESUME_ASSESSMENT_JOB",
+      scoreId: resume.id,
+      jobId: job.id,
+      role,
+      experienceLevel,
+    },
+  }).catch((error) =>
+    console.warn("[ResumeActions] Failed to record resume score start activity:", error)
+  );
+
   // 4. Trigger background task in Trigger.dev
   let triggerRunId: string | undefined;
   try {
@@ -132,6 +153,24 @@ export async function createResumeAssessmentJob(formData: FormData) {
         error: error instanceof Error ? error.message : "Trigger failed",
       },
     });
+    await prisma.resumeScore.update({
+      where: { id: resume.id },
+      data: { status: ResumeScoreStatus.FAILED },
+    });
+    await ModuleActivityService.recordActivity({
+      userId: dbUser.id,
+      module: ModuleType.RESUME_SCORE,
+      eventType: ModuleActivityEventType.RESUME_SCORE_FAILED,
+      entityId: resume.id,
+      metadata: {
+        source: "ASSESS_RESUME_DISPATCH",
+        scoreId: resume.id,
+        jobId: job.id,
+        error: error instanceof Error ? error.message : "Trigger failed",
+      },
+    }).catch((activityError) =>
+      console.warn("[ResumeActions] Failed to record resume score failure activity:", activityError)
+    );
   }
 
   return {

@@ -62,6 +62,9 @@ export interface InterviewRequest {
     skipped: boolean;
     profile?: InterviewProfileContext | null;
   };
+  profileId?: string;
+  resumeId?: string;
+  roadmapId?: string;
 }
 
 // ====================================================

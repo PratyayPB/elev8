@@ -1,6 +1,7 @@
+import assert from "node:assert";
+import { describe, it } from "node:test";
 import { builderToJsonResume } from "../adapters/builder-to-json-resume";
 import { BuilderResumeArtifact } from "../types";
-import { describe, it, expect } from "vitest";
 
 describe("builderToJsonResume adapter", () => {
   it("should map personal information to basics", () => {
@@ -26,13 +27,13 @@ describe("builderToJsonResume adapter", () => {
 
     const result = builderToJsonResume(artifact);
 
-    expect(result.basics.name).toBe("Jane Doe");
-    expect(result.basics.email).toBe("jane@example.com");
-    expect(result.basics.phone).toBe("555-1234");
-    expect(result.basics.location.address).toBe("New York");
-    expect(result.basics.url).toBe("janedoe.com");
-    expect(result.basics.summary).toBe("A great developer.");
-    expect(result.basics.profiles[0].url).toBe("linkedin.com/in/jane");
+    assert.strictEqual(result.basics.name, "Jane Doe");
+    assert.strictEqual(result.basics.email, "jane@example.com");
+    assert.strictEqual(result.basics.phone, "555-1234");
+    assert.strictEqual(result.basics.location.address, "New York");
+    assert.strictEqual(result.basics.url, "janedoe.com");
+    assert.strictEqual(result.basics.summary, "A great developer.");
+    assert.strictEqual(result.basics.profiles[0].url, "linkedin.com/in/jane");
   });
 
   it("should map work experience correctly", () => {
@@ -62,12 +63,12 @@ describe("builderToJsonResume adapter", () => {
 
     const result = builderToJsonResume(artifact);
 
-    expect(result.work[0].name).toBe("Tech Corp");
-    expect(result.work[0].position).toBe("Software Engineer");
-    expect(result.work[0].startDate).toBe("2020-01");
-    expect(result.work[0].endDate).toBe("2022-01");
-    expect(result.work[0].summary).toBe("Wrote code.");
-    expect(result.work[0].highlights[0]).toBe("Did a thing");
+    assert.strictEqual(result.work[0].name, "Tech Corp");
+    assert.strictEqual(result.work[0].position, "Software Engineer");
+    assert.strictEqual(result.work[0].startDate, "2020-01");
+    assert.strictEqual(result.work[0].endDate, "2022-01");
+    assert.strictEqual(result.work[0].summary, "Wrote code.");
+    assert.strictEqual(result.work[0].highlights[0], "Did a thing");
   });
 
   it("should safely handle empty sections", () => {
@@ -86,9 +87,9 @@ describe("builderToJsonResume adapter", () => {
 
     const result = builderToJsonResume(artifact);
 
-    expect(result.basics.name).toBe("Jane Doe");
-    expect(result.work).toBeUndefined();
-    expect(result.education).toBeUndefined();
-    expect(result.projects).toBeUndefined();
+    assert.strictEqual(result.basics.name, "Jane Doe");
+    assert.strictEqual(result.work, undefined);
+    assert.strictEqual(result.education, undefined);
+    assert.strictEqual(result.projects, undefined);
   });
 });

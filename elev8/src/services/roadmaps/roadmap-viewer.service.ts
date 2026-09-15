@@ -2,6 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { RoadmapArtifact, RoadmapArtifactService } from "./roadmap-artifact.service";
 import { Job, JobStatus, RoadmapStatus, CareerLevel } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleCompletionStatus,
+  ModuleType,
+} from "@/features/progress/types";
 
 export interface RoadmapViewerSummary {
   id: string;
@@ -97,6 +103,33 @@ export class RoadmapViewerService {
         const rawArtifact = await BlobStorageService.fetchJson<unknown>(blobUrlToFetch);
         if (RoadmapArtifactService.validateArtifact(rawArtifact)) {
           artifact = rawArtifact;
+          await ModuleActivityService.recordActivity({
+            userId,
+            module: ModuleType.ROADMAP,
+            eventType: ModuleActivityEventType.ROADMAP_VIEWED,
+            entityId: roadmapId,
+            metadata: {
+              source: "ROADMAP_VIEWER",
+              roadmapId,
+              isGlobal: roadmapSummary.isGlobal,
+            },
+          }).catch((activityError) =>
+            console.warn("[RoadmapViewerService] Failed to record view activity:", activityError)
+          );
+          await ModuleActivityService.recordActivity({
+            userId,
+            module: ModuleType.ROADMAP,
+            eventType: ModuleActivityEventType.ROADMAP_STARTED,
+            completionStatus: ModuleCompletionStatus.STARTED,
+            entityId: roadmapId,
+            metadata: {
+              source: "ROADMAP_VIEWER",
+              roadmapId,
+              isGlobal: roadmapSummary.isGlobal,
+            },
+          }).catch((activityError) =>
+            console.warn("[RoadmapViewerService] Failed to record started activity:", activityError)
+          );
         } else {
           error = "Invalid or corrupted roadmap artifact.";
         }

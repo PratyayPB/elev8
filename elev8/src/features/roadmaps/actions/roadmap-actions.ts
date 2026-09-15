@@ -8,14 +8,37 @@ import {
 import { RoadmapActionsService } from "@/services/roadmaps/roadmap-actions.service";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { JobStatus, JobType, RoadmapStatus, CareerLevel } from "@prisma/client";
+import { JobStatus, JobType, RoadmapStatus } from "@prisma/client";
 import { RoadmapRequest } from "@/features/roadmaps/types";
 import { generateRoadmapTask } from "@/trigger/generate-roadmap";
 import { tasks } from "@trigger.dev/sdk/v3";
-import { RoadmapGenerationService } from "@/services/roadmaps/roadmap-generation.service";
+import { ModuleActivityService } from "@/features/progress/services";
+import { ModuleActivityEventType, ModuleType, ModuleCompletionStatus } from "@/features/progress/types";
 import { RoadmapArtifactService } from "@/services/roadmaps/roadmap-artifact.service";
+import { RoadmapGenerationService } from "@/services/roadmaps/roadmap-generation.service";
 import { JobService } from "@/services/jobs/job.service";
 import { parseCareerLevel, normalizeRole } from "../utils";
+
+async function recordRoadmapActivity(input: {
+  userId: string;
+  eventType: ModuleActivityEventType;
+  entityId: string;
+  completionStatus?: ModuleCompletionStatus;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    await ModuleActivityService.recordActivity({
+      userId: input.userId,
+      module: ModuleType.ROADMAP,
+      eventType: input.eventType,
+      completionStatus: input.completionStatus,
+      entityId: input.entityId,
+      metadata: input.metadata,
+    });
+  } catch (error) {
+    console.warn("[RoadmapActivity] Failed to record activity:", error);
+  }
+}
 
 export async function fetchUserRoadmaps(
   options: Omit<GetRoadmapsOptions, "userId">
@@ -64,6 +87,18 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
         console.log(
           `[GlobalRoadmap] Cache hit for "${normalizedRole}" (${experienceLevel}). Reusing ${existingGlobal.id}.`
         );
+        await recordRoadmapActivity({
+          userId: user.id,
+          eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+          entityId: existingGlobal.id,
+          completionStatus: ModuleCompletionStatus.COMPLETED,
+          metadata: {
+            source: "GLOBAL_ROADMAP_CACHE_HIT",
+            roadmapId: existingGlobal.id,
+            targetRole: existingGlobal.targetRole,
+            experienceLevel: existingGlobal.experienceLevel,
+          },
+        });
         return {
           success: true,
           roadmapId: existingGlobal.id,
@@ -106,6 +141,12 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
           status: RoadmapStatus.IN_PROGRESS,
         },
       });
+      await recordRoadmapActivity({
+        userId: user.id,
+        eventType: ModuleActivityEventType.ROADMAP_GENERATION_STARTED,
+        entityId: globalRoadmap.id,
+        metadata: { source: "GLOBAL_ROADMAP_CREATION", roadmapId: globalRoadmap.id },
+      });
     } catch (err: any) {
       if (err?.code === "P2002") {
         const raceGlobal = await prisma.globalRoadmap.findUnique({
@@ -118,6 +159,16 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
         });
         if (raceGlobal) {
           if (raceGlobal.status === RoadmapStatus.COMPLETED) {
+            await recordRoadmapActivity({
+              userId: user.id,
+              eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+              entityId: raceGlobal.id,
+              completionStatus: ModuleCompletionStatus.COMPLETED,
+              metadata: {
+                source: "GLOBAL_ROADMAP_RACE_CACHE_HIT",
+                roadmapId: raceGlobal.id,
+              },
+            });
             return {
               success: true,
               roadmapId: raceGlobal.id,
@@ -207,9 +258,22 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
             },
           });
           await JobService.completeJob(job.id, globalRoadmap.id, "GLOBAL_ROADMAP");
+          await recordRoadmapActivity({
+            userId: user.id,
+            eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+            entityId: globalRoadmap.id,
+            completionStatus: ModuleCompletionStatus.COMPLETED,
+            metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", roadmapId: globalRoadmap.id },
+          });
         } catch (err: any) {
           console.error("[Local Background Job Error]:", err);
           await JobService.failJob(job.id, err?.message || String(err));
+          await recordRoadmapActivity({
+            userId: user.id,
+            eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
+            entityId: globalRoadmap.id,
+            metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", error: err?.message || String(err) },
+          });
         }
       })();
     }
@@ -250,6 +314,13 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
       artifactId: roadmap.id,
       artifactType: "ROADMAP",
     },
+  });
+
+  await recordRoadmapActivity({
+    userId: user.id,
+    eventType: ModuleActivityEventType.ROADMAP_GENERATION_STARTED,
+    entityId: roadmap.id,
+    metadata: { source: "PERSONALIZED_ROADMAP_CREATION", roadmapId: roadmap.id },
   });
 
   try {
@@ -303,9 +374,22 @@ export async function generateRoadmapAction(requestPayload: RoadmapRequest) {
           },
         });
         await JobService.completeJob(job.id, roadmap.id, "ROADMAP");
+        await recordRoadmapActivity({
+          userId: user.id,
+          eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+          entityId: roadmap.id,
+          completionStatus: ModuleCompletionStatus.COMPLETED,
+          metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", roadmapId: roadmap.id },
+        });
       } catch (err: any) {
         console.error("[Local Background Job Error]:", err);
         await JobService.failJob(job.id, err?.message || String(err));
+        await recordRoadmapActivity({
+          userId: user.id,
+          eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
+          entityId: roadmap.id,
+          metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", error: err?.message || String(err) },
+        });
       }
     })();
   }

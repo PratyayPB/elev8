@@ -165,28 +165,6 @@ enum JobType {
   EXPORT
 }
 
-enum RecommendationSource {
-  RULE_ENGINE
-  HYBRID
-  MODULE_RESULT
-  PROFILE_SIGNAL
-  LLM_ASSESSMENT
-}
-
-enum RecommendationType {
-  MODULE
-  SKILL
-  ACTION
-  PROFILE_CLARIFICATION
-}
-
-enum RecommendationStatus {
-  PENDING
-  ACCEPTED
-  DISMISSED
-  COMPLETED
-}
-
 enum ModuleType {
   ROADMAP
   RESUME_SCORE
@@ -199,6 +177,71 @@ enum ModuleCompletionStatus {
   STARTED
   COMPLETED
   ABANDONED
+}
+
+enum ModuleProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PROCESSING
+  READY
+  COMPLETED
+  FAILED
+  ABANDONED
+}
+
+enum ModuleActivityEventType {
+  // Career Assessment
+  ASSESSMENT_STARTED
+  ASSESSMENT_INPUT_UPDATED
+  ASSESSMENT_READY
+  ASSESSMENT_SUBMITTED
+  ASSESSMENT_GENERATION_STARTED
+  ASSESSMENT_GENERATION_STAGE_CHANGED
+  ASSESSMENT_COMPLETED
+  ASSESSMENT_GENERATION_FAILED
+  ASSESSMENT_VIEWED
+
+  // Roadmap
+  ROADMAP_STARTED
+  ROADMAP_GENERATION_STARTED
+  ROADMAP_GENERATION_STAGE_CHANGED
+  ROADMAP_GENERATED
+  ROADMAP_GENERATION_FAILED
+  MILESTONE_STARTED
+  MILESTONE_COMPLETED
+  ROADMAP_COMPLETED
+  ROADMAP_VIEWED
+
+  // Interview
+  INTERVIEW_STARTED
+  INTERVIEW_QUESTION_ANSWERED
+  INTERVIEW_ALL_QUESTIONS_ANSWERED
+  INTERVIEW_SUBMITTED
+  INTERVIEW_EVALUATION_STARTED
+  INTERVIEW_COMPLETED
+  INTERVIEW_FAILED
+  INTERVIEW_ABANDONED
+  INTERVIEW_VIEWED
+
+  // Resume Build
+  RESUME_BUILD_STARTED
+  RESUME_UPDATED
+  RESUME_SECTION_UPDATED
+  RESUME_BUILD_READY
+  RESUME_BUILD_COMPLETED
+  RESUME_TEMPLATE_CHANGED
+  AI_RESUME_BUILD_REQUESTED
+  AI_RESUME_BUILD_STARTED
+  AI_RESUME_BUILD_COMPLETED
+  AI_RESUME_BUILD_FAILED
+  RESUME_PDF_GENERATED
+  RESUME_VIEWED
+
+  // Resume Score
+  RESUME_SCORE_STARTED
+  RESUME_SCORE_COMPLETED
+  RESUME_SCORE_FAILED
+  RESUME_SCORE_VIEWED
 }
 
 // ==========================================
@@ -220,6 +263,7 @@ model User {
   notifications      Notification[]
   jobs               Job[]
   moduleActivities   ModuleActivity[]
+  progress           Progress?
   globalRoadmaps     GlobalRoadmap[]
   globalInterviewTemplates GlobalInterviewTemplate[]
 
@@ -551,6 +595,10 @@ model InterviewSession {
   personalized    Boolean @default(false)
   profileSnapshot Json?
 
+  profileId String?
+  resumeId  String?
+  roadmapId String?
+
   status InterviewStatus @default(READY)
 
   createdAt DateTime @default(now())
@@ -645,69 +693,50 @@ model ModuleActivity {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   module           ModuleType
-  completionStatus ModuleCompletionStatus
-  metadata         Json?
+  eventType        ModuleActivityEventType @default(ASSESSMENT_COMPLETED)
+  completionStatus ModuleCompletionStatus?
+
+  entityId String?
+  metadata Json?
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@index([userId, module])
-  @@index([userId, createdAt])
+  @@index([userId, module, createdAt])
+  @@index([userId, entityId, createdAt])
+  @@index([userId, eventType, createdAt])
   @@map("module_activities")
 }
+
 
 model Progress {
   id     String @id @default(cuid())
   userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  completedMilestones Int  @default(0)
-  totalMilestones     Int  @default(0)
-  interviewReadiness  Int?
-  resumeReadiness     Int?
-  careerReadiness     Int?
-  overallProgress     Int?
+  careerAssessmentStatus ModuleProgressStatus @default(NOT_STARTED)
+  roadmapStatus          ModuleProgressStatus @default(NOT_STARTED)
+  interviewStatus        ModuleProgressStatus @default(NOT_STARTED)
+  resumeBuildStatus      ModuleProgressStatus @default(NOT_STARTED)
+  resumeScoreStatus      ModuleProgressStatus @default(NOT_STARTED)
+
+  careerAssessmentProgress Int @default(0)
+  roadmapProgress          Int @default(0)
+  interviewProgress        Int @default(0)
+  resumeBuildProgress      Int @default(0)
+  resumeScoreProgress      Int @default(0)
+
+  careerAssessmentMetadata Json?
+  roadmapMetadata          Json?
+  interviewMetadata        Json?
+  resumeBuildMetadata      Json?
+  resumeScoreMetadata      Json?
+
+  lastActivityAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([lastActivityAt])
   @@map("progress")
-}
-
-model RecommendationSet {
-  id             String @id @default(cuid())
-  userId         String
-  profileVersion Int
-  trigger        String
-
-  recommendations Recommendation[]
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, createdAt])
-  @@map("recommendation_sets")
-}
-
-model Recommendation {
-  id                  String            @id @default(cuid())
-  recommendationSetId String
-  recommendationSet   RecommendationSet @relation(fields: [recommendationSetId], references: [id], onDelete: Cascade)
-  userId              String
-
-  source         RecommendationSource
-  type           RecommendationType
-  refId          String
-  priority       Int
-  score          Float
-  scoreBreakdown Json?
-  reason         String
-  context        Json?
-  status         RecommendationStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId, createdAt])
-  @@index([userId, status])
-  @@map("recommendations")
 }

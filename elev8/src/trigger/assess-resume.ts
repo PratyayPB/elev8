@@ -7,8 +7,13 @@ import { OverallAssessmentService } from "@/features/resume/services/overall-ass
 import { ResumeArtifactService } from "@/features/resume/services/resume-artifact.service";
 import { JobService } from "@/services/jobs/job.service";
 import { prisma } from "@/lib/prisma";
-import { ModuleActivityService } from "@/features/recommendations/services";
-import { ModuleType, ResumeScoreStatus } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleCompletionStatus,
+  ModuleActivityEventType,
+} from "@/features/progress/types";
+import { ResumeScoreStatus } from "@prisma/client";
 
 export const AssessResumeTaskSchema = z.object({
   resumeId: z.string(),
@@ -114,16 +119,20 @@ export const assessResumeTask = schemaTask({
       await JobService.completeJob(jobId, resumeId, "RESUME");
 
       try {
-        await ModuleActivityService.recordActivity(
+        await ModuleActivityService.recordActivity({
           userId,
-          ModuleType.RESUME_SCORE,
-          "COMPLETED",
-          {
+          module: ModuleType.RESUME_SCORE,
+          eventType: ModuleActivityEventType.RESUME_SCORE_COMPLETED,
+          completionStatus: ModuleCompletionStatus.COMPLETED,
+          entityId: resumeId,
+          metadata: {
+            scoreId: resumeId,
             role,
             experienceLevel,
+            overallScore: overallAssessment.overallScore,
             atsScore: overallAssessment.atsScore,
-          }
-        );
+          },
+        });
       } catch (err) {
         console.error("[AssessResumeTask] Failed to record activity:", err);
       }
@@ -146,6 +155,23 @@ export const assessResumeTask = schemaTask({
         where: { id: resumeId },
         data: { status: ResumeScoreStatus.FAILED },
       });
+
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_SCORE,
+        eventType: ModuleActivityEventType.RESUME_SCORE_FAILED,
+        entityId: resumeId,
+        metadata: {
+          source: "ASSESS_RESUME_TASK",
+          scoreId: resumeId,
+          jobId,
+          role,
+          experienceLevel,
+          error: errorMessage,
+        },
+      }).catch((activityError) =>
+        console.warn("[AssessResumeTask] Failed to record failure activity:", activityError)
+      );
 
       throw error;
     }

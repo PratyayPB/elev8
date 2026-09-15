@@ -18,4 +18,3 @@ export {
 export * from "./progress";
 export * from "./profile";
 export * from "./skill-gap";
-export * from "./recommendations";

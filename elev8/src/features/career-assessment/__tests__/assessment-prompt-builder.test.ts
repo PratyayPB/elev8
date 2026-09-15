@@ -14,26 +14,23 @@ export async function runAssessmentPromptBuilderTests() {
     country: "Canada",
     currentStatus: "EMPLOYED",
     currentRole: "Frontend Engineer",
-    
+
     yearsOfExperience: 3,
     education: {
       highestQualification: "Bachelor of Science",
       fieldOfStudy: "Software Engineering",
-      
-
     },
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
-      
+
       targetRole: "Full Stack Engineer",
-      
     },
     skills: [
       { id: "s1", name: "React", proficiency: "ADVANCED" },
       { id: "s2", name: "TypeScript", proficiency: "INTERMEDIATE" },
     ],
     desiredSkills: ["Go", "Kubernetes", "GraphQL"],
-    
+
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 12,
     isMandatoryCompleted: true,
@@ -47,22 +44,28 @@ export async function runAssessmentPromptBuilderTests() {
   console.log("1. Verifying System Prompt boundaries...");
   const systemPrompt = CareerAssessmentPromptBuilder.buildSystemPrompt();
   assert.ok(systemPrompt.includes("Do NOT invent facts"));
-  assert.ok(systemPrompt.includes("DO NOT make definitive claims about hiring outcomes"));
-  assert.ok(systemPrompt.includes("DO NOT recommend specific Elev8 platform modules"));
+  assert.ok(
+    systemPrompt.includes("DO NOT make definitive claims about hiring outcomes")
+  );
+  assert.ok(
+    systemPrompt.includes("DO NOT recommend specific Elev8 platform modules")
+  );
   console.log("✔ System prompt includes mandatory architectural boundaries.");
 
   // 2. Profile Context Serialization
   console.log("2. Verifying Profile Context serialization...");
-  const profileContext = CareerAssessmentPromptBuilder.buildProfileContext(sampleProfile);
+  const profileContext =
+    CareerAssessmentPromptBuilder.buildProfileContext(sampleProfile);
   assert.ok(profileContext.includes("John Developer"));
   assert.ok(profileContext.includes("Frontend Engineer"));
-  assert.ok(profileContext.includes("University of Waterloo"));
+  assert.ok(profileContext.includes("Software Engineering"));
   assert.ok(profileContext.includes("Full Stack Engineer"));
   console.log("✔ Profile context serialization accurate.");
 
   // 3. Skill Inventory Formatting
   console.log("3. Verifying Skill Inventory formatting...");
-  const skillContext = CareerAssessmentPromptBuilder.buildSkillContext(sampleProfile);
+  const skillContext =
+    CareerAssessmentPromptBuilder.buildSkillContext(sampleProfile);
   assert.ok(skillContext.includes("React (ADVANCED)"));
   assert.ok(skillContext.includes("TypeScript (INTERMEDIATE)"));
   assert.ok(skillContext.includes("- Go"));
@@ -75,16 +78,20 @@ export async function runAssessmentPromptBuilderTests() {
     ...sampleProfile,
     careerGoals: {
       primaryGoal: "EXPLORE_CAREERS",
-      
-      targetRole: null,
 
+      targetRole: null,
     },
   };
-  const explorePrompt = CareerAssessmentPromptBuilder.buildAssessmentPrompt(exploreProfile);
+  const explorePrompt =
+    CareerAssessmentPromptBuilder.buildAssessmentPrompt(exploreProfile);
   assert.ok(
-    explorePrompt.includes("No specific target role is currently defined. Do not invent one.")
+    explorePrompt.includes(
+      "No specific target role is currently defined. Do not invent one."
+    )
   );
-  console.log("✔ Null targetRole gracefully instructs model not to invent a role.");
+  console.log(
+    "✔ Null targetRole gracefully instructs model not to invent a role."
+  );
 
   // 5. Activity Context Inclusion
   console.log("5. Verifying Activity Context inclusion...");
@@ -114,11 +121,14 @@ export async function runAssessmentPromptBuilderTests() {
     ],
   };
 
-  const fullPromptWithActivity = CareerAssessmentPromptBuilder.buildAssessmentPrompt(
-    sampleProfile,
-    activity
+  const fullPromptWithActivity =
+    CareerAssessmentPromptBuilder.buildAssessmentPrompt(
+      sampleProfile,
+      activity
+    );
+  assert.ok(
+    fullPromptWithActivity.includes("Recent Interview Practice Sessions:")
   );
-  assert.ok(fullPromptWithActivity.includes("Recent Interview Practice Sessions:"));
   assert.ok(fullPromptWithActivity.includes("Score: 82/100"));
   assert.ok(fullPromptWithActivity.includes("Senior Full Stack Path"));
   console.log("✔ Activity context accurately integrated into prompt.");

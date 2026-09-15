@@ -4,6 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { ResumeBuilderService } from "@/features/resume-builder/services/resume-builder.service";
 import { builderToJsonResume } from "@/features/resume-builder/adapters/builder-to-json-resume";
 import { RESUME_TEMPLATE_REGISTRY } from "@/features/resume-builder/templates/registry";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleCompletionStatus,
+  ModuleType,
+} from "@/features/progress/types";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -97,6 +103,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Convert Uint8Array to Node.js Buffer to prevent Next.js from serializing it as JSON
     const pdfBuffer = Buffer.from(pdfUint8Array);
+
+    await ModuleActivityService.recordActivity({
+      userId: dbUser.id,
+      module: ModuleType.RESUME_BUILD,
+      eventType: ModuleActivityEventType.RESUME_PDF_GENERATED,
+      completionStatus: ModuleCompletionStatus.COMPLETED,
+      entityId: resumeId,
+      metadata: {
+        source: "RESUME_PDF_API",
+        resumeId,
+        title: resume.title,
+        template: resume.template,
+      },
+    }).catch((activityError) =>
+      console.warn("[ResumePdfApi] Failed to record PDF activity:", activityError)
+    );
 
     // Sanitize filename
     const sanitizedTitle = (resume.title || "Resume")

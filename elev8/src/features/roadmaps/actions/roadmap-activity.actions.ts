@@ -2,8 +2,12 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { ModuleActivityService } from "@/features/recommendations/services";
-import { ModuleType, ModuleCompletionStatus } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleCompletionStatus,
+  ModuleActivityEventType,
+} from "@/features/progress/types";
 
 export async function completeRoadmapPhaseAction(payload: {
   roadmapId: string;
@@ -26,19 +30,54 @@ export async function completeRoadmapPhaseAction(payload: {
   }
 
   try {
-    await ModuleActivityService.recordActivity(
-      dbUser.id,
-      ModuleType.ROADMAP,
-      ModuleCompletionStatus.COMPLETED,
-      {
+    await ModuleActivityService.recordActivity({
+      userId: dbUser.id,
+      module: ModuleType.ROADMAP,
+      eventType: ModuleActivityEventType.MILESTONE_COMPLETED,
+      completionStatus: ModuleCompletionStatus.COMPLETED,
+      entityId: payload.phaseId,
+      metadata: {
         source: "ROADMAP_PHASE_COMPLETION",
         roadmapId: payload.roadmapId,
         phaseId: payload.phaseId,
         phaseTitle: payload.phaseTitle,
         topics: payload.topics,
         targetRole: roadmap.targetRole || "Unknown Role",
-      }
-    );
+      },
+    });
+
+    const artifact = roadmap.blobUrl
+      ? await import("@/services/storage/blob-storage.service")
+          .then(({ BlobStorageService }) => BlobStorageService.fetchJson<any>(roadmap.blobUrl!))
+          .catch(() => null)
+      : null;
+    const totalMilestones = Array.isArray(artifact?.phases) ? artifact.phases.length : undefined;
+    const completedMilestones = await prisma.moduleActivity.count({
+      where: {
+        userId: dbUser.id,
+        eventType: ModuleActivityEventType.MILESTONE_COMPLETED,
+        metadata: {
+          path: ["roadmapId"],
+          equals: payload.roadmapId,
+        },
+      },
+    });
+
+    if (totalMilestones && completedMilestones >= totalMilestones) {
+      await ModuleActivityService.recordActivity({
+        userId: dbUser.id,
+        module: ModuleType.ROADMAP,
+        eventType: ModuleActivityEventType.ROADMAP_COMPLETED,
+        completionStatus: ModuleCompletionStatus.COMPLETED,
+        entityId: payload.roadmapId,
+        metadata: {
+          source: "ROADMAP_PHASE_COMPLETION",
+          roadmapId: payload.roadmapId,
+          completedMilestones,
+          totalMilestones,
+        },
+      });
+    }
 
     return { success: true };
   } catch (error: any) {

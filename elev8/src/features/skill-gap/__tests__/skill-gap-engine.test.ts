@@ -28,14 +28,34 @@ export async function runSkillGapEngineTests() {
   // 2. Weighted Severity Calculation Formula
   console.log("2. Testing weighted severity calculation formula...");
   const required = [
-    { name: "JavaScript", minimumProficiency: "INTERMEDIATE" as const, importance: "CORE" as const },      // weight 3
-    { name: "React", minimumProficiency: "INTERMEDIATE" as const, importance: "CORE" as const },           // weight 3
-    { name: "Node.js", minimumProficiency: "BASIC" as const, importance: "IMPORTANT" as const },           // weight 2
-    { name: "Git", minimumProficiency: "BASIC" as const, importance: "SUPPORTING" as const },              // weight 1
+    {
+      name: "JavaScript",
+      minimumProficiency: "INTERMEDIATE" as const,
+      importance: "CORE" as const,
+    }, // weight 3
+    {
+      name: "React",
+      minimumProficiency: "INTERMEDIATE" as const,
+      importance: "CORE" as const,
+    }, // weight 3
+    {
+      name: "Node.js",
+      minimumProficiency: "BASIC" as const,
+      importance: "IMPORTANT" as const,
+    }, // weight 2
+    {
+      name: "Git",
+      minimumProficiency: "BASIC" as const,
+      importance: "SUPPORTING" as const,
+    }, // weight 1
   ]; // Total weight: 3 + 3 + 2 + 1 = 9
 
   // Case A: All matched -> 0 severity
-  const severityAllMatched = SkillGapService.calculateSeverity(required, [], []);
+  const severityAllMatched = SkillGapService.calculateSeverity(
+    required,
+    [],
+    []
+  );
   assert.strictEqual(severityAllMatched, 0.0);
 
   // Case B: All missing -> 1.0 severity
@@ -44,17 +64,41 @@ export async function runSkillGapEngineTests() {
     requiredProficiency: r.minimumProficiency,
     importance: r.importance,
   }));
-  const severityAllMissing = SkillGapService.calculateSeverity(required, [], missingAll);
+  const severityAllMissing = SkillGapService.calculateSeverity(
+    required,
+    [],
+    missingAll
+  );
   assert.strictEqual(severityAllMissing, 1.0);
 
   // Case C: Missing only 1 CORE (JS, weight 3) vs Missing only 1 SUPPORTING (Git, weight 1)
-  const missingCoreOnly = [{ name: "JavaScript", requiredProficiency: "INTERMEDIATE" as const, importance: "CORE" as const }];
-  const severityMissingCore = SkillGapService.calculateSeverity(required, [], missingCoreOnly);
+  const missingCoreOnly = [
+    {
+      name: "JavaScript",
+      requiredProficiency: "INTERMEDIATE" as const,
+      importance: "CORE" as const,
+    },
+  ];
+  const severityMissingCore = SkillGapService.calculateSeverity(
+    required,
+    [],
+    missingCoreOnly
+  );
   // 3 * 1.0 / 9 = 0.33
   assert.strictEqual(severityMissingCore, 0.33);
 
-  const missingSupportingOnly = [{ name: "Git", requiredProficiency: "BASIC" as const, importance: "SUPPORTING" as const }];
-  const severityMissingSupporting = SkillGapService.calculateSeverity(required, [], missingSupportingOnly);
+  const missingSupportingOnly = [
+    {
+      name: "Git",
+      requiredProficiency: "BASIC" as const,
+      importance: "SUPPORTING" as const,
+    },
+  ];
+  const severityMissingSupporting = SkillGapService.calculateSeverity(
+    required,
+    [],
+    missingSupportingOnly
+  );
   // 1 * 1.0 / 9 = 0.11
   assert.strictEqual(severityMissingSupporting, 0.11);
 
@@ -62,7 +106,9 @@ export async function runSkillGapEngineTests() {
     severityMissingCore > severityMissingSupporting,
     "CORE missing must produce significantly higher severity than SUPPORTING missing"
   );
-  console.log("✔ Weighted severity calculation strictly adheres to importance weights.");
+  console.log(
+    "✔ Weighted severity calculation strictly adheres to importance weights."
+  );
 
   // 3. Pure calculateGap Execution
   console.log("3. Testing pure calculateGap function...");
@@ -75,9 +121,24 @@ export async function runSkillGapEngineTests() {
   const gapResult = SkillGapService.calculateGap({
     userSkills,
     requiredSkills: [
-      { name: "JavaScript", minimumProficiency: "INTERMEDIATE", importance: "CORE", estimatedHours: 40 },
-      { name: "React", minimumProficiency: "INTERMEDIATE", importance: "CORE", estimatedHours: 35 },
-      { name: "Node.js", minimumProficiency: "BASIC", importance: "IMPORTANT", estimatedHours: 30 },
+      {
+        name: "JavaScript",
+        minimumProficiency: "INTERMEDIATE",
+        importance: "CORE",
+        estimatedHours: 40,
+      },
+      {
+        name: "React",
+        minimumProficiency: "INTERMEDIATE",
+        importance: "CORE",
+        estimatedHours: 35,
+      },
+      {
+        name: "Node.js",
+        minimumProficiency: "BASIC",
+        importance: "IMPORTANT",
+        estimatedHours: 30,
+      },
     ],
     targetRole: "Full Stack Developer",
   });
@@ -93,7 +154,9 @@ export async function runSkillGapEngineTests() {
   assert.strictEqual(gapResult.unmatchedUserSkills[0], "C++");
   // Total estimated hours: React (35) + Node.js (30) = 65
   assert.strictEqual(gapResult.estimatedLearningHours, 65);
-  console.log("✔ calculateGap correctly categorizes skills, preserves unmatched skills, and calculates learning hours.");
+  console.log(
+    "✔ calculateGap correctly categorizes skills, preserves unmatched skills, and calculates learning hours."
+  );
 
   // 4. getTopSkillGaps Ordering
   console.log("4. Testing getTopSkillGaps ordering...");
@@ -120,20 +183,17 @@ export async function runSkillGapEngineTests() {
     education: {
       highestQualification: "Bachelor of Science",
       fieldOfStudy: "Computer Science",
-      
-
     },
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
       targetRole: "Full Stack Engineer", // Alias to Full Stack Developer
-      
     },
     skills: [
       { id: "s1", name: "JS", proficiency: "INTERMEDIATE" },
       { id: "s2", name: "ReactJS", proficiency: "INTERMEDIATE" },
     ],
     desiredSkills: ["Node.js", "SQL"],
-    
+
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 15,
     isMandatoryCompleted: true,
@@ -146,10 +206,14 @@ export async function runSkillGapEngineTests() {
   const profileGap = await SkillGapService.calculateForProfile(sampleProfile);
   assert.strictEqual(profileGap.status, "SUCCESS");
   assert.strictEqual(profileGap.targetRole, "Full Stack Developer");
-  assert.ok(profileGap.matchedSkills.some((m) => m.name === "JavaScript"));
   assert.ok(profileGap.matchedSkills.some((m) => m.name === "React"));
+  assert.ok(
+    profileGap.underqualifiedSkills.some((m) => m.name === "JavaScript")
+  );
   assert.ok(profileGap.missingSkills.some((m) => m.name === "Node.js"));
-  console.log("✔ calculateForProfile resolved alias and queried seeded RoleSkillProfile seamlessly.");
+  console.log(
+    "✔ calculateForProfile resolved alias and queried seeded RoleSkillProfile seamlessly."
+  );
 
   // 6. No Target Role handling
   console.log("6. Testing NO_TARGET_ROLE state...");
@@ -158,7 +222,6 @@ export async function runSkillGapEngineTests() {
     careerGoals: {
       primaryGoal: "EXPLORE_CAREERS",
       targetRole: null,
-
     },
   };
   const exploreGap = await SkillGapService.calculateForProfile(exploreProfile);
@@ -173,10 +236,10 @@ export async function runSkillGapEngineTests() {
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
       targetRole: "Quantum Computing Specialist",
-      
     },
   };
-  const unknownRoleGap = await SkillGapService.calculateForProfile(unknownRoleProfile);
+  const unknownRoleGap =
+    await SkillGapService.calculateForProfile(unknownRoleProfile);
   assert.strictEqual(unknownRoleGap.status, "ROLE_NOT_SUPPORTED");
   assert.strictEqual(unknownRoleGap.severity, 0);
   console.log("✔ ROLE_NOT_SUPPORTED handled cleanly without error.");

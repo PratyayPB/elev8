@@ -13,8 +13,12 @@ import {
   CreateResumeInput,
   UpdateResumeInput,
 } from "../schemas/resume-artifact.schema";
-import { ModuleActivityService } from "@/features/recommendations/services";
-import { ModuleType, ModuleCompletionStatus } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleCompletionStatus,
+  ModuleActivityEventType,
+} from "@/features/progress/types";
 
 export class ResumeBuilderError extends Error {
   constructor(message: string, public code: string, public statusCode: number = 400) {
@@ -57,6 +61,24 @@ export class ResumeBuilderService {
         data: { artifactBlobUrl },
       });
 
+      // Record activity
+      try {
+        await ModuleActivityService.recordActivity({
+          userId,
+          module: ModuleType.RESUME_BUILD,
+          eventType: ModuleActivityEventType.RESUME_BUILD_STARTED,
+          completionStatus: ModuleCompletionStatus.STARTED,
+          entityId: resumeId,
+          metadata: {
+            resumeId,
+            title: input.title,
+            template: input.template || "CLASSIC",
+          },
+        });
+      } catch (err) {
+        console.warn("[ResumeBuilderService] Failed to record build started activity:", err);
+      }
+
       return updatedRecord as unknown as BuilderResumeRecord;
     } catch (error) {
       // Cleanup Prisma record if Blob upload fails
@@ -91,6 +113,21 @@ export class ResumeBuilderService {
         403
       );
     }
+
+    await ModuleActivityService.recordActivity({
+      userId,
+      module: ModuleType.RESUME_BUILD,
+      eventType: ModuleActivityEventType.RESUME_VIEWED,
+      entityId: resumeId,
+      metadata: {
+        source: "RESUME_BUILDER_GET_RESUME",
+        resumeId,
+        title: resume.title,
+        template: resume.template,
+      },
+    }).catch((error) =>
+      console.warn("[ResumeBuilderService] Failed to record resume view activity:", error)
+    );
 
     return resume as unknown as BuilderResumeRecord;
   }
@@ -128,16 +165,39 @@ export class ResumeBuilderService {
 
     if (input.status === "READY" && existingResume.status !== "READY") {
       try {
-        await ModuleActivityService.recordActivity(
+        await ModuleActivityService.recordActivity({
           userId,
-          ModuleType.RESUME_BUILD,
-          ModuleCompletionStatus.COMPLETED,
-          {
+          module: ModuleType.RESUME_BUILD,
+          eventType: ModuleActivityEventType.RESUME_BUILD_READY,
+          completionStatus: ModuleCompletionStatus.COMPLETED,
+          entityId: resumeId,
+          metadata: {
+            resumeId,
             template: updated.template,
-          }
-        );
+            status: "READY",
+          },
+        });
       } catch (err) {
         console.error("[ResumeBuilderService] Failed to record activity:", err);
+      }
+    }
+
+    if (input.template !== undefined && input.template !== existingResume.template) {
+      try {
+        await ModuleActivityService.recordActivity({
+          userId,
+          module: ModuleType.RESUME_BUILD,
+          eventType: ModuleActivityEventType.RESUME_TEMPLATE_CHANGED,
+          entityId: resumeId,
+          metadata: {
+            source: "RESUME_BUILDER_UPDATE_RESUME",
+            resumeId,
+            previousTemplate: existingResume.template,
+            template: updated.template,
+          },
+        });
+      } catch (err) {
+        console.error("[ResumeBuilderService] Failed to record template change activity:", err);
       }
     }
 
@@ -243,6 +303,20 @@ export class ResumeBuilderService {
           artifactBlobUrl: updatedBlobUrl,
         },
       });
+
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_BUILD,
+        eventType: ModuleActivityEventType.RESUME_UPDATED,
+        entityId: resumeId,
+        metadata: {
+          source: "RESUME_BUILDER_ARTIFACT_AUTOSAVE",
+          resumeId,
+          version: newVersion,
+        },
+      }).catch((error) =>
+        console.warn("[ResumeBuilderService] Failed to record resume update activity:", error)
+      );
 
       return {
         artifact: validArtifact,

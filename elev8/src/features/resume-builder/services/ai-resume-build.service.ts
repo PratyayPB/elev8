@@ -4,6 +4,11 @@ import { JobService } from "@/services/jobs/job.service";
 import { JobType, JobStatus } from "@prisma/client";
 import { AiBuildResumeInput } from "../schemas/ai-build.schema";
 import { buildAiResumeTask } from "@/trigger/build-ai-resume";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleType,
+} from "@/features/progress/types";
 
 export class AiResumeBuildService {
   /**
@@ -64,6 +69,21 @@ export class AiResumeBuildService {
       type: JobType.RESUME_BUILD,
     });
 
+    await ModuleActivityService.recordActivity({
+      userId,
+      module: ModuleType.RESUME_BUILD,
+      eventType: ModuleActivityEventType.AI_RESUME_BUILD_REQUESTED,
+      entityId: resumeId,
+      metadata: {
+        source: "AI_RESUME_BUILD_SERVICE",
+        resumeId,
+        jobId: job.id,
+        targetJobTitle: input.targetJobTitle,
+      },
+    }).catch((error) =>
+      console.warn("[AiResumeBuildService] Failed to record AI build requested activity:", error)
+    );
+
     // 4. Dispatch Trigger.dev task
     let triggerRunId: string | undefined;
     try {
@@ -94,6 +114,20 @@ export class AiResumeBuildService {
       await JobService.failJob(
         job.id,
         (triggerError as Error).message || "Failed to trigger AI resume build task"
+      );
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_BUILD,
+        eventType: ModuleActivityEventType.AI_RESUME_BUILD_FAILED,
+        entityId: resumeId,
+        metadata: {
+          source: "AI_RESUME_BUILD_DISPATCH",
+          resumeId,
+          jobId: job.id,
+          error: (triggerError as Error).message || "Failed to trigger AI resume build task",
+        },
+      }).catch((activityError) =>
+        console.warn("[AiResumeBuildService] Failed to record AI build failure activity:", activityError)
       );
       throw triggerError;
     }

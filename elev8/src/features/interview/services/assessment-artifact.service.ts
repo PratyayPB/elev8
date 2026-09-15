@@ -1,8 +1,13 @@
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { InterviewArtifact, AssessmentReport } from "../types";
 import { prisma } from "@/lib/prisma";
-import { InterviewStatus, ModuleType } from "@prisma/client";
-import { ModuleActivityService } from "@/features/recommendations/services/module-activity.service";
+import { InterviewStatus } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleCompletionStatus,
+  ModuleActivityEventType,
+} from "@/features/progress/types";
 
 export class AssessmentArtifactService {
   /**
@@ -43,15 +48,19 @@ export class AssessmentArtifactService {
 
     // 4. Record ModuleActivity
     try {
-      await ModuleActivityService.recordActivity(
-        interview.userId,
-        ModuleType.INTERVIEW_PRACTICE,
-        "COMPLETED",
-        {
+      await ModuleActivityService.recordActivity({
+        userId: interview.userId,
+        module: ModuleType.INTERVIEW_PRACTICE,
+        eventType: ModuleActivityEventType.INTERVIEW_COMPLETED,
+        completionStatus: ModuleCompletionStatus.COMPLETED,
+        entityId: interviewId,
+        metadata: {
+          interviewId,
           role: interview.role,
           experienceLevel: interview.experienceLevel,
-        }
-      );
+          overallScore: assessmentReport.overallScores.overallScore,
+        },
+      });
     } catch (err) {
       console.error("[AssessmentArtifactService] Failed to record activity:", err);
       // Do not fail the overall assessment completion if this fails

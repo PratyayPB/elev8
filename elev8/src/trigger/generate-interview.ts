@@ -9,6 +9,11 @@ import { JobService } from "@/services/jobs/job.service";
 import { prisma } from "@/lib/prisma";
 import { InterviewRequest } from "@/features/interview/types";
 import { CareerExperienceLevel, InterviewType, InterviewTemplateSource, InterviewStatus } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleType,
+} from "@/features/progress/types";
 
 export const GenerateInterviewTaskSchema = z.object({
   interviewId: z.string(),
@@ -198,8 +203,27 @@ export const generateInterviewTask = schemaTask({
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error(`[Trigger.dev] Interview generation error for interviewId=${interviewId}:`, errorMsg);
       await JobService.failJob(jobId, errorMsg);
+      await prisma.interviewSession.update({
+        where: { id: interviewId },
+        data: { status: InterviewStatus.FAILED },
+      }).catch((updateError) =>
+        console.warn("[generateInterviewTask] Failed to mark interview failed:", updateError)
+      );
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.INTERVIEW_PRACTICE,
+        eventType: ModuleActivityEventType.INTERVIEW_FAILED,
+        entityId: interviewId,
+        metadata: {
+          source: "GENERATE_INTERVIEW_TASK",
+          interviewId,
+          jobId,
+          error: errorMsg,
+        },
+      }).catch((activityError) =>
+        console.warn("[generateInterviewTask] Failed to record failure activity:", activityError)
+      );
       throw err;
     }
   },
 });
-

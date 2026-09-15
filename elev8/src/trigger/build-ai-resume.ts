@@ -14,6 +14,11 @@ import {
 } from "@/features/resume-builder/schemas/resume-artifact.schema";
 import { BuilderResumeArtifact } from "@/features/resume-builder/types";
 import { ResumeCompanyType } from "@prisma/client";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityEventType,
+  ModuleType,
+} from "@/features/progress/types";
 
 export const BuildAiResumeTaskSchema = z.object({
   resumeId: z.string(),
@@ -46,6 +51,21 @@ export const buildAiResumeTask = schemaTask({
     } = payload;
 
     try {
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_BUILD,
+        eventType: ModuleActivityEventType.AI_RESUME_BUILD_STARTED,
+        entityId: resumeId,
+        metadata: {
+          source: "BUILD_AI_RESUME_TASK",
+          resumeId,
+          jobId,
+          targetJobTitle,
+        },
+      }).catch((error) =>
+        console.warn("[buildAiResumeTask] Failed to record AI build start activity:", error)
+      );
+
       // Step 1: 15% - Validating user profile & resume ownership
       metadata.set("status", "Validating Profile & Resume");
       metadata.set("progress", 15);
@@ -368,6 +388,22 @@ Remember: Output ONLY valid JSON conforming exactly to the expected structure. N
         await JobService.completeJob(jobId, resumeId, "RESUME_BUILD");
       }
 
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_BUILD,
+        eventType: ModuleActivityEventType.AI_RESUME_BUILD_COMPLETED,
+        entityId: resumeId,
+        metadata: {
+          source: "BUILD_AI_RESUME_TASK",
+          resumeId,
+          jobId,
+          targetJobTitle,
+          version: validArtifact.version,
+        },
+      }).catch((activityError) =>
+        console.warn("[buildAiResumeTask] Failed to record AI build completion activity:", activityError)
+      );
+
       return {
         success: true,
         resumeId,
@@ -385,6 +421,22 @@ Remember: Output ONLY valid JSON conforming exactly to the expected structure. N
           console.error("Failed to fail job record:", e)
         );
       }
+
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_BUILD,
+        eventType: ModuleActivityEventType.AI_RESUME_BUILD_FAILED,
+        entityId: resumeId,
+        metadata: {
+          source: "BUILD_AI_RESUME_TASK",
+          resumeId,
+          jobId,
+          targetJobTitle,
+          error: errorMessage,
+        },
+      }).catch((activityError) =>
+        console.warn("[buildAiResumeTask] Failed to record AI build failure activity:", activityError)
+      );
 
       throw error;
     }

@@ -1,5 +1,6 @@
+import assert from "node:assert";
+import { describe, it } from "node:test";
 import { RESUME_TEMPLATE_REGISTRY } from "../templates/registry";
-import { describe, it, expect } from "vitest";
 
 describe("Resume Template Registry", () => {
   it("should have all 17 templates defined", () => {
@@ -24,14 +25,14 @@ describe("Resume Template Registry", () => {
     ];
 
     for (const slug of expectedSlugs) {
-      expect(RESUME_TEMPLATE_REGISTRY[slug]).toBeDefined();
-      expect(typeof RESUME_TEMPLATE_REGISTRY[slug]).toBe("function");
+      assert.ok(RESUME_TEMPLATE_REGISTRY[slug]);
+      assert.strictEqual(typeof RESUME_TEMPLATE_REGISTRY[slug], "function");
     }
   });
 
   it("should not crash when a fallback template is rendered", async () => {
     const renderCb = RESUME_TEMPLATE_REGISTRY["consultant-polished"];
     const html = await renderCb({});
-    expect(html).toContain("Preview not available");
+    assert.ok(html.includes("Preview not available"));
   });
 });

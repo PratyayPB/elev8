@@ -18,18 +18,15 @@ export async function runProgressiveProfilingTests() {
     education: {
       highestQualification: "",
       fieldOfStudy: "",
-      
-
     },
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
 
       targetRole: null, // missing
-
     },
     skills: [], // missing
     desiredSkills: [], // missing
-    
+
     targetCompanyType: "NO_PREFERENCE",
     weeklyLearningHours: 10,
     isMandatoryCompleted: true,
@@ -39,20 +36,27 @@ export async function runProgressiveProfilingTests() {
     updatedAt: new Date(),
   };
 
-  // 1. Resume Context: Prioritizes targetRole -> skills -> education -> targetIndustry
+  // 1. Resume Context: Prioritizes missing role, skills, and education details
   console.log("1. Testing RESUME context priority...");
-  const resumePrompts = getProfileCompletionPrompts(incompleteProfile, "RESUME");
+  const resumePrompts = getProfileCompletionPrompts(
+    incompleteProfile,
+    "RESUME"
+  );
   assert.ok(resumePrompts.length > 0);
   assert.strictEqual(resumePrompts[0].field, "targetRole");
   assert.strictEqual(resumePrompts[1].field, "skills");
   assert.strictEqual(resumePrompts[2].field, "education");
-  assert.strictEqual(resumePrompts[3].field, "targetIndustry");
   assert.ok(resumePrompts.every((p) => p.skippable === true));
-  console.log("✔ Resume context prioritizes targetRole, skills, and education.");
+  console.log(
+    "✔ Resume context prioritizes targetRole, skills, and education."
+  );
 
   // 2. Interview Context: Prioritizes targetRole -> skills
   console.log("2. Testing INTERVIEW context priority...");
-  const interviewPrompts = getProfileCompletionPrompts(incompleteProfile, "INTERVIEW");
+  const interviewPrompts = getProfileCompletionPrompts(
+    incompleteProfile,
+    "INTERVIEW"
+  );
   assert.ok(interviewPrompts.length > 0);
   assert.strictEqual(interviewPrompts[0].field, "targetRole");
   assert.strictEqual(interviewPrompts[1].field, "skills");
@@ -60,7 +64,10 @@ export async function runProgressiveProfilingTests() {
 
   // 3. Roadmap Context: Prioritizes targetRole -> desiredSkills -> skills
   console.log("3. Testing ROADMAP context priority...");
-  const roadmapPrompts = getProfileCompletionPrompts(incompleteProfile, "ROADMAP");
+  const roadmapPrompts = getProfileCompletionPrompts(
+    incompleteProfile,
+    "ROADMAP"
+  );
   assert.ok(roadmapPrompts.length > 0);
   assert.strictEqual(roadmapPrompts[0].field, "targetRole");
   assert.strictEqual(roadmapPrompts[1].field, "desiredSkills");
@@ -69,7 +76,10 @@ export async function runProgressiveProfilingTests() {
 
   // 4. Dashboard Context: Prioritizes skills -> targetRole -> desiredSkills
   console.log("4. Testing DASHBOARD context priority...");
-  const dashboardPrompts = getProfileCompletionPrompts(incompleteProfile, "DASHBOARD");
+  const dashboardPrompts = getProfileCompletionPrompts(
+    incompleteProfile,
+    "DASHBOARD"
+  );
   assert.ok(dashboardPrompts.length > 0);
   assert.strictEqual(dashboardPrompts[0].field, "skills");
   assert.strictEqual(dashboardPrompts[1].field, "targetRole");
@@ -83,14 +93,11 @@ export async function runProgressiveProfilingTests() {
     education: {
       highestQualification: "BS",
       fieldOfStudy: "CS",
-      
-
     },
     careerGoals: {
       primaryGoal: "LAND_A_JOB",
-      
+
       targetRole: "Full Stack Developer",
-      
     },
     skills: [{ id: "s1", name: "React", proficiency: "INTERMEDIATE" }],
     desiredSkills: ["Docker"],

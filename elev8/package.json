@@ -11,7 +11,8 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts",
+    "test": "npx tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
@@ -34,7 +35,7 @@
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tanstack/react-query": "^5.0.0",
-    "@trigger.dev/sdk": "4.5.16",
+    "@trigger.dev/sdk": "4.6.0",
     "@types/dagre": "^0.7.54",
     "@types/pdf-parse": "^1.1.5",
     "@vercel/blob": "^2.6.1",
@@ -91,6 +92,7 @@
     "postcss": "^8.4.0",
     "prisma": "^6.0.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4"
   }
 }

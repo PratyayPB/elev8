@@ -17,6 +17,12 @@ import { tasks } from "@trigger.dev/sdk/v3";
 import { generateInterviewTask } from "@/trigger/generate-interview";
 import { GlobalInterviewTemplateService } from "../services/global-interview-template.service";
 import { InterviewArtifactService } from "../services/interview-artifact.service";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleCompletionStatus,
+  ModuleActivityEventType,
+} from "@/features/progress/types";
 
 function mapInterviewType(type: string): InterviewType {
   const norm = type.toUpperCase().replace(/[\s-]+/g, "_");
@@ -86,8 +92,30 @@ export async function createInterviewJob(request: InterviewRequest) {
             blobUrl: existingGlobalTemplate.templateBlobUrl,
             status: InterviewStatus.READY,
             personalized: false,
+            profileId: validatedRequest.profileId,
+            resumeId: validatedRequest.resumeId,
+            roadmapId: validatedRequest.roadmapId,
           },
         });
+
+        try {
+          await ModuleActivityService.recordActivity({
+            userId: dbUser.id,
+            module: ModuleType.INTERVIEW_PRACTICE,
+            eventType: ModuleActivityEventType.INTERVIEW_STARTED,
+            completionStatus: ModuleCompletionStatus.STARTED,
+            entityId: session.id,
+            metadata: {
+              interviewId: session.id,
+              role: validatedRequest.role,
+              profileId: validatedRequest.profileId,
+              resumeId: validatedRequest.resumeId,
+              roadmapId: validatedRequest.roadmapId,
+            },
+          });
+        } catch (err) {
+          console.warn("[InterviewActions] Failed to record interview started activity:", err);
+        }
 
         // Create completed tracking job
         const job = await prisma.job.create({
@@ -261,6 +289,20 @@ export async function createInterviewJob(request: InterviewRequest) {
         where: { id: session.id },
         data: { status: InterviewStatus.FAILED },
       });
+      await ModuleActivityService.recordActivity({
+        userId: dbUser.id,
+        module: ModuleType.INTERVIEW_PRACTICE,
+        eventType: ModuleActivityEventType.INTERVIEW_FAILED,
+        entityId: session.id,
+        metadata: {
+          source: "GENERATE_INTERVIEW_DISPATCH",
+          interviewId: session.id,
+          jobId: job.id,
+          error: error instanceof Error ? error.message : "Trigger failed",
+        },
+      }).catch((activityError) =>
+        console.warn("[InterviewActions] Failed to record interview failure activity:", activityError)
+      );
       throw new Error("Failed to start background interview generation job.");
     }
 
@@ -321,8 +363,31 @@ export async function createInterviewJob(request: InterviewRequest) {
       status: InterviewStatus.GENERATING,
       personalized: true,
       profileSnapshot: profileSnapshot || undefined,
+      profileId: validatedRequest.profileId,
+      resumeId: validatedRequest.resumeId,
+      roadmapId: validatedRequest.roadmapId,
     },
   });
+
+  try {
+    await ModuleActivityService.recordActivity({
+      userId: dbUser.id,
+      module: ModuleType.INTERVIEW_PRACTICE,
+      eventType: ModuleActivityEventType.INTERVIEW_STARTED,
+      completionStatus: ModuleCompletionStatus.STARTED,
+      entityId: session.id,
+      metadata: {
+        interviewId: session.id,
+        role: validatedRequest.role,
+        experienceLevel: mappedExpLevel,
+        profileId: validatedRequest.profileId,
+        resumeId: validatedRequest.resumeId,
+        roadmapId: validatedRequest.roadmapId,
+      },
+    });
+  } catch (err) {
+    console.warn("[InterviewActions] Failed to record interview started activity:", err);
+  }
 
   // 3. Create Job System record
   const job = await prisma.job.create({
@@ -377,6 +442,20 @@ export async function createInterviewJob(request: InterviewRequest) {
       where: { id: session.id },
       data: { status: InterviewStatus.FAILED },
     });
+    await ModuleActivityService.recordActivity({
+      userId: dbUser.id,
+      module: ModuleType.INTERVIEW_PRACTICE,
+      eventType: ModuleActivityEventType.INTERVIEW_FAILED,
+      entityId: session.id,
+      metadata: {
+        source: "GENERATE_INTERVIEW_DISPATCH",
+        interviewId: session.id,
+        jobId: job.id,
+        error: error instanceof Error ? error.message : "Trigger failed",
+      },
+    }).catch((activityError) =>
+      console.warn("[InterviewActions] Failed to record interview failure activity:", activityError)
+    );
     throw new Error("Failed to start background interview generation job.");
   }
 
@@ -386,4 +465,3 @@ export async function createInterviewJob(request: InterviewRequest) {
     triggerRunId,
   };
 }
-

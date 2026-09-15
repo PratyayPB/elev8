@@ -11,7 +11,7 @@ import { MetricCard, SectionHeader } from "@/components/dashboard";
 import { ROUTES } from "@/constants/routes";
 import { ArrowRight, FileText, Compass, Trophy, Target, Activity } from "lucide-react";
 import { CareerAssessmentService } from "@/features/career-assessment/services/career-assessment.service";
-import { ModuleActivityService } from "@/features/recommendations/services/module-activity.service";
+import { ModuleActivityService } from "@/features/progress/services";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-text-primary">
-                        {activity.module.replace(/_/g, " ")} {activity.completionStatus}
+                        {activity.eventType ? activity.eventType.replace(/_/g, " ") : `${activity.module.replace(/_/g, " ")} ${activity.completionStatus || ""}`}
                       </h4>
                       <p className="text-xs text-text-secondary mt-0.5">
                         {new Date(activity.createdAt).toLocaleDateString()}

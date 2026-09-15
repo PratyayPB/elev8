@@ -36,4 +36,7 @@ export const InterviewRequestSchema = InterviewRequestStage1Schema.extend({
     skipped: z.boolean(),
     profile: InterviewProfileContextSchema.nullable().optional(),
   }),
+  profileId: z.string().optional(),
+  resumeId: z.string().optional(),
+  roadmapId: z.string().optional(),
 });

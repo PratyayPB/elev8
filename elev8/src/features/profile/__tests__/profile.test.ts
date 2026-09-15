@@ -52,20 +52,19 @@ export async function runProfileFoundationTests() {
     name: "Alex Smith",
     age: 23,
     country: "US",
-    phoneNumber: "+14155552671",
+    phoneCountryCode: "+1",
+    phoneNumber: "4155552671",
     currentStatus: "STUDENT",
     currentRole: "Computer Science Student",
 
     yearsOfExperience: 0,
     highestQualification: "Bachelor of Science",
     fieldOfStudy: "Software Engineering",
-    
 
     primaryGoal: "LAND_A_JOB",
-    
+
     targetRole: "Full Stack Engineer",
-    
-    
+
     targetCompanyType: "STARTUP",
     weeklyLearningHours: 15,
     skills: [
@@ -111,11 +110,17 @@ export async function runProfileFoundationTests() {
   // 7. Validation: Career Status Normalization
   console.log("7. Testing Career Status Normalization...");
   assert.strictEqual(normalizeCareerStatus("freelancer"), "FREELANCER");
-  assert.strictEqual(normalizeCareerStatus("freelance web developer"), "FREELANCER");
+  assert.strictEqual(
+    normalizeCareerStatus("freelance web developer"),
+    "FREELANCER"
+  );
   assert.strictEqual(normalizeCareerStatus("College Student"), "STUDENT");
   assert.strictEqual(normalizeCareerStatus("looking for a job"), "JOB_SEEKER");
   assert.strictEqual(normalizeCareerStatus("Self-Employed"), "SELF_EMPLOYED");
-  assert.strictEqual(normalizeCareerStatus("Startup Founder"), "BUSINESS_OWNER");
+  assert.strictEqual(
+    normalizeCareerStatus("Startup Founder"),
+    "BUSINESS_OWNER"
+  );
   assert.strictEqual(normalizeCareerStatus("recent grad"), "RECENT_GRADUATE");
   assert.strictEqual(normalizeCareerStatus("homemaker"), "OTHER");
   assert.strictEqual(normalizeCareerStatus(""), "OTHER");
@@ -142,27 +147,30 @@ export async function runProfileFoundationTests() {
       proficiency: "SUPER_EXPERT",
     });
   });
-  console.log("✔ Career status normalization and invalid enums correctly verified.");
+  console.log(
+    "✔ Career status normalization and invalid enums correctly verified."
+  );
 
   // 8. Validation: Optional Target Role Allowed
-  console.log("8. Testing Optional Target Role (e.g. for Career Exploration)...");
+  console.log(
+    "8. Testing Optional Target Role (e.g. for Career Exploration)..."
+  );
   const exploratoryPayload = {
     ...validPayload,
     primaryGoal: "EXPLORE_CAREERS",
     targetRole: null,
-
-
   };
   const exploratoryParsed = profileCreateSchema.parse(exploratoryPayload);
   assert.strictEqual(exploratoryParsed.targetRole, null);
-  console.log("✔ Exploratory profile with null targetRole parsed successfully.");
+  console.log(
+    "✔ Exploratory profile with null targetRole parsed successfully."
+  );
 
   // 9. Validation: Partial Update Schema
   console.log("9. Testing Partial Update Schema...");
   const updatePayload = {
     yearsOfExperience: 2,
     currentRole: "Software Engineer",
-
   };
   const updateParsed = profileUpdateSchema.parse(updatePayload);
   assert.strictEqual(updateParsed.yearsOfExperience, 2);

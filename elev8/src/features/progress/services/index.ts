@@ -1,2 +1,2 @@
-// Progress services
-export {};
+export * from "./module-activity.service";
+export * from "./progress.service";
