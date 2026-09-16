@@ -86,7 +86,7 @@ export class ResumeArtifactService {
     };
 
     // 1. Upload artifact to Blob Storage
-    const artifactBlobUrl = await BlobStorageService.uploadJson(
+    const artifactBlobUrl = await BlobStorageService.upsertJson(
       `resumes/${resumeId}.json`,
       artifact
     );

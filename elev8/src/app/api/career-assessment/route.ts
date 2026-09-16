@@ -6,6 +6,7 @@ import {
   CareerAssessmentService,
   ModuleActivityContextService,
 } from "@/features/career-assessment/services";
+import { normalizeError } from "@/lib/error-handler";
 
 export async function GET() {
   try {
@@ -108,8 +109,9 @@ export async function POST() {
     return NextResponse.json({ assessment }, { status: 201 });
   } catch (error: any) {
     console.error("POST /api/career-assessment error:", error);
+    const appError = normalizeError(error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: appError.message, title: appError.title, retryable: appError.retryable },
       { status: 500 }
     );
   }

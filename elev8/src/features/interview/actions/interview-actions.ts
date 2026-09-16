@@ -9,6 +9,7 @@ import {
   JobStatus,
   InterviewStatus,
   InterviewType,
+  InterviewDifficulty,
   InterviewTemplateStatus,
   InterviewTemplateSource,
   CareerExperienceLevel,
@@ -23,6 +24,7 @@ import {
   ModuleCompletionStatus,
   ModuleActivityEventType,
 } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 function mapInterviewType(type: string): InterviewType {
   const norm = type.toUpperCase().replace(/[\s-]+/g, "_");
@@ -40,6 +42,13 @@ function mapExperienceLevel(level: string): CareerExperienceLevel {
   if (upper === "ADVANCED" || upper === "SENIOR") return CareerExperienceLevel.SENIOR;
   if (upper === "LEAD") return CareerExperienceLevel.LEAD;
   return CareerExperienceLevel.MID;
+}
+
+function mapDifficulty(difficulty: string): InterviewDifficulty {
+  const upper = difficulty.toUpperCase();
+  if (upper === "EASY") return InterviewDifficulty.EASY;
+  if (upper === "HARD") return InterviewDifficulty.HARD;
+  return InterviewDifficulty.MEDIUM;
 }
 
 export async function createInterviewJob(request: InterviewRequest) {
@@ -63,6 +72,7 @@ export async function createInterviewJob(request: InterviewRequest) {
   const targetQuestionCount = validatedRequest.questionCount || 10;
   const mappedInterviewType = mapInterviewType(validatedRequest.interviewType);
   const mappedExpLevel = mapExperienceLevel(validatedRequest.experienceLevel);
+  const mappedDifficulty = mapDifficulty(validatedRequest.difficulty);
 
   const isPersonalized = !validatedRequest.personalization.skipped;
 
@@ -73,7 +83,8 @@ export async function createInterviewJob(request: InterviewRequest) {
     const existingGlobalTemplate = await GlobalInterviewTemplateService.findMatchingTemplate(
       validatedRequest.role,
       mappedExpLevel,
-      mappedInterviewType
+      mappedInterviewType,
+      mappedDifficulty
     );
 
     if (existingGlobalTemplate) {
@@ -86,6 +97,7 @@ export async function createInterviewJob(request: InterviewRequest) {
             templateSource: InterviewTemplateSource.GLOBAL,
             role: validatedRequest.role,
             experienceLevel: mappedExpLevel,
+            difficulty: mappedDifficulty,
             interviewType: mappedInterviewType,
             questionCount: existingGlobalTemplate.questionCount || targetQuestionCount,
             estimatedDuration: existingGlobalTemplate.estimatedDuration,
@@ -154,6 +166,7 @@ export async function createInterviewJob(request: InterviewRequest) {
           templateSource: InterviewTemplateSource.GLOBAL,
           role: validatedRequest.role,
           experienceLevel: mappedExpLevel,
+          difficulty: mappedDifficulty,
           interviewType: mappedInterviewType,
           questionCount: existingGlobalTemplate.questionCount || targetQuestionCount,
           status: InterviewStatus.GENERATING,
@@ -177,6 +190,7 @@ export async function createInterviewJob(request: InterviewRequest) {
         role: validatedRequest.role,
         normalizedRole,
         experienceLevel: mappedExpLevel,
+        difficulty: mappedDifficulty,
         interviewType: mappedInterviewType,
         questionCount: targetQuestionCount,
         templateBlobUrl: "",
@@ -186,7 +200,8 @@ export async function createInterviewJob(request: InterviewRequest) {
         const raceTemplate = await GlobalInterviewTemplateService.findMatchingTemplate(
           validatedRequest.role,
           mappedExpLevel,
-          mappedInterviewType
+          mappedInterviewType,
+          mappedDifficulty
         );
         if (raceTemplate) {
           if (raceTemplate.templateBlobUrl && raceTemplate.templateBlobUrl.trim() !== "") {
@@ -197,6 +212,7 @@ export async function createInterviewJob(request: InterviewRequest) {
                 templateSource: InterviewTemplateSource.GLOBAL,
                 role: validatedRequest.role,
                 experienceLevel: mappedExpLevel,
+                difficulty: mappedDifficulty,
                 interviewType: mappedInterviewType,
                 questionCount: raceTemplate.questionCount || targetQuestionCount,
                 estimatedDuration: raceTemplate.estimatedDuration,
@@ -235,6 +251,7 @@ export async function createInterviewJob(request: InterviewRequest) {
         templateSource: InterviewTemplateSource.GLOBAL,
         role: validatedRequest.role,
         experienceLevel: mappedExpLevel,
+        difficulty: mappedDifficulty,
         interviewType: mappedInterviewType,
         questionCount: targetQuestionCount,
         status: InterviewStatus.GENERATING,
@@ -278,11 +295,12 @@ export async function createInterviewJob(request: InterviewRequest) {
       });
     } catch (error) {
       console.error("Failed to trigger Trigger.dev generate-interview task:", error);
+      const appError = normalizeError(error);
       await prisma.job.update({
         where: { id: job.id },
         data: {
           status: JobStatus.FAILED,
-          error: error instanceof Error ? error.message : "Trigger failed",
+          error: appError.message,
         },
       });
       await prisma.interviewSession.update({
@@ -298,12 +316,12 @@ export async function createInterviewJob(request: InterviewRequest) {
           source: "GENERATE_INTERVIEW_DISPATCH",
           interviewId: session.id,
           jobId: job.id,
-          error: error instanceof Error ? error.message : "Trigger failed",
+          error: appError.message,
         },
       }).catch((activityError) =>
         console.warn("[InterviewActions] Failed to record interview failure activity:", activityError)
       );
-      throw new Error("Failed to start background interview generation job.");
+      throw new Error(appError.message);
     }
 
     return {
@@ -341,6 +359,7 @@ export async function createInterviewJob(request: InterviewRequest) {
       userId: dbUser.id,
       role: validatedRequest.role,
       experienceLevel: mappedExpLevel,
+      difficulty: mappedDifficulty,
       interviewType: mappedInterviewType,
       questionCount: targetQuestionCount,
       templateBlobUrl: "",
@@ -358,6 +377,7 @@ export async function createInterviewJob(request: InterviewRequest) {
       templateSource: InterviewTemplateSource.USER_CREATED,
       role: validatedRequest.role,
       experienceLevel: mappedExpLevel,
+      difficulty: mappedDifficulty,
       interviewType: mappedInterviewType,
       questionCount: targetQuestionCount,
       status: InterviewStatus.GENERATING,
@@ -431,11 +451,12 @@ export async function createInterviewJob(request: InterviewRequest) {
     });
   } catch (error) {
     console.error("Failed to trigger Trigger.dev generate-interview task:", error);
+    const appError = normalizeError(error);
     await prisma.job.update({
       where: { id: job.id },
       data: {
         status: JobStatus.FAILED,
-        error: error instanceof Error ? error.message : "Trigger failed",
+        error: appError.message,
       },
     });
     await prisma.interviewSession.update({
@@ -451,12 +472,12 @@ export async function createInterviewJob(request: InterviewRequest) {
         source: "GENERATE_INTERVIEW_DISPATCH",
         interviewId: session.id,
         jobId: job.id,
-        error: error instanceof Error ? error.message : "Trigger failed",
+        error: appError.message,
       },
     }).catch((activityError) =>
       console.warn("[InterviewActions] Failed to record interview failure activity:", activityError)
     );
-    throw new Error("Failed to start background interview generation job.");
+    throw new Error(appError.message);
   }
 
   return {

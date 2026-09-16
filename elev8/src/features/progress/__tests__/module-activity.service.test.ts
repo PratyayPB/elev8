@@ -30,28 +30,28 @@ export async function runModuleActivityServiceTests() {
     console.log("✔ Assessment Completed projects to COMPLETED (100%) with readinessScore metadata");
   }
 
-  // 3. Roadmap Milestone Completed (5/8) -> IN_PROGRESS, 63%
+  // 3. Roadmap Generated -> READY, 100%
   {
     const state = ModuleActivityService.computeProgressState(
       ModuleType.ROADMAP,
-      ModuleActivityEventType.MILESTONE_COMPLETED,
-      { completedMilestones: 5, totalMilestones: 8 }
+      ModuleActivityEventType.ROADMAP_GENERATED,
+      { targetRole: "Full Stack Developer" }
     );
-    assert.strictEqual(state.roadmapStatus, ModuleProgressStatus.IN_PROGRESS);
-    assert.strictEqual(state.roadmapProgress, 63);
-    console.log("✔ Milestone 5/8 projects to IN_PROGRESS (63%)");
+    assert.strictEqual(state.roadmapStatus, ModuleProgressStatus.READY);
+    assert.strictEqual(state.roadmapProgress, 100);
+    console.log("✔ Roadmap Generated projects to READY (100%)");
   }
 
-  // 4. Roadmap All Milestones Completed (8/8) -> COMPLETED, 100%
+  // 4. Roadmap Completed -> COMPLETED, 100%
   {
     const state = ModuleActivityService.computeProgressState(
       ModuleType.ROADMAP,
-      ModuleActivityEventType.MILESTONE_COMPLETED,
-      { completedMilestones: 8, totalMilestones: 8 }
+      ModuleActivityEventType.ROADMAP_COMPLETED,
+      { targetRole: "Full Stack Developer" }
     );
     assert.strictEqual(state.roadmapStatus, ModuleProgressStatus.COMPLETED);
     assert.strictEqual(state.roadmapProgress, 100);
-    console.log("✔ Milestone 8/8 projects to COMPLETED (100%)");
+    console.log("✔ Roadmap Completed projects to COMPLETED (100%)");
   }
 
   // 5. Interview Question Answered (5/10) -> IN_PROGRESS, 50%

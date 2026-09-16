@@ -10,12 +10,14 @@ import {
   fetchUserRoadmaps,
   duplicateRoadmapAction,
   deleteRoadmapAction,
+  retryRoadmapGenerationAction,
 } from "@/features/roadmaps/actions/roadmap-actions";
 import { Compass, Plus, Loader2, Globe, User, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard";
 import { LibraryRoadmap } from "@/features/roadmaps/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 export const RoadmapLibrary: React.FC = () => {
   const router = useRouter();
@@ -26,9 +28,9 @@ export const RoadmapLibrary: React.FC = () => {
 
   const [section, setSection] = useState<"mine" | "global">(initialSection);
   const [search, setSearch] = useState("");
-  const [experienceLevel, setExperienceLevel] = useState("ALL");
-  const [status, setStatus] = useState("ALL");
-  const [sort, setSort] = useState<"newest" | "oldest" | "updated" | "alphabetical">("newest");
+  const [sort, setSort] = useState<
+    "newest" | "oldest" | "updated" | "alphabetical"
+  >("newest");
   const [page, setPage] = useState(1);
 
   const [roadmaps, setRoadmaps] = useState<LibraryRoadmap[]>([]);
@@ -61,14 +63,16 @@ export const RoadmapLibrary: React.FC = () => {
       const res = await fetchUserRoadmaps({
         section,
         search,
-        experienceLevel,
-        status,
         sort,
         page,
         limit: 9,
       });
-      setRoadmaps(res.roadmaps);
-      setPagination(res.pagination);
+      if (res.success) {
+        setRoadmaps(res.data.roadmaps);
+        setPagination(res.data.pagination);
+      } else {
+        toast.error(res.error?.message || "Failed to load roadmaps.");
+      }
     } catch (err) {
       console.error("Failed to load roadmaps:", err);
     } finally {
@@ -78,7 +82,7 @@ export const RoadmapLibrary: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [section, search, experienceLevel, status, sort, page]);
+  }, [section, search, sort, page]);
 
   const handleTabChange = (newTab: string) => {
     const nextSection = newTab as "mine" | "global";
@@ -90,15 +94,29 @@ export const RoadmapLibrary: React.FC = () => {
     } else {
       params.delete("tab");
     }
-    router.replace(`/dashboard/roadmaps${params.toString() ? `?${params.toString()}` : ""}`);
+    router.replace(
+      `/dashboard/roadmaps${params.toString() ? `?${params.toString()}` : ""}`
+    );
   };
 
   const handleDuplicate = async (roadmapId: string) => {
     try {
-      await duplicateRoadmapAction(roadmapId);
-      loadData();
-    } catch (err) {
+      const res = await duplicateRoadmapAction(roadmapId);
+      if (!res.success) {
+        toast.error(res.error?.message || "Failed to duplicate roadmap. Please try again.");
+        return;
+      }
+      toast.success(
+        'Roadmap has been successfully duplicated in the "MY ROADMAPS" tab/section'
+      );
+      if (section === "global") {
+        handleTabChange("mine");
+      } else {
+        loadData();
+      }
+    } catch (err: any) {
       console.error("Failed to duplicate roadmap:", err);
+      toast.error(err?.message || "Failed to duplicate roadmap. Please try again.");
     }
   };
 
@@ -106,20 +124,44 @@ export const RoadmapLibrary: React.FC = () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      await deleteRoadmapAction(deleteTarget.id);
+      const res = await deleteRoadmapAction(deleteTarget.id);
+      if (!res.success) {
+        toast.error(res.error?.message || "Failed to delete roadmap.");
+        return;
+      }
+      toast.success("Roadmap deleted successfully.");
       setDeleteTarget(null);
       loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete roadmap:", err);
+      toast.error(err?.message || "Failed to delete roadmap.");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleRegenerate = (roadmap: LibraryRoadmap) => {
-    const role = encodeURIComponent(roadmap.targetRole || "");
-    const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
-    router.push(`/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`);
+  const handleRegenerate = async (roadmap: LibraryRoadmap) => {
+    try {
+      const res = await retryRoadmapGenerationAction(roadmap.id);
+      if (!res.success) {
+        toast.error(res.error?.message || "Failed to retry roadmap generation.");
+        const role = encodeURIComponent(roadmap.targetRole || "");
+        const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
+        router.push(
+          `/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`
+        );
+        return;
+      }
+      router.push(`/dashboard/roadmaps/${roadmap.id}`);
+    } catch (err: any) {
+      console.error("Failed to retry roadmap generation:", err);
+      toast.error(err?.message || "Failed to retry roadmap generation.");
+      const role = encodeURIComponent(roadmap.targetRole || "");
+      const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
+      router.push(
+        `/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`
+      );
+    }
   };
 
   return (
@@ -141,19 +183,23 @@ export const RoadmapLibrary: React.FC = () => {
 
       {/* Tabs Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-subtle pb-4">
-        <Tabs value={section} onValueChange={handleTabChange} className="w-full sm:w-auto">
-          <TabsList className="grid grid-cols-2 w-full sm:w-[360px] bg-surface-muted p-1 rounded-xl border border-border-subtle">
+        <Tabs
+          value={section}
+          onValueChange={handleTabChange}
+          className="w-full sm:w-auto"
+        >
+          <TabsList className="grid grid-cols-2 w-full sm:w-[360px] bg-surface-muted rounded-xl">
             <TabsTrigger
               value="mine"
-              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-lg data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-e-2xl data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
             >
               <User className="w-3.5 h-3.5" /> My Roadmaps
             </TabsTrigger>
             <TabsTrigger
               value="global"
-              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-lg data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-s-2xl data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
             >
-              <Globe className="w-3.5 h-3.5" /> Global Roadmaps
+              <Globe className="w-3.5 h-full" /> Global Roadmaps
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -167,39 +213,52 @@ export const RoadmapLibrary: React.FC = () => {
 
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius)] p-4 shadow-sm">
-        <SearchBar value={search} onChange={(val) => { setSearch(val); setPage(1); }} />
+        <SearchBar
+          value={search}
+          onChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+        />
         <FilterPanel
-          experienceLevel={experienceLevel}
-          status={status}
           sort={sort}
-          onExperienceChange={(val) => { setExperienceLevel(val); setPage(1); }}
-          onStatusChange={(val) => { setStatus(val); setPage(1); }}
-          onSortChange={(val) => { setSort(val); setPage(1); }}
+          onSortChange={(val) => {
+            setSort(val);
+            setPage(1);
+          }}
         />
       </div>
 
       {/* Roadmap Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+        <div className="flex flex-col items-center justify-center min-h-[400px] py-20 text-text-muted">
           <Loader2 className="w-8 h-8 animate-spin text-text-primary mb-3" />
           <p className="text-sm font-sans">
-            {section === "mine" ? "Loading your roadmaps..." : "Loading global roadmaps..."}
+            {section === "mine"
+              ? "Loading your roadmaps..."
+              : "Loading global roadmaps..."}
           </p>
         </div>
       ) : roadmaps.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] text-center p-8">
           <div className="w-16 h-16 rounded-full bg-surface-muted text-text-primary flex items-center justify-center mb-4 shadow-sm">
-            {section === "mine" ? <Compass className="w-8 h-8" /> : <Globe className="w-8 h-8" />}
+            {section === "mine" ? (
+              <Compass className="w-8 h-8" />
+            ) : (
+              <Globe className="w-8 h-8" />
+            )}
           </div>
           <h3 className="text-xl font-display font-bold text-text-primary">
-            {section === "mine" ? "No Personal Roadmaps Found" : "No Global Roadmaps Found"}
+            {section === "mine"
+              ? "No Personal Roadmaps Found"
+              : "No Global Roadmaps Found"}
           </h3>
           <p className="text-sm font-sans text-text-secondary max-w-sm mt-2 mb-6">
-            {search || experienceLevel !== "ALL" || status !== "ALL"
-              ? "No roadmaps matched your search and filter criteria. Try resetting your filters."
+            {search
+              ? "No roadmaps matched your search query. Try clearing your search."
               : section === "mine"
-              ? "Generate your first personalized AI career roadmap or generate a generic role roadmap to get started."
-              : "No pre-generated global roadmaps are available yet. Generate one now to start populating the catalog!"}
+                ? "Generate your first personalized AI career roadmap or generate a generic role roadmap to get started."
+                : "No pre-generated global roadmaps are available yet. Generate one now to start populating the catalog!"}
           </p>
           <Link
             href="/dashboard/roadmaps/new"
@@ -214,6 +273,7 @@ export const RoadmapLibrary: React.FC = () => {
             <RoadmapCard
               key={item.id}
               roadmap={item}
+              isGlobalSection={section === "global"}
               onDuplicate={handleDuplicate}
               onDeleteClick={(target) => setDeleteTarget(target)}
               onRegenerate={handleRegenerate}
@@ -226,7 +286,8 @@ export const RoadmapLibrary: React.FC = () => {
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-border-subtle text-xs font-sans text-text-secondary">
           <div>
-            Showing Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+            Showing Page {pagination.page} of {pagination.totalPages} (
+            {pagination.total} total)
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -237,7 +298,9 @@ export const RoadmapLibrary: React.FC = () => {
               Previous
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+              onClick={() =>
+                setPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
               disabled={page === pagination.totalPages}
               className="px-3.5 py-2 bg-surface-muted border border-border-subtle rounded-xl hover:bg-border-subtle text-text-primary font-display font-medium disabled:opacity-40 transition-colors"
             >

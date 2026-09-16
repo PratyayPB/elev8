@@ -19,6 +19,7 @@ import {
   ModuleActivityEventType,
   ModuleType,
 } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 export const BuildAiResumeTaskSchema = z.object({
   resumeId: z.string(),
@@ -411,13 +412,13 @@ Remember: Output ONLY valid JSON conforming exactly to the expected structure. N
         artifactBlobUrl,
       };
     } catch (error) {
-      console.error("[buildAiResumeTask] Error during AI resume build:", error);
-      const errorMessage = (error as Error).message || "Unknown error";
+      const appError = normalizeError(error);
+      console.error("[buildAiResumeTask] Error during AI resume build:", appError.message, error);
       metadata.set("status", "Failed");
-      metadata.set("error", errorMessage);
+      metadata.set("error", appError.message);
 
       if (jobId) {
-        await JobService.failJob(jobId, errorMessage).catch((e) =>
+        await JobService.failJob(jobId, appError.message).catch((e) =>
           console.error("Failed to fail job record:", e)
         );
       }
@@ -432,7 +433,7 @@ Remember: Output ONLY valid JSON conforming exactly to the expected structure. N
           resumeId,
           jobId,
           targetJobTitle,
-          error: errorMessage,
+          error: appError.message,
         },
       }).catch((activityError) =>
         console.warn("[buildAiResumeTask] Failed to record AI build failure activity:", activityError)

@@ -33,6 +33,17 @@ export class ResumeReportService {
       const health = ResumeAnalyticsService.computeHealth(artifact);
       const keywords = KeywordAnalysisService.analyze(artifact);
 
+      const recommendations = (artifact.overallAssessment.weaknesses || []).map(
+        (weakness, idx) => ({
+          id: `rec-${idx + 1}`,
+          title: weakness.split(":")[0] || "Area for Improvement",
+          description: weakness,
+          priority: (idx < 2 ? "High" : idx < 4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
+          section: "General",
+          expectedImpact: idx < 2 ? "+10-15 ATS points" : "+5-10 ATS points",
+        })
+      );
+
       await ModuleActivityService.recordActivity({
         userId: resume.userId,
         module: ModuleType.RESUME_SCORE,
@@ -57,6 +68,7 @@ export class ResumeReportService {
         artifact,
         health,
         keywords,
+        recommendations,
       };
     } catch (error) {
       console.error(

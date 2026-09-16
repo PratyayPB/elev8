@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export type ExperienceLevel = "Beginner" | "Basic" | "Intermediate" | "Advanced";
-export type StudyHours = number | "Flexible";
 
 export const ExistingSkillSchema = z.object({
   name: z.string(),
@@ -79,17 +78,6 @@ export interface CareerTip {
   tip: string;
 }
 
-export interface Milestone {
-  id: string;
-  title: string;
-  description: string;
-  order: number;
-  estimatedWeeks: number;
-  skillsCovered: string[];
-  resources: LearningResource[];
-  projects?: Project[];
-}
-
 export interface RoadmapMetadata {
   title: string;
   role: string;
@@ -101,7 +89,6 @@ export interface RoadmapMetadata {
 export interface GeneratedRoadmap {
   metadata: RoadmapMetadata;
   summary: string;
-  milestones: Milestone[];
   projects: Project[];
   resources: LearningResource[];
   careerTips: CareerTip[];

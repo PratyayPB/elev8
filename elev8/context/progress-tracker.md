@@ -143,7 +143,10 @@ Phase 7.2: Release & Production Verification
   - Maintained complete light/dark theme adaptability and portal tooltip styling parity with the interview assessment module.
   - Fixed `CareerExperienceLevel` Prisma enum mapping in `createResumeAssessmentJob` server action.
   - Fixed `ResumeScoreStatus` mapping, automatic `router.refresh()` background polling, state syncing in `useResumeWorkspace`, and fixed the status badge rendering in `ResumeCard`.
+- [x] **RoadmapStatus Cleanup**: Removed unused `ARCHIVED` status from `RoadmapStatus` Prisma enum, updated `RoadmapCard.tsx` UI status badge handler, updated documentation in `database.md` and `elev8-enum-update-spec.md`.
   - Verified 100% type safety with `npx tsc --noEmit`.
+- [x] **Roadmap Library Level/Status Filter Removal & Sort UI Refactor**: Removed Level and Status filters and all query/state code from `FilterPanel.tsx`, `RoadmapLibrary.tsx`, and `RoadmapLibraryService`. Refactored Sort dropdown to use shadcn UI `Select` styled with primary/secondary monochrome black & white design system tokens (no blue hover highlights).
+- [x] **Roadmap Generation LoadingOverlay Performance Optimization**: Eliminated idle delay between toast notification and `LoadingOverlay` appearance by triggering instant local overlay state in `RoadmapWizard`, updating `LoadingOverlay.tsx` to `fixed inset-0 z-50`, and adding route-level `loading.tsx` for `/dashboard/roadmaps/[roadmapId]`.
 - [x] **Resume Builder Static Template Previews (`resume-builder-static-template-previews.md`)**:
   - Added `previewImage` attribute to `ResumeTemplate` Prisma schema.
   - Created `public/resume-templates/` directory for developer-supplied `.webp` screenshots.
@@ -183,6 +186,61 @@ Phase 7.2: Release & Production Verification
   - Added Resume Score started/failed/viewed hooks across upload actions, assessment task failures, and report fetches.
   - Added Resume Build update/template/view/PDF and AI resume build requested/started/completed/failed hooks.
   - Expanded progress projection handling and activity timeline copy for newly produced event types.
+- [x] **Universal Background Task Error Handling (`elev8-universal-error-handling-spec.md`)**:
+  - Implemented `normalizeError` utility to sanitize raw `Error` objects and Gemini 503 HTTP responses into human-readable strings before persisting to the `Job.error` column.
+  - Updated Trigger.dev catch blocks across Roadmap, Interview, Resume Score, Resume Builder AI, and Career Assessment workflows.
+  - Fixed 404 infinite loading screens on `/dashboard/interviews/[interviewId]` and `/dashboard/resumes/[resumeId]` routes by directly querying Prisma database records for failed job statuses and presenting graceful retryable error UI components.
+- [x] **Milestone Feature Removal from Roadmap Module**:
+  - Excised `MilestoneSchema` and `milestones` array from `GeneratedRoadmapSchema`, `GeneratedRoadmap`, and `RoadmapArtifact`.
+  - Updated `RoadmapDurationService` to calculate deterministic durations from graph nodes and hours rather than milestones.
+  - Removed milestone references from `ROADMAP_SYSTEM_PROMPT` instructions and structural requirements.
+  - Removed `Milestones Overview` and `MilestoneCard` components from `RoadmapViewer.tsx` and removed `completeRoadmapPhaseAction`.
+  - Removed `MILESTONE_STARTED` and `MILESTONE_COMPLETED` from `ModuleActivityEventType` Prisma enum, migrated the database, and regenerated Prisma Client.
+  - Cleaned up milestone references and events in `ModuleActivityService`, progress grid, activity ledger timeline, and progressive profiling constants.
+  - Verified 100% type safety and all unit test suites passing.
+- [x] **RoadmapStatus.FAILED & RoadmapCard Failure State**:
+  - Added `FAILED` enum value to `RoadmapStatus` in `prisma/schema.prisma` and synchronized database.
+  - Updated `generateRoadmapTask` (Trigger.dev) and local execution fallbacks in `roadmap-actions.ts` to update `Roadmap` / `GlobalRoadmap` status to `RoadmapStatus.FAILED` upon generation failure.
+  - Added cache retry handling for failed `GlobalRoadmap` records to prevent unique constraint violations.
+  - Updated `RoadmapCard.tsx` to render a red "Failed" badge when `roadmap.status === "FAILED"` with an in-card "Try Again" action.
+  - Synced existing failed roadmap records in the database.
+- [x] **In-Place Roadmap Retry (Reusing Persisted Configuration & ID)**:
+  - Created `formatCareerLevelToExperience` utility in `utils.ts` to parse Prisma `CareerLevel` to Zod `ExperienceLevel`.
+  - Implemented `retryRoadmapGenerationAction(roadmapId)` server action in `roadmap-actions.ts` that retrieves stored `Roadmap` / `GlobalRoadmap` configuration, updates status to `IN_PROGRESS`, and triggers generation on the same ID without creating new entities.
+  - Updated `RoadmapViewer.tsx` to trigger in-place retries from the failed state, display immediate loading overlay, and resume short polling.
+  - Updated `RoadmapLibrary.tsx` to trigger in-place retries when clicking "Try Again" on failed cards and navigate to the viewer with the existing ID.
+  - Fixed an indefinite loading loop bug in `RoadmapViewer.tsx` where the `isRetrying` state was not cleared after successful background generation.
+  - Resolved Vercel Blob overwrite collision error by switching to `upsertJson` across artifact services.
+  - Fixed UI overflow in `RoadmapCard.tsx` on `/dashboard/roadmaps` by restructuring the header into dedicated badge and title rows, adding proper container truncation, and ensuring action elements never clip or overflow.
+  - Hardened Global Roadmaps: restricted card actions in Global section to "Duplicate" and "View Roadmap" only (removed Delete, Regenerate, Try Again), filtered global tab queries to `COMPLETED` roadmaps exclusively, enforced ownership middleware on Delete/Regenerate/Try Again (strictly limited to personal `Roadmap` schema owned by current user), ensured duplicates always persist into personal `Roadmap` schema, added post-duplication toast with auto-tab switch to "My Roadmaps", and created graceful error boundaries with redirection back to `/dashboard/roadmaps`.
+  - Verified 100% type safety and all test suites passing.
+- [x] **Phase 8 (Spec 41): Roadmap Module Cleanup, Testing, Optimization & Security Audit**:
+  - **Security Fix (IDOR)**: Fixed IDOR vulnerability in `RoadmapActionsService.duplicateRoadmap` by scoping personal roadmap lookup to `userId`, preventing cross-user private roadmap and profile context duplication.
+  - **Security & Validation**: Added server-side Zod validation (`RoadmapRequestSchema.parse`) to `generateRoadmapAction` prior to DB/AI execution, sanitized `roadmapId` strings across all server actions, and preserved original creator ownership on global retry.
+  - **Dead Code Cleanup**: Deleted orphaned `StudyHoursSelector` component, `constants/study-hours.ts`, `StudyHours` type, `ROADMAP_LEVELS` constant, `RoadmapService` placeholder, and unreferenced `milestones` artifact field. Removed unused `jobStatus` prop from `RoadmapViewer`.
+  - **Database Performance Optimization**: Added strict `select` projections to `RoadmapLibraryService` (`mine` and `global`), `RoadmapViewerService`, and `RoadmapActionsService` to eliminate over-fetching of large `profileSnapshot` JSON and unnecessary metadata columns.
+  - **Comprehensive Testing**: Added 5 new test suites (~45 test assertions) covering `RoadmapActionsService` (CRUD, cascading delete, unreferenced blob cleanup, IDOR protection), `RoadmapLibraryService` (filtering, search, and sorting), `RoadmapViewerService` (auth scoping and artifact validation), `RoadmapServerActions` (input validation and auth boundaries), and `RoadmapValidatorExtended` (cycle detection, diamond DAG, malformed markdown stripping, and schema constraints).
+  - Verified 100% type safety (`tsc --noEmit` = 0 errors) and all 28 test suites passing (`npm test` = 28/28 pass).
+- [x] **Phase 8 (Spec 41 - # 32): Roadmap Module Graceful Error Handling**:
+  - Wrapped all roadmap server actions (`fetchUserRoadmaps`, `duplicateRoadmapAction`, `deleteRoadmapAction`, `generateRoadmapAction`, `retryRoadmapGenerationAction`) with `safeAction` from `@/lib/error-handler` to prevent raw exception and stack trace leakage to the client.
+  - Standardized error return format as `{ success: true, data: T } | { success: false, error: AppError }`.
+  - Updated client components (`RoadmapLibrary`, `RoadmapWizard`, `RoadmapViewer`) to consume the discriminated union responses and present clean, user-friendly toasts without UI disruption.
+  - Refactored server action test suite to assert on structured error responses.
+  - Verified 100% type safety and passed all 28 test suites repository-wide.
+- [x] **Interview Module: Difficulty Attribute DB Persistence & Workspace Filtering**:
+  - Added `InterviewDifficulty` enum (`EASY`, `MEDIUM`, `HARD`) to `prisma/schema.prisma`.
+  - Added `difficulty` column with `@default(MEDIUM)` and indexes to `InterviewSession`, `InterviewTemplate`, and `GlobalInterviewTemplate` models.
+  - Updated `GlobalInterviewTemplate` unique constraint to `@@unique([normalizedRole, experienceLevel, interviewType, difficulty])` to allow separate global templates per difficulty tier.
+  - Migrated database schema and regenerated Prisma client types (`prisma db push --accept-data-loss` / `prisma generate`).
+  - Updated `GlobalInterviewTemplateService` (`findMatchingTemplate`, `createTemplate`) and `interview-actions.ts` (`createInterviewJob`, `mapDifficulty`) to persist and match on difficulty.
+  - Updated Trigger.dev `generateInterviewTask` to pass difficulty to global template creation.
+  - Implemented real-time client-side difficulty filtering in `use-interview-workspace.ts` hook.
+  - Added difficulty metadata badge to `InterviewCard.tsx` on the `/dashboard/interviews` workspace.
+- [x] **Interview Module: Workspace Filter Refactor & Dropdown Design System Alignment**:
+  - Removed status filter dropdown and related filtering logic from `use-interview-workspace.ts`, `workspace-container.tsx`, and `filters-and-search.tsx`.
+  - Refactored Difficulty and Sorting dropdowns to use `shadcn` UI (`Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`).
+  - Styled dropdowns to match the primary/secondary (black and white) design system from the Roadmap module (`/dashboard/roadmaps`).
+  - Updated unit tests in `src/features/interview/__tests__/interview-workspace.test.ts` (All 29 test suites passing, zero TypeScript errors).
 
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**

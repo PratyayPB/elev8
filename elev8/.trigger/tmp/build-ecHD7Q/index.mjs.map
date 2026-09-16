@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/trigger/index.ts"],
+  "sourcesContent": ["export * from \"./generate-roadmap\";\n"],
+  "mappings": ";;;;;;;;;;;;AAAA;",
+  "names": []
+}

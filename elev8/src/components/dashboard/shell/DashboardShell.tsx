@@ -18,7 +18,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <MobileNavigation />
         <main
           className={cn(
-            "flex-1 overflow-y-auto",
+            "flex-1 overflow-y-auto [scrollbar-gutter:stable]",
             !isEditor && "p-4 md:p-6 lg:p-8"
           )}
         >

@@ -70,6 +70,12 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
           </span>
           <span>•</span>
           <span>{interview.experienceLevel}</span>
+          {interview.difficulty && (
+            <>
+              <span>•</span>
+              <span className="capitalize">{interview.difficulty.toLowerCase()}</span>
+            </>
+          )}
           <span>•</span>
           <span>{interview.interviewType}</span>
           <span>•</span>
@@ -122,6 +128,16 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
             <Loader2 className="w-3.5 h-3.5 animate-spin text-text-secondary" />
             Generating...
           </div>
+        )}
+
+        {interview.status === InterviewStatus.FAILED && (
+          <Link
+            href={`/dashboard/interviews/new?role=${encodeURIComponent(interview.role)}&experience=${interview.experienceLevel}`}
+            className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900 text-center font-display font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Generation Failed — Try Again
+          </Link>
         )}
       </div>
 

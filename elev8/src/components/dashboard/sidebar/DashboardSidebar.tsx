@@ -40,6 +40,7 @@ export function DashboardSidebar() {
   );
 
   const isActive = (href: string) => {
+    if (!pathname) return false;
     if (href === ROUTES.DASHBOARD) return pathname === ROUTES.DASHBOARD;
     return pathname.startsWith(href);
   };

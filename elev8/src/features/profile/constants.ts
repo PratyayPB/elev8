@@ -131,7 +131,7 @@ export const FIELD_METADATA: Record<
   },
   desiredSkills: {
     label: "Desired Skills",
-    description: "Target skills shape learning paths and roadmap milestone recommendations.",
+    description: "Target skills shape learning paths and roadmap recommendations.",
     priority: 6,
   },
   weeklyLearningHours: {

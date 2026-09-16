@@ -39,17 +39,6 @@ export const CareerTipSchema = z.object({
   tip: z.string(),
 });
 
-export const MilestoneSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  order: z.number(),
-  estimatedWeeks: z.number(),
-  skillsCovered: z.array(z.string()),
-  resources: z.array(LearningResourceSchema),
-  projects: z.array(ProjectSchema).optional(),
-});
-
 export const RoadmapMetadataSchema = z.object({
   title: z.string(),
   role: z.string(),
@@ -66,7 +55,6 @@ export const LogicalGraphSchema = z.object({
 export const GeneratedRoadmapSchema = z.object({
   metadata: RoadmapMetadataSchema,
   summary: z.string(),
-  milestones: z.array(MilestoneSchema).min(1, "Roadmap must contain at least one milestone"),
   projects: z.array(ProjectSchema),
   resources: z.array(LearningResourceSchema),
   careerTips: z.array(CareerTipSchema),

@@ -10,6 +10,7 @@ import { RoadmapStatus } from "@prisma/client";
 import { parseCareerLevel, normalizeRole } from "@/features/roadmaps/utils";
 import { ModuleActivityService } from "@/features/progress/services";
 import { ModuleActivityEventType, ModuleType } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 export const GenerateRoadmapTaskSchema = RoadmapRequestSchema.extend({
   jobId: z.string().optional(),
@@ -190,17 +191,30 @@ export const generateRoadmapTask = schemaTask({
         artifact,
       };
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error("[Trigger.dev] Pipeline error:", errorMsg);
+      const appError = normalizeError(err);
+      console.error("[Trigger.dev] Pipeline error:", appError.message, err);
       if (jobId) {
-        await JobService.failJob(jobId, errorMsg);
+        await JobService.failJob(jobId, appError.message);
+      }
+      if (payload.roadmapId) {
+        if (payload.isGlobal) {
+          await prisma.globalRoadmap.update({
+            where: { id: payload.roadmapId },
+            data: { status: RoadmapStatus.FAILED },
+          }).catch((dbErr) => console.warn("[Trigger.dev] Failed to mark GlobalRoadmap as FAILED:", dbErr));
+        } else {
+          await prisma.roadmap.update({
+            where: { id: payload.roadmapId },
+            data: { status: RoadmapStatus.FAILED },
+          }).catch((dbErr) => console.warn("[Trigger.dev] Failed to mark Roadmap as FAILED:", dbErr));
+        }
       }
       if (userId) await ModuleActivityService.recordActivity({
         userId,
         module: ModuleType.ROADMAP,
         eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
         entityId: payload.roadmapId,
-        metadata: { source: "GENERATE_ROADMAP_TASK", roadmapId: payload.roadmapId, error: errorMsg },
+        metadata: { source: "GENERATE_ROADMAP_TASK", roadmapId: payload.roadmapId, error: appError.message },
       }).catch((e) => console.warn('[RoadmapActivity] Generation failed log error:', e));
       throw err;
     }

@@ -8,12 +8,19 @@ import { GlobalInterviewTemplateService } from "@/features/interview/services/gl
 import { JobService } from "@/services/jobs/job.service";
 import { prisma } from "@/lib/prisma";
 import { InterviewRequest } from "@/features/interview/types";
-import { CareerExperienceLevel, InterviewType, InterviewTemplateSource, InterviewStatus } from "@prisma/client";
+import {
+  CareerExperienceLevel,
+  InterviewType,
+  InterviewDifficulty,
+  InterviewTemplateSource,
+  InterviewStatus,
+} from "@prisma/client";
 import { ModuleActivityService } from "@/features/progress/services";
 import {
   ModuleActivityEventType,
   ModuleType,
 } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 export const GenerateInterviewTaskSchema = z.object({
   interviewId: z.string(),
@@ -97,6 +104,13 @@ export const generateInterviewTask = schemaTask({
           ? "GENERAL"
           : "TECHNICAL";
 
+      const difficulty: InterviewDifficulty =
+        request.difficulty?.toUpperCase() === "EASY"
+          ? "EASY"
+          : request.difficulty?.toUpperCase() === "HARD"
+          ? "HARD"
+          : "MEDIUM";
+
       let blobUrl: string;
 
       if (templateSource === "USER_CREATED" && interviewTemplateId) {
@@ -154,6 +168,7 @@ export const generateInterviewTask = schemaTask({
             role: request.role,
             normalizedRole,
             experienceLevel: expLevel,
+            difficulty,
             interviewType,
             questionCount: targetQuestionCount,
             estimatedDuration: plan.estimatedDuration,
@@ -200,9 +215,9 @@ export const generateInterviewTask = schemaTask({
         blobUrl,
       };
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[Trigger.dev] Interview generation error for interviewId=${interviewId}:`, errorMsg);
-      await JobService.failJob(jobId, errorMsg);
+      const appError = normalizeError(err);
+      console.error(`[Trigger.dev] Interview generation error for interviewId=${interviewId}:`, appError.message, err);
+      await JobService.failJob(jobId, appError.message);
       await prisma.interviewSession.update({
         where: { id: interviewId },
         data: { status: InterviewStatus.FAILED },
@@ -218,7 +233,7 @@ export const generateInterviewTask = schemaTask({
           source: "GENERATE_INTERVIEW_TASK",
           interviewId,
           jobId,
-          error: errorMsg,
+          error: appError.message,
         },
       }).catch((activityError) =>
         console.warn("[generateInterviewTask] Failed to record failure activity:", activityError)

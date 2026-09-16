@@ -58,7 +58,7 @@ export class RoadmapGenerationService {
           // Application-side enrichment: set deterministic timestamp and calculated duration
           generatedRoadmap.metadata.generatedAt = new Date().toISOString();
           generatedRoadmap.metadata.estimatedDuration = RoadmapDurationService.calculate(
-            generatedRoadmap.milestones,
+            generatedRoadmap.logicalGraph.nodes,
             request.personalization?.profileContext?.weeklyLearningHours
           );
 

@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { CareerExperienceLevel, InterviewType, InterviewTemplateStatus, GlobalInterviewTemplate } from "@prisma/client";
+import {
+  CareerExperienceLevel,
+  InterviewType,
+  InterviewDifficulty,
+  InterviewTemplateStatus,
+  GlobalInterviewTemplate,
+} from "@prisma/client";
 import { resolveRoleAlias } from "@/features/skill-gap/utils/role-normalizer";
 
 export class GlobalInterviewTemplateService {
@@ -11,22 +17,24 @@ export class GlobalInterviewTemplateService {
   }
 
   /**
-   * Looks up an existing GlobalInterviewTemplate matching the normalized role, experience level, and interview type.
+   * Looks up an existing GlobalInterviewTemplate matching the normalized role, experience level, interview type, and difficulty.
    */
   public static async findMatchingTemplate(
     role: string,
     experienceLevel: CareerExperienceLevel,
-    interviewType: InterviewType
+    interviewType: InterviewType,
+    difficulty: InterviewDifficulty = "MEDIUM"
   ): Promise<GlobalInterviewTemplate | null> {
     const normalizedRole = this.normalizeRole(role);
     if (!normalizedRole) return null;
 
     return prisma.globalInterviewTemplate.findUnique({
       where: {
-        normalizedRole_experienceLevel_interviewType: {
+        normalizedRole_experienceLevel_interviewType_difficulty: {
           normalizedRole,
           experienceLevel,
           interviewType,
+          difficulty,
         },
       },
     });
@@ -40,6 +48,7 @@ export class GlobalInterviewTemplateService {
     role: string;
     normalizedRole: string;
     experienceLevel: CareerExperienceLevel;
+    difficulty?: InterviewDifficulty;
     interviewType: InterviewType;
     questionCount: number;
     estimatedDuration?: string | null;
@@ -51,6 +60,7 @@ export class GlobalInterviewTemplateService {
         role: data.role,
         normalizedRole: data.normalizedRole,
         experienceLevel: data.experienceLevel,
+        difficulty: data.difficulty || "MEDIUM",
         interviewType: data.interviewType,
         questionCount: data.questionCount,
         estimatedDuration: data.estimatedDuration,

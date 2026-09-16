@@ -14,6 +14,7 @@ import {
   ModuleActivityEventType,
 } from "@/features/progress/types";
 import { ResumeScoreStatus } from "@prisma/client";
+import { normalizeError } from "@/lib/error-handler";
 
 export const AssessResumeTaskSchema = z.object({
   resumeId: z.string(),
@@ -145,10 +146,10 @@ export const assessResumeTask = schemaTask({
         atsScore: overallAssessment.atsScore,
       };
     } catch (error: any) {
-      console.error(`Assess Resume task failed for resume ${resumeId}:`, error);
+      const appError = normalizeError(error);
+      console.error(`Assess Resume task failed for resume ${resumeId}:`, appError.message, error);
 
-      const errorMessage = error?.message || "Unknown error during resume assessment";
-      await JobService.failJob(jobId, errorMessage);
+      await JobService.failJob(jobId, appError.message);
 
       // Update ResumeScore record status to FAILED
       await prisma.resumeScore.update({
@@ -167,7 +168,7 @@ export const assessResumeTask = schemaTask({
           jobId,
           role,
           experienceLevel,
-          error: errorMessage,
+          error: appError.message,
         },
       }).catch((activityError) =>
         console.warn("[AssessResumeTask] Failed to record failure activity:", activityError)

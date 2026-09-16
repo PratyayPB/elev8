@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import assert from "node:assert";
 import { RoadmapPromptService } from "../roadmap-prompt.service";
 import { RoadmapProfileContextService, RoadmapProfileContext } from "../roadmap-profile-context.service";
 import { RoadmapDurationService } from "../roadmap-duration.service";
 import { RoadmapValidator } from "../roadmap-validator";
-import { RoadmapRequest, Milestone } from "@/features/roadmaps/types";
+import { RoadmapRequest, RoadmapNode } from "@/features/roadmaps/types";
 import { normalizeRole, parseCareerLevel } from "@/features/roadmaps/utils";
 
 export async function runRoadmapPromptAndPersonalizationTests() {
@@ -178,45 +179,39 @@ export async function runRoadmapPromptAndPersonalizationTests() {
   // ==========================================
   console.log("6. Testing RoadmapDurationService calculation...");
 
-  const sampleMilestones: Milestone[] = [
+  const sampleNodes: RoadmapNode[] = [
     {
-      id: "m1",
+      id: "n1",
       title: "Foundations",
       description: "Basics",
-      order: 1,
-      estimatedWeeks: 2,
-      skillsCovered: ["HTML", "CSS"],
-      resources: [],
+      type: "skill",
+      estimatedHours: 20,
     },
     {
-      id: "m2",
+      id: "n2",
       title: "Frameworks",
       description: "React",
-      order: 2,
-      estimatedWeeks: 4,
-      skillsCovered: ["React"],
-      resources: [],
+      type: "skill",
+      estimatedHours: 40,
     },
     {
-      id: "m3",
+      id: "n3",
       title: "Backend & APIs",
       description: "Node & Express",
-      order: 3,
-      estimatedWeeks: 6,
-      skillsCovered: ["Node.js"],
-      resources: [],
+      type: "skill",
+      estimatedHours: 60,
     },
   ];
 
-  // 2 + 4 + 6 = 12 weeks -> 3 months
-  const duration12Weeks = RoadmapDurationService.calculate(sampleMilestones, 10);
+  // (20 + 40 + 60) = 120 hours / 10 hours/week = 12 weeks -> 3 months
+  const duration12Weeks = RoadmapDurationService.calculate(sampleNodes, 10);
   assert.strictEqual(duration12Weeks, "3 months");
 
-  // Single 2-week milestone -> "2 weeks"
-  const duration2Weeks = RoadmapDurationService.calculate([sampleMilestones[0]], 10);
+  // Single 20-hour node -> 2 weeks
+  const duration2Weeks = RoadmapDurationService.calculate([sampleNodes[0]], 10);
   assert.strictEqual(duration2Weeks, "2 weeks");
 
-  // Empty milestones fallback
+  // Empty nodes fallback
   const durationEmpty = RoadmapDurationService.calculate([], "Flexible");
   assert.strictEqual(durationEmpty, "Flexible");
 
@@ -234,19 +229,6 @@ export async function runRoadmapPromptAndPersonalizationTests() {
       experienceLevel: "Beginner",
     },
     summary: "Comprehensive guide to frontend development.",
-    milestones: [
-      {
-        id: "m1",
-        title: "HTML & CSS",
-        description: "Web fundamentals",
-        order: 1,
-        estimatedWeeks: 3,
-        skillsCovered: ["HTML", "CSS"],
-        resources: [
-          { id: "r1", title: "MDN Web Docs", url: "https://developer.mozilla.org", type: "article", isFree: true },
-        ],
-      },
-    ],
     projects: [
       {
         id: "p1",

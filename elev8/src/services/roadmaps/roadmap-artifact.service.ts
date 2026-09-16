@@ -1,4 +1,4 @@
-import { GeneratedRoadmap, RoadmapMetadata, Milestone, Project, LearningResource, CareerTip, RoadmapNode, RoadmapEdge } from "@/features/roadmaps/types";
+import { GeneratedRoadmap, RoadmapMetadata, Project, LearningResource, CareerTip, RoadmapNode, RoadmapEdge } from "@/features/roadmaps/types";
 import { ReactFlowGraph, RoadmapRenderService } from "./roadmap-render.service";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 
@@ -6,7 +6,6 @@ import { BlobStorageService } from "@/services/storage/blob-storage.service";
 export interface RoadmapArtifact {
   metadata: RoadmapMetadata;
   summary: string;
-  milestones: Milestone[];
   projects: Project[];
   resources: LearningResource[];
   careerTips: CareerTip[];
@@ -30,7 +29,6 @@ export class RoadmapArtifactService {
     return {
       metadata: generated.metadata,
       summary: generated.summary,
-      milestones: generated.milestones,
       projects: generated.projects,
       resources: generated.resources,
       careerTips: generated.careerTips,
@@ -47,7 +45,7 @@ export class RoadmapArtifactService {
     artifact: RoadmapArtifact
   ): Promise<string> {
     const path = `roadmaps/${roadmapId}.json`;
-    return BlobStorageService.uploadJson(path, artifact);
+    return BlobStorageService.upsertJson(path, artifact);
   }
 
   /**
@@ -59,9 +57,11 @@ export class RoadmapArtifactService {
 
     return Boolean(
       a.metadata &&
+      typeof a.metadata.title === "string" &&
       a.logicalGraph &&
+      Array.isArray(a.logicalGraph.nodes) &&
       a.reactFlow &&
-      Array.isArray(a.milestones)
+      Array.isArray(a.reactFlow.nodes)
     );
   }
 }

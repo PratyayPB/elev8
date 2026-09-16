@@ -26,7 +26,7 @@ export function ActivityLedgerTimeline({ activities }: ActivityLedgerTimelinePro
           No Activity Recorded Yet
         </h4>
         <p className="text-sm font-sans text-text-secondary max-w-md mx-auto">
-          As you practice mock interviews, complete roadmap milestones, and build resumes, your career progress history will be recorded here.
+          As you practice mock interviews, generate roadmaps, and build resumes, your career progress history will be recorded here.
         </p>
       </div>
     );
@@ -74,13 +74,7 @@ export function ActivityLedgerTimeline({ activities }: ActivityLedgerTimelinePro
           icon: <Award className="w-4 h-4 text-emerald-500" />,
         };
       }
-      case ModuleActivityEventType.MILESTONE_COMPLETED: {
-        const title = act.metadata?.phaseTitle || act.metadata?.topic || "Roadmap Milestone";
-        return {
-          title: `Completed ${title}`,
-          icon: <Map className="w-4 h-4 text-blue-500" />,
-        };
-      }
+
       case ModuleActivityEventType.ROADMAP_COMPLETED:
         return {
           title: "Completed Full Roadmap Journey",

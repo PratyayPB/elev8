@@ -44,16 +44,21 @@ export default async function RoadmapViewerPage({ params }: RoadmapViewerPagePro
     notFound();
   }
 
+  const isJobFailed = res.job?.status === "FAILED";
+  const isJobRunning = res.roadmap.status === "IN_PROGRESS" && !isJobFailed;
+  const displayError = isJobFailed
+    ? res.job?.error || res.error || "The AI model encountered an error while generating your roadmap. Please try again."
+    : res.error;
+
   return (
     <div className="p-6">
       <RoadmapViewer
         roadmapId={roadmapId}
         artifact={res.artifact}
-        isLoading={res.roadmap.status === "IN_PROGRESS"}
-        jobStatus={res.job?.step || "Generating..."}
+        isLoading={isJobRunning}
         jobProgress={res.job?.progress || 0}
         jobState={res.job?.status ?? null}
-        error={res.error}
+        error={displayError}
       />
     </div>
   );

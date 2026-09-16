@@ -74,7 +74,7 @@ enum RoadmapStatus {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
-  ARCHIVED
+  FAILED
 }
 
 enum ResumeScoreStatus {
@@ -107,6 +107,12 @@ enum InterviewType {
   SYSTEM_DESIGN
   ROLE_SPECIFIC
   GENERAL
+}
+
+enum InterviewDifficulty {
+  EASY
+  MEDIUM
+  HARD
 }
 
 enum InterviewTemplateSource {
@@ -207,8 +213,6 @@ enum ModuleActivityEventType {
   ROADMAP_GENERATION_STAGE_CHANGED
   ROADMAP_GENERATED
   ROADMAP_GENERATION_FAILED
-  MILESTONE_STARTED
-  MILESTONE_COMPLETED
   ROADMAP_COMPLETED
   ROADMAP_VIEWED
 
@@ -514,6 +518,7 @@ model InterviewTemplate {
 
   role              String
   experienceLevel   CareerExperienceLevel
+  difficulty        InterviewDifficulty   @default(MEDIUM)
   interviewType     InterviewType
   questionCount     Int
   estimatedDuration String?
@@ -531,6 +536,7 @@ model InterviewTemplate {
   interviews InterviewSession[]
 
   @@index([userId])
+  @@index([difficulty])
   @@index([status])
   @@map("interview_templates")
 }
@@ -544,6 +550,7 @@ model GlobalInterviewTemplate {
   role              String
   normalizedRole    String
   experienceLevel   CareerExperienceLevel
+  difficulty        InterviewDifficulty   @default(MEDIUM)
   interviewType     InterviewType
   questionCount     Int
   estimatedDuration String?
@@ -557,10 +564,11 @@ model GlobalInterviewTemplate {
 
   interviews InterviewSession[]
 
-  @@unique([normalizedRole, experienceLevel, interviewType])
+  @@unique([normalizedRole, experienceLevel, interviewType, difficulty])
   @@index([createdByUserId])
   @@index([normalizedRole])
   @@index([experienceLevel])
+  @@index([difficulty])
   @@index([interviewType])
   @@index([status])
   @@map("global_interview_templates")
@@ -582,6 +590,7 @@ model InterviewSession {
   // Historical snapshot
   role              String
   experienceLevel   CareerExperienceLevel
+  difficulty        InterviewDifficulty   @default(MEDIUM)
   interviewType     InterviewType
   questionCount     Int
   estimatedDuration String?
@@ -608,6 +617,7 @@ model InterviewSession {
   @@index([interviewTemplateId])
   @@index([globalInterviewTemplateId])
   @@index([templateSource])
+  @@index([difficulty])
   @@index([status])
   @@index([createdAt])
   @@map("interviews")

@@ -83,13 +83,9 @@ export function ModuleProgressGrid({ progress }: ModuleProgressGridProps) {
       icon: <Map className="w-5 h-5 text-blue-500" />,
       status: progress.roadmapStatus,
       percentage: progress.roadmapProgress,
-      detail:
-        progress.roadmapMetadata?.completedMilestones !== undefined &&
-        progress.roadmapMetadata?.totalMilestones !== undefined
-          ? `${progress.roadmapMetadata.completedMilestones} / ${progress.roadmapMetadata.totalMilestones} Milestones`
-          : progress.roadmapMetadata?.targetRole
-          ? `Role: ${progress.roadmapMetadata.targetRole}`
-          : null,
+      detail: progress.roadmapMetadata?.targetRole
+        ? `Role: ${progress.roadmapMetadata.targetRole}`
+        : null,
       href: progress.roadmapMetadata?.roadmapId
         ? `/dashboard/roadmap/${progress.roadmapMetadata.roadmapId}`
         : "/dashboard/roadmap",

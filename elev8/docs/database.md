@@ -54,7 +54,7 @@ User (clerkId: unique)
 - **`CurrentStatus`**: `STUDENT`, `GRADUATE`, `WORKING_PROFESSIONAL`, `CAREER_SWITCHER`
 - **`OnboardingStatus`**: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `SKIPPED`
 - **`CareerLevel`**: `BEGINNER`, `INTERMEDIATE`, `ADVANCED`
-- **`RoadmapStatus`**: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `ARCHIVED`
+- **`RoadmapStatus`**: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`
 - **`MilestoneStatus`**: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `SKIPPED`
 - **`ResumeStatus`**: `DRAFT`, `COMPLETED`, `ARCHIVED`
 - **`InterviewStatus`**: `IN_PROGRESS`, `COMPLETED`, `ABANDONED`

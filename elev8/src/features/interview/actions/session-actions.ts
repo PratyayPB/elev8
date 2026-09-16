@@ -12,6 +12,7 @@ import {
   ModuleCompletionStatus,
   ModuleActivityEventType,
 } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 /**
  * Fetches the interview metadata and its corresponding Blob artifact.
@@ -230,11 +231,12 @@ export async function submitInterview(
     });
   } catch (error) {
     console.error("Failed to trigger Trigger.dev assess-interview task:", error);
+    const appError = normalizeError(error);
     await prisma.job.update({
       where: { id: job.id },
       data: {
         status: JobStatus.FAILED,
-        error: error instanceof Error ? error.message : "Trigger failed",
+        error: appError.message,
       },
     });
     await ModuleActivityService.recordActivity({
@@ -246,7 +248,7 @@ export async function submitInterview(
         source: "ASSESS_INTERVIEW_DISPATCH",
         interviewId,
         jobId: job.id,
-        error: error instanceof Error ? error.message : "Trigger failed",
+        error: appError.message,
       },
     }).catch((activityError) =>
       console.warn("[SessionActions] Failed to record interview failure activity:", activityError)

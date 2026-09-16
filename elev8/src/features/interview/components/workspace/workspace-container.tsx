@@ -27,8 +27,6 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
   const {
     search,
     setSearch,
-    statusFilter,
-    setStatusFilter,
     difficultyFilter,
     setDifficultyFilter,
     sortOption,
@@ -64,8 +62,6 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
       <FiltersAndSearch
         search={search}
         setSearch={setSearch}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
         difficultyFilter={difficultyFilter}
         setDifficultyFilter={setDifficultyFilter}
         sortOption={sortOption}

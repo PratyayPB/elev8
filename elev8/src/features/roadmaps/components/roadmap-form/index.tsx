@@ -14,6 +14,8 @@ import { usePersonalization } from "../../hooks/use-personalization";
 import { useRoadmapRequest } from "../../hooks/use-roadmap-request";
 import { RoadmapRequest } from "../../types";
 import { generateRoadmapAction } from "../../actions/roadmap-actions";
+import { LoadingOverlay } from "../roadmap-viewer/LoadingOverlay";
+import { normalizeError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 interface RoadmapWizardProps {
@@ -24,6 +26,7 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isGeneratingOverlay, setIsGeneratingOverlay] = useState<boolean>(false);
 
   // Hook 1: Required Form Inputs (Stage 1)
   const form = useRoadmapForm();
@@ -50,24 +53,35 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
 
   const triggerGeneration = async (reqPayload: RoadmapRequest) => {
     setIsSubmitting(true);
+    setIsGeneratingOverlay(true);
     try {
       if (onComplete) {
         onComplete(reqPayload);
       }
       const res = await generateRoadmapAction(reqPayload);
+      if (!res.success) {
+        toast.error(res.error?.title || "Generation failed", {
+          description: res.error?.message || "Unable to generate roadmap. Please try again.",
+        });
+        setIsGeneratingOverlay(false);
+        return;
+      }
       toast.success("Roadmap generation started!", {
         description: `Generating your ${reqPayload.role} roadmap...`,
       });
-      if (res?.roadmapId) {
-        router.push(`/dashboard/roadmaps/${res.roadmapId}`);
+      if (res.data?.roadmapId) {
+        router.push(`/dashboard/roadmaps/${res.data.roadmapId}`);
       } else {
         router.push("/dashboard/roadmaps");
+        setIsGeneratingOverlay(false);
       }
     } catch (err) {
       console.error("Failed to trigger roadmap generation:", err);
-      toast.error("Generation failed", {
-        description: "Failed to start roadmap generation task. Please try again.",
+      const appError = normalizeError(err);
+      toast.error(appError.title || "Generation failed", {
+        description: appError.message,
       });
+      setIsGeneratingOverlay(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +126,9 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 sm:p-8 shadow-sm">
+    <>
+      {isGeneratingOverlay && <LoadingOverlay progress={10} />}
+      <div className="w-full max-w-3xl mx-auto bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 sm:p-8 shadow-sm">
       {/* Wizard Header */}
       <div className="text-center mb-8">
         <h2 className="text-2xl font-display font-bold text-text-primary tracking-tight">
@@ -177,5 +193,6 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
         />
       </div>
     </div>
-  );
+  </>
+);
 }

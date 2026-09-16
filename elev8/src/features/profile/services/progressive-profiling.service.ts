@@ -74,21 +74,21 @@ const CONTEXT_TEMPLATES: Record<PromptContext, PromptTemplate[]> = {
       field: "targetRole",
       title: "What career path are you aiming for?",
       description:
-        "Defines the destination and milestones of your custom learning roadmap.",
+        "Defines the destination and focus of your custom learning roadmap.",
       priority: 100,
     },
     {
       field: "desiredSkills",
       title: "What skills do you want to learn?",
       description:
-        "Creates targeted milestones specifically for your desired skills.",
+        "Creates targeted paths specifically for your desired skills.",
       priority: 90,
     },
     {
       field: "weeklyLearningHours",
       title: "How many hours can you dedicate per week?",
       description:
-        "Calculates realistic milestone pacing and completion estimates.",
+        "Calculates realistic roadmap pacing and completion estimates.",
       priority: 80,
     },
     {
@@ -101,7 +101,7 @@ const CONTEXT_TEMPLATES: Record<PromptContext, PromptTemplate[]> = {
       field: "skills",
       title: "What skills do you already know?",
       description:
-        "Allows skipping redundant beginner milestones you've already mastered.",
+        "Allows skipping redundant beginner topics you've already mastered.",
       priority: 60,
     },
   ],
@@ -181,7 +181,7 @@ const CONTEXT_TEMPLATES: Record<PromptContext, PromptTemplate[]> = {
     {
       field: "desiredSkills",
       title: "Add skills you want to learn",
-      description: "Generates custom learning milestones.",
+      description: "Generates custom learning roadmaps.",
       priority: 70,
     },
     {

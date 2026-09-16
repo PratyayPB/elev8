@@ -1,13 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { CareerLevel, RoadmapStatus, Prisma } from "@prisma/client";
+import { Prisma, RoadmapStatus } from "@prisma/client";
 import { LibraryRoadmap } from "@/features/roadmaps/types";
 
 export interface GetRoadmapsOptions {
   userId: string;
   section?: "mine" | "global";
   search?: string;
-  experienceLevel?: string;
-  status?: string;
   sort?: "newest" | "oldest" | "updated" | "alphabetical";
   page?: number;
   limit?: number;
@@ -27,30 +25,26 @@ export class RoadmapLibraryService {
       userId,
       section = "mine",
       search,
-      experienceLevel,
-      status,
       sort = "newest",
       page = 1,
       limit = 9,
     } = options;
 
     if (section === "global") {
-      const globalWhere: Prisma.GlobalRoadmapWhereInput = {};
+      const globalWhere: Prisma.GlobalRoadmapWhereInput = {
+        status: RoadmapStatus.COMPLETED,
+      };
 
       if (search && search.trim()) {
         const query = search.trim();
-        globalWhere.OR = [
-          { title: { contains: query, mode: "insensitive" } },
-          { targetRole: { contains: query, mode: "insensitive" } },
+        globalWhere.AND = [
+          {
+            OR: [
+              { title: { contains: query, mode: "insensitive" } },
+              { targetRole: { contains: query, mode: "insensitive" } },
+            ],
+          },
         ];
-      }
-
-      if (experienceLevel && experienceLevel !== "ALL") {
-        globalWhere.experienceLevel = experienceLevel as CareerLevel;
-      }
-
-      if (status && status !== "ALL") {
-        globalWhere.status = status as RoadmapStatus;
       }
 
       let orderBy: Prisma.GlobalRoadmapOrderByWithRelationInput = { createdAt: "desc" };
@@ -70,6 +64,19 @@ export class RoadmapLibraryService {
           orderBy,
           skip,
           take: limit,
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            targetRole: true,
+            experienceLevel: true,
+            status: true,
+            estimatedDuration: true,
+            blobUrl: true,
+            createdByUserId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
         }),
         prisma.globalRoadmap.count({ where: globalWhere }),
       ]);
@@ -115,14 +122,6 @@ export class RoadmapLibraryService {
       ];
     }
 
-    if (experienceLevel && experienceLevel !== "ALL") {
-      roadmapWhere.experienceLevel = experienceLevel as CareerLevel;
-    }
-
-    if (status && status !== "ALL") {
-      roadmapWhere.status = status as RoadmapStatus;
-    }
-
     // 2. Build where clause for GlobalRoadmaps created by this user
     const globalUserWhere: Prisma.GlobalRoadmapWhereInput = {
       createdByUserId: userId,
@@ -136,20 +135,37 @@ export class RoadmapLibraryService {
       ];
     }
 
-    if (experienceLevel && experienceLevel !== "ALL") {
-      globalUserWhere.experienceLevel = experienceLevel as CareerLevel;
-    }
-
-    if (status && status !== "ALL") {
-      globalUserWhere.status = status as RoadmapStatus;
-    }
-
     const [personalRoadmaps, userGlobalRoadmaps] = await Promise.all([
       prisma.roadmap.findMany({
         where: roadmapWhere,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          targetRole: true,
+          experienceLevel: true,
+          status: true,
+          estimatedDuration: true,
+          blobUrl: true,
+          personalized: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
       prisma.globalRoadmap.findMany({
         where: globalUserWhere,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          targetRole: true,
+          experienceLevel: true,
+          status: true,
+          estimatedDuration: true,
+          blobUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
     ]);
 
@@ -185,7 +201,7 @@ export class RoadmapLibraryService {
       updatedAt: g.updatedAt,
     }));
 
-    let combined = [...mappedPersonal, ...mappedUserGlobal];
+    const combined = [...mappedPersonal, ...mappedUserGlobal];
 
     if (sort === "oldest") {
       combined.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());

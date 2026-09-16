@@ -75,7 +75,7 @@ export class BlobStorageService {
       console.warn(`Failed to delete old blob during replacement: ${currentBlobUrl}`, error);
     }
     
-    return this.uploadJson(pathname, data);
+    return this.upsertJson(pathname, data);
   }
 
   /**

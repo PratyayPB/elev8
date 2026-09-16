@@ -29,8 +29,7 @@ MISSING DATA:
 REALISM:
 - The roadmap must be achievable within the specified weekly time commitment if provided.
 - Prioritize essential skills over exhaustive coverage.
-- Do not overload milestones with unrealistic numbers of skills, projects, or resources.
-- Estimated hours and weeks must be internally consistent.
+- Estimated hours must be internally consistent.
 - Projects and resources must be appropriate for the user's current level.
 
 GRAPH SEMANTICS:
@@ -39,14 +38,11 @@ GRAPH SEMANTICS:
 - Avoid unnecessary edges.
 - Foundational skills must precede dependent skills.
 - Projects should depend on skills they actually require.
-- Milestones should represent meaningful learning phases.
 - The graph must remain a true Directed Acyclic Graph (DAG) with NO circular dependencies.
 
 CONSISTENCY:
-- Milestone order must agree with prerequisite relationships.
-- Skills referenced in milestones should correspond to relevant graph nodes where appropriate.
 - Project difficulty must match required skills.
-- Estimated hours and weeks must be plausible.
+- Estimated hours must be plausible.
 - Do not create references to nonexistent IDs.
 
 CRITICAL OUTPUT INSTRUCTIONS:
@@ -56,18 +52,17 @@ CRITICAL OUTPUT INSTRUCTIONS:
 4. DO NOT generate React Flow positioning metadata or coordinates (x, y, position). You must ONLY generate a logical graph (node list with ids, titles, types, and edge list connecting node ids).
 5. Ensure node IDs in "logicalGraph.edges" refer to actual existing node IDs in "logicalGraph.nodes".
 6. Graph must be a Directed Acyclic Graph (DAG) with NO circular dependencies.
-7. EVERY OBJECT in every array (milestones, projects, resources, careerTips, nodes, edges) MUST have a non-empty string "id" field (e.g. "m1", "proj_1", "res_1", "tip_1", "n1", "e1").
-8. "projects" and "resources" arrays inside milestones, as well as the top-level "projects", "resources", and "careerTips" arrays, MUST contain full objects, NEVER plain strings.
+7. EVERY OBJECT in every array (projects, resources, careerTips, nodes, edges) MUST have a non-empty string "id" field (e.g. "proj_1", "res_1", "tip_1", "n1", "e1").
+8. The top-level "projects", "resources", and "careerTips" arrays MUST contain full objects, NEVER plain strings.
 
 STRUCTURAL REQUIREMENTS:
 - metadata: title, role, experienceLevel ("Beginner" | "Basic" | "Intermediate" | "Advanced").
 - summary: high-level overview of the roadmap strategy.
-- milestones: sequential learning phases. Each milestone MUST have { id, title, description, order (1-indexed), estimatedWeeks, skillsCovered (string[]), resources (object[]), projects (object[]) }.
 - projects: top-level array of { id, title, description, difficulty ("Beginner" | "Intermediate" | "Advanced"), skillsRequired (string[]) }.
 - resources: top-level array of { id, title, url, type, isFree (boolean), description }.
 - careerTips: top-level array of { id, category, tip }.
 - logicalGraph:
-  - nodes: array of { id, title, description, type: "skill" | "milestone" | "project", category, estimatedHours }
+  - nodes: array of { id, title, description, type: "skill" | "project", category, estimatedHours }
   - edges: array of { id, source, target } representing prerequisite relationships (e.g. source: "html", target: "css").
 `;
 

@@ -5,7 +5,6 @@ import { InterviewSession, InterviewStatus } from "@prisma/client";
 export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [sortOption, setSortOption] = useState<string>("NEWEST");
 
@@ -34,10 +33,12 @@ export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
         item.role.toLowerCase().includes(search.toLowerCase()) ||
         (item.interviewType && item.interviewType.toLowerCase().includes(search.toLowerCase()));
 
-      // Status
-      const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
+      // Difficulty
+      const matchesDifficulty =
+        difficultyFilter === "ALL" ||
+        (item.difficulty && item.difficulty.toLowerCase() === difficultyFilter.toLowerCase());
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesDifficulty;
     }).sort((a, b) => {
       if (sortOption === "NEWEST") {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -53,7 +54,7 @@ export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
       }
       return 0;
     });
-  }, [initialInterviews, search, statusFilter, difficultyFilter, sortOption]);
+  }, [initialInterviews, search, difficultyFilter, sortOption]);
 
   const inProgressList = useMemo(() => {
     return filteredInterviews.filter((i) => i.status === "IN_PROGRESS");
@@ -70,8 +71,6 @@ export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
   return {
     search,
     setSearch,
-    statusFilter,
-    setStatusFilter,
     difficultyFilter,
     setDifficultyFilter,
     sortOption,

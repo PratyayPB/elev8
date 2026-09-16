@@ -70,7 +70,6 @@ enum RoadmapStatus {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
-  ARCHIVED
 }
 
 enum ResumeScoreStatus {

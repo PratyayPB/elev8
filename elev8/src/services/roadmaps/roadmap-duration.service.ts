@@ -1,29 +1,27 @@
-import { Milestone } from "@/features/roadmaps/types";
+import { RoadmapNode } from "@/features/roadmaps/types";
 
 export class RoadmapDurationService {
   /**
    * Calculates a deterministic overall duration string (e.g. "6 weeks", "3 months")
-   * from milestones and weekly hours.
+   * from graph nodes and weekly hours.
    */
   public static calculate(
-    milestones: Milestone[],
+    nodes: RoadmapNode[],
     weeklyHoursInput: number | "Flexible" | null | undefined
   ): string {
-    if (!milestones || milestones.length === 0) {
+    if (!nodes || nodes.length === 0) {
       return "Flexible";
     }
 
-    const totalWeeksFromMilestones = milestones.reduce(
-      (sum, m) => sum + (typeof m.estimatedWeeks === "number" && m.estimatedWeeks > 0 ? m.estimatedWeeks : 1),
+    const totalHours = nodes.reduce(
+      (sum, n) => sum + (typeof n.estimatedHours === "number" && n.estimatedHours > 0 ? n.estimatedHours : 8),
       0
     );
 
-    let weeklyHours: number | null = null;
-    if (typeof weeklyHoursInput === "number" && weeklyHoursInput > 0) {
-      weeklyHours = weeklyHoursInput;
-    }
+    const weeklyHours =
+      typeof weeklyHoursInput === "number" && weeklyHoursInput > 0 ? weeklyHoursInput : 10;
 
-    const estimatedWeeks = Math.max(1, totalWeeksFromMilestones);
+    const estimatedWeeks = Math.max(1, Math.ceil(totalHours / weeklyHours));
     return this.formatDuration(estimatedWeeks);
   }
 

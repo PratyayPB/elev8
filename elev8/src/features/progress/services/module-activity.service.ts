@@ -30,7 +30,7 @@ export class ModuleActivityService {
       // Infer eventType for legacy calls
       let eventType: ModuleActivityEventType = ModuleActivityEventType.ASSESSMENT_COMPLETED;
       if (module === ModuleType.ROADMAP) {
-        eventType = ModuleActivityEventType.MILESTONE_COMPLETED;
+        eventType = ModuleActivityEventType.ROADMAP_COMPLETED;
       } else if (module === ModuleType.INTERVIEW_PRACTICE) {
         eventType = ModuleActivityEventType.INTERVIEW_COMPLETED;
       } else if (module === ModuleType.RESUME_BUILD) {
@@ -198,14 +198,7 @@ export class ModuleActivityService {
             progress = metadata?.stageNumber ? Math.round((metadata.stageNumber / 4) * 100) : 20;
           } else if (eventType === ModuleActivityEventType.ROADMAP_GENERATED) {
             status = ModuleProgressStatus.READY;
-            progress = 0;
-          } else if (eventType === ModuleActivityEventType.MILESTONE_STARTED) {
-            status = ModuleProgressStatus.IN_PROGRESS;
-          } else if (eventType === ModuleActivityEventType.MILESTONE_COMPLETED) {
-            const completed = metadata?.completedMilestones ?? 1;
-            const total = metadata?.totalMilestones ?? 1;
-            progress = Math.min(100, Math.round((completed / Math.max(total, 1)) * 100));
-            status = completed >= total ? ModuleProgressStatus.COMPLETED : ModuleProgressStatus.IN_PROGRESS;
+            progress = 100;
           } else if (eventType === ModuleActivityEventType.ROADMAP_COMPLETED) {
             status = ModuleProgressStatus.COMPLETED;
             progress = 100;

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { normalizeError } from "@/lib/error-handler";
 
 export function ReviewStep() {
   const { requestData, prevStep, setStep } = useInterviewRequestStore();
@@ -30,7 +31,8 @@ export function ReviewStep() {
       router.push(`/dashboard/interviews`);
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Failed to start interview generation. Please try again.");
+      const appError = normalizeError(err);
+      setError(appError.message);
     } finally {
       setIsSubmitting(false);
     }

@@ -7,10 +7,23 @@ export class RoadmapActionsService {
    * Can duplicate both personal roadmaps and global roadmaps into the user's personal roadmap library.
    */
   public static async duplicateRoadmap(roadmapId: string, userId: string) {
-    // 1. Try finding in personal Roadmap table
+    // 1. Try finding in personal Roadmap table (IDOR fix: scoped to userId)
     const personal = await prisma.roadmap.findFirst({
       where: {
         id: roadmapId,
+        userId,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        targetRole: true,
+        experienceLevel: true,
+        estimatedDuration: true,
+        status: true,
+        blobUrl: true,
+        personalized: true,
+        profileSnapshot: true,
       },
     });
 
@@ -26,15 +39,28 @@ export class RoadmapActionsService {
           status: personal.status,
           blobUrl: personal.blobUrl,
           personalized: personal.personalized,
+          profileSnapshot: personal.profileSnapshot
+            ? JSON.parse(JSON.stringify(personal.profileSnapshot))
+            : undefined,
         },
       });
       return duplicated;
     }
 
-    // 2. Try finding in GlobalRoadmap table
+    // 2. Try finding in GlobalRoadmap table (public catalog)
     const globalRoadmap = await prisma.globalRoadmap.findUnique({
       where: {
         id: roadmapId,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        targetRole: true,
+        experienceLevel: true,
+        estimatedDuration: true,
+        status: true,
+        blobUrl: true,
       },
     });
 
@@ -60,18 +86,24 @@ export class RoadmapActionsService {
 
   /**
    * Deletes a roadmap metadata record, associated jobs, and deletes the Blob artifact if unreferenced.
-   * If the roadmap is a GlobalRoadmap created by this user, it unlinks the author so it leaves their library.
+   * Delete is only available for personal roadmaps owned by the current user.
    */
   public static async deleteRoadmap(roadmapId: string, userId: string) {
-    // 1. Try finding and deleting from personal Roadmap table
-    const personal = await prisma.roadmap.findFirst({
-      where: {
-        id: roadmapId,
-        userId,
+    // 1. Try finding in personal Roadmap table
+    const personal = await prisma.roadmap.findUnique({
+      where: { id: roadmapId },
+      select: {
+        id: true,
+        userId: true,
+        blobUrl: true,
       },
     });
 
     if (personal) {
+      if (personal.userId !== userId) {
+        throw new Error("Unauthorized: You can only delete your own roadmaps.");
+      }
+
       const blobUrl = personal.blobUrl;
 
       // Delete Prisma Roadmap model
@@ -103,23 +135,16 @@ export class RoadmapActionsService {
       return true;
     }
 
-    // 2. Try finding in GlobalRoadmap table where createdByUserId = userId
-    const userGlobal = await prisma.globalRoadmap.findFirst({
-      where: {
-        id: roadmapId,
-        createdByUserId: userId,
-      },
+    // 2. Check if it's in GlobalRoadmap table
+    const globalRoadmap = await prisma.globalRoadmap.findUnique({
+      where: { id: roadmapId },
+      select: { id: true },
     });
 
-    if (userGlobal) {
-      // Unlink the user so it no longer appears in their personal "My Roadmaps", but remains in the global catalog
-      await prisma.globalRoadmap.update({
-        where: { id: roadmapId },
-        data: { createdByUserId: null },
-      });
-      return true;
+    if (globalRoadmap) {
+      throw new Error("Delete is not available for global roadmaps.");
     }
 
-    throw new Error("Roadmap not found or access denied.");
+    throw new Error("Roadmap not found.");
   }
 }

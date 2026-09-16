@@ -32,7 +32,7 @@ export class InterviewArtifactService {
     };
 
     const blobPath = `interview-templates/${templateId}.json`;
-    return BlobStorageService.uploadJson(blobPath, templateArtifact);
+    return BlobStorageService.upsertJson(blobPath, templateArtifact);
   }
 
   /**
@@ -70,7 +70,7 @@ export class InterviewArtifactService {
 
     // 1. Upload JSON artifact to Blob Storage
     const blobPath = `interviews/${interviewId}.json`;
-    const blobUrl = await BlobStorageService.uploadJson(blobPath, artifact);
+    const blobUrl = await BlobStorageService.upsertJson(blobPath, artifact);
 
     // 2. Persist metadata in Prisma
     await prisma.interviewSession.update({
@@ -111,7 +111,7 @@ export class InterviewArtifactService {
     };
 
     const blobPath = `interviews/${sessionId}.json`;
-    const blobUrl = await BlobStorageService.uploadJson(blobPath, sessionArtifact);
+    const blobUrl = await BlobStorageService.upsertJson(blobPath, sessionArtifact);
 
     await prisma.interviewSession.update({
       where: { id: sessionId },

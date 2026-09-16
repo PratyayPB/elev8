@@ -39,6 +39,16 @@ export class RoadmapViewerService {
         id: roadmapId,
         userId,
       },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        blobUrl: true,
+        targetRole: true,
+        experienceLevel: true,
+        estimatedDuration: true,
+        personalized: true,
+      },
     });
 
     let roadmapSummary: RoadmapViewerSummary | null = null;
@@ -64,6 +74,15 @@ export class RoadmapViewerService {
       const globalRoadmap = await prisma.globalRoadmap.findUnique({
         where: {
           id: roadmapId,
+        },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          blobUrl: true,
+          targetRole: true,
+          experienceLevel: true,
+          estimatedDuration: true,
         },
       });
 

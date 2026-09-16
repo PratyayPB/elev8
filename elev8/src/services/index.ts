@@ -1,6 +1,6 @@
 // Shared services export
 export * from "./ai/ai.service";
-export * from "./roadmaps/roadmap.service";
+export * from "./roadmaps";
 export * from "./resume/resume.service";
 export * from "./interview/interview.service";
 export * from "./career/career.service";

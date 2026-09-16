@@ -11,6 +11,7 @@ import {
   ModuleActivityEventType,
   ModuleType,
 } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 export const assessInterviewJob = task({
   id: "assess-interview",
@@ -92,14 +93,15 @@ export const assessInterviewJob = task({
 
       return { success: true, interviewId };
     } catch (error: any) {
-      console.error("Assessment Job Failed:", error);
+      const appError = normalizeError(error);
+      console.error("Assessment Job Failed:", appError.message, error);
 
       try {
         await prisma.job.update({
           where: { id: jobId },
           data: {
             status: JobStatus.FAILED,
-            error: error.message,
+            error: appError.message,
             completedAt: new Date(),
           },
         });
@@ -123,7 +125,7 @@ export const assessInterviewJob = task({
             source: "ASSESS_INTERVIEW_TASK",
             interviewId,
             jobId,
-            error: error?.message || "Assessment failed",
+            error: appError.message,
           },
         }).catch((activityError) =>
           console.warn("[AssessInterviewJob] Failed to record failure activity:", activityError)

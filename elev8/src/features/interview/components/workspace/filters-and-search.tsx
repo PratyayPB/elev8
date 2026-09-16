@@ -1,10 +1,18 @@
-import { Search, Filter, ArrowUpDown } from "lucide-react";
+"use client";
+
+import React from "react";
+import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FiltersAndSearchProps {
   search: string;
   setSearch: (v: string) => void;
-  statusFilter: string;
-  setStatusFilter: (v: string) => void;
   difficultyFilter: string;
   setDifficultyFilter: (v: string) => void;
   sortOption: string;
@@ -14,8 +22,6 @@ interface FiltersAndSearchProps {
 export function FiltersAndSearch({
   search,
   setSearch,
-  statusFilter,
-  setStatusFilter,
   difficultyFilter,
   setDifficultyFilter,
   sortOption,
@@ -37,49 +43,39 @@ export function FiltersAndSearch({
 
       {/* Filters & Sorting Controls */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Status Filter */}
-        <div className="flex items-center gap-1.5 bg-surface-muted px-3 py-1.5 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary">
-          <Filter className="w-3.5 h-3.5 text-text-secondary" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-transparent focus:outline-none cursor-pointer pr-1"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="FAILED">Failed</option>
-          </select>
-        </div>
-
         {/* Difficulty Filter */}
-        <div className="flex items-center gap-1.5 bg-surface-muted px-3 py-1.5 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary">
-          <select
-            value={difficultyFilter}
-            onChange={(e) => setDifficultyFilter(e.target.value)}
-            className="bg-transparent focus:outline-none cursor-pointer pr-1"
-          >
-            <option value="ALL">All Difficulties</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
-        </div>
+        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+          <SelectTrigger className="w-[185px] h-9 bg-surface-muted hover:bg-surface-subtle border-border-subtle rounded-xl px-3 text-xs font-display font-medium text-text-primary dark:text-foreground focus:ring-1 focus:ring-text-primary focus:border-text-primary transition-all">
+            <div className="flex items-center gap-1.5 text-text-secondary dark:text-text-muted truncate">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <span className="text-text-muted shrink-0">Difficulty:</span>
+              <SelectValue placeholder="All Difficulties" />
+            </div>
+          </SelectTrigger>
+          <SelectContent className="bg-surface dark:bg-surface-subtle border-border-subtle shadow-md rounded-xl p-1 z-50">
+            <SelectItem value="ALL">All Difficulties</SelectItem>
+            <SelectItem value="Easy">Easy</SelectItem>
+            <SelectItem value="Medium">Medium</SelectItem>
+            <SelectItem value="Hard">Hard</SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Sorting */}
-        <div className="flex items-center gap-1.5 bg-surface-muted px-3 py-1.5 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary">
-          <ArrowUpDown className="w-3.5 h-3.5 text-text-secondary" />
-          <select
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value)}
-            className="bg-transparent focus:outline-none cursor-pointer pr-1"
-          >
-            <option value="NEWEST">Newest First</option>
-            <option value="OLDEST">Oldest First</option>
-            <option value="HIGHEST_SCORE">Highest Score</option>
-            <option value="LOWEST_SCORE">Lowest Score</option>
-          </select>
-        </div>
+        <Select value={sortOption} onValueChange={setSortOption}>
+          <SelectTrigger className="w-[185px] h-9 bg-surface-muted hover:bg-surface-subtle border-border-subtle rounded-xl px-3 text-xs font-display font-medium text-text-primary dark:text-foreground focus:ring-1 focus:ring-text-primary focus:border-text-primary transition-all">
+            <div className="flex items-center gap-1.5 text-text-secondary dark:text-text-muted truncate">
+              <ArrowUpDown className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <span className="text-text-muted shrink-0">Sort:</span>
+              <SelectValue placeholder="Sort by" />
+            </div>
+          </SelectTrigger>
+          <SelectContent className="bg-surface dark:bg-surface-subtle border-border-subtle shadow-md rounded-xl p-1 z-50">
+            <SelectItem value="NEWEST">Newest First</SelectItem>
+            <SelectItem value="OLDEST">Oldest First</SelectItem>
+            <SelectItem value="HIGHEST_SCORE">Highest Score</SelectItem>
+            <SelectItem value="LOWEST_SCORE">Lowest Score</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

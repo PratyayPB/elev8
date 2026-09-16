@@ -6,6 +6,7 @@ import { createResumeAssessmentJob } from "../../actions/resume-actions";
 import { useState } from "react";
 import { Loader2, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { normalizeError } from "@/lib/error-handler";
 
 export function ReviewStep() {
   const { requestData, prevStep, setStep, reset } = useResumeRequestStore();
@@ -45,7 +46,8 @@ export function ReviewStep() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || "Failed to start resume assessment. Please check your inputs.");
+      const appError = normalizeError(err);
+      setError(appError.message);
     } finally {
       setIsSubmitting(false);
     }

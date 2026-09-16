@@ -27,7 +27,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ progress = 0 }) 
   const currentStageIndex = resolveRoadmapStage(progress);
 
   return (
-    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
       <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 max-w-md w-full shadow-xl space-y-6">
         <div className="flex flex-col items-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-muted text-text-primary border border-border-subtle">

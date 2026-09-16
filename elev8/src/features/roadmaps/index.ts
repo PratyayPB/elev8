@@ -6,5 +6,4 @@ export * from "./services/roadmap-request.service";
 export * from "./actions/profile-status.action";
 export * from "./types";
 export * from "./constants/experience-levels";
-export * from "./constants/study-hours";
 export * from "./constants/roadmap-roles";

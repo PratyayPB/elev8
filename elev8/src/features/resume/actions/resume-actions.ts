@@ -11,6 +11,7 @@ import {
   ModuleActivityEventType,
   ModuleType,
 } from "@/features/progress/types";
+import { normalizeError } from "@/lib/error-handler";
 
 function mapExperienceLevel(level: string): CareerExperienceLevel {
   const upper = level.toUpperCase();
@@ -146,11 +147,12 @@ export async function createResumeAssessmentJob(formData: FormData) {
     });
   } catch (error) {
     console.error("Failed to trigger Trigger.dev assess-resume task:", error);
+    const appError = normalizeError(error);
     await prisma.job.update({
       where: { id: job.id },
       data: {
         status: JobStatus.FAILED,
-        error: error instanceof Error ? error.message : "Trigger failed",
+        error: appError.message,
       },
     });
     await prisma.resumeScore.update({
@@ -166,11 +168,12 @@ export async function createResumeAssessmentJob(formData: FormData) {
         source: "ASSESS_RESUME_DISPATCH",
         scoreId: resume.id,
         jobId: job.id,
-        error: error instanceof Error ? error.message : "Trigger failed",
+        error: appError.message,
       },
     }).catch((activityError) =>
       console.warn("[ResumeActions] Failed to record resume score failure activity:", activityError)
     );
+    throw new Error(appError.message);
   }
 
   return {

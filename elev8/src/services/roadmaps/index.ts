@@ -1,4 +1,3 @@
-export * from "./roadmap.service";
 export * from "./roadmap-prompts";
 export * from "./roadmap-schema";
 export * from "./roadmap-validator";

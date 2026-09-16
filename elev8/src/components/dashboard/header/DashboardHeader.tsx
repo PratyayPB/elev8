@@ -10,7 +10,7 @@ export function DashboardHeader() {
   const { isSidebarOpen, toggleSidebar } = useDashboardStore();
 
   const getPageName = () => {
-    if (pathname === "/dashboard") return "Dashboard";
+    if (!pathname || pathname === "/dashboard") return "Dashboard";
     const segment = pathname.split("/")[2];
     if (!segment) return "Dashboard";
     return segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
