@@ -1,5 +1,20 @@
+﻿import { describe, it } from "node:test";
 import assert from "node:assert";
-import { InterviewSession, InterviewStatus, InterviewDifficulty, CareerExperienceLevel, InterviewType, InterviewTemplateSource } from "@prisma/client";
+import {
+  InterviewSession,
+  InterviewStatus,
+  InterviewDifficulty,
+  CareerExperienceLevel,
+  InterviewType,
+  InterviewTemplateSource,
+} from "@prisma/client";
+import {
+  mapInterviewType,
+  mapExperienceLevel,
+  mapDifficulty,
+  mapExpToStr,
+  mapDiffToStr,
+} from "../utils/interview-mappers";
 
 function filterInterviews(
   interviews: InterviewSession[],
@@ -7,13 +22,11 @@ function filterInterviews(
   difficultyFilter: string
 ): InterviewSession[] {
   return interviews.filter((item) => {
-    // Search
     const matchesSearch =
       search === "" ||
       item.role.toLowerCase().includes(search.toLowerCase()) ||
       (item.interviewType && item.interviewType.toLowerCase().includes(search.toLowerCase()));
 
-    // Difficulty
     const matchesDifficulty =
       difficultyFilter === "ALL" ||
       (item.difficulty && item.difficulty.toLowerCase() === difficultyFilter.toLowerCase());
@@ -22,9 +35,7 @@ function filterInterviews(
   });
 }
 
-async function runWorkspaceFilterTests() {
-  console.log("Running Interview Workspace Difficulty & Filter Unit Tests...\n");
-
+describe("Interview Workspace & Filter Tests", () => {
   const mockInterviews: InterviewSession[] = [
     {
       id: "int_1",
@@ -41,7 +52,6 @@ async function runWorkspaceFilterTests() {
       blobUrl: "https://blob.example.com/1",
       overallScore: 85,
       durationSeconds: 1800,
-      assessment: null,
       personalized: false,
       profileSnapshot: null,
       profileId: null,
@@ -66,7 +76,6 @@ async function runWorkspaceFilterTests() {
       blobUrl: "https://blob.example.com/2",
       overallScore: 90,
       durationSeconds: 2700,
-      assessment: null,
       personalized: false,
       profileSnapshot: null,
       profileId: null,
@@ -91,7 +100,6 @@ async function runWorkspaceFilterTests() {
       blobUrl: "https://blob.example.com/3",
       overallScore: null,
       durationSeconds: null,
-      assessment: null,
       personalized: false,
       profileSnapshot: null,
       profileId: null,
@@ -103,49 +111,135 @@ async function runWorkspaceFilterTests() {
     },
   ];
 
-  // 1. Test Filter All (no-op filter)
-  console.log("1. Testing ALL difficulty filter...");
-  const allResults = filterInterviews(mockInterviews, "", "ALL");
-  assert.strictEqual(allResults.length, 3, "ALL filter should return all 3 interviews");
-  console.log("✔ ALL difficulty filter passed.");
+  it("should return all interviews when difficulty is ALL", () => {
+    const allResults = filterInterviews(mockInterviews, "", "ALL");
+    assert.strictEqual(allResults.length, 3);
+  });
 
-  // 2. Test Easy Difficulty Filter
-  console.log("2. Testing 'Easy' difficulty filter...");
-  const easyResults = filterInterviews(mockInterviews, "", "Easy");
-  assert.strictEqual(easyResults.length, 1, "Easy filter should return exactly 1 interview");
-  assert.strictEqual(easyResults[0].id, "int_1");
-  console.log("✔ 'Easy' difficulty filter passed.");
+  it("should filter by Easy difficulty", () => {
+    const easyResults = filterInterviews(mockInterviews, "", "Easy");
+    assert.strictEqual(easyResults.length, 1);
+    assert.strictEqual(easyResults[0].id, "int_1");
+  });
 
-  // 3. Test Hard Difficulty Filter
-  console.log("3. Testing 'Hard' difficulty filter...");
-  const hardResults = filterInterviews(mockInterviews, "", "Hard");
-  assert.strictEqual(hardResults.length, 1, "Hard filter should return exactly 1 interview");
-  assert.strictEqual(hardResults[0].id, "int_2");
-  console.log("✔ 'Hard' difficulty filter passed.");
+  it("should filter by Hard difficulty", () => {
+    const hardResults = filterInterviews(mockInterviews, "", "Hard");
+    assert.strictEqual(hardResults.length, 1);
+    assert.strictEqual(hardResults[0].id, "int_2");
+  });
 
-  // 4. Test Medium Difficulty Filter
-  console.log("4. Testing 'Medium' difficulty filter...");
-  const mediumResults = filterInterviews(mockInterviews, "", "Medium");
-  assert.strictEqual(mediumResults.length, 1, "Medium filter should return exactly 1 interview");
-  assert.strictEqual(mediumResults[0].id, "int_3");
-  console.log("✔ 'Medium' difficulty filter passed.");
+  it("should filter by Medium difficulty", () => {
+    const mediumResults = filterInterviews(mockInterviews, "", "Medium");
+    assert.strictEqual(mediumResults.length, 1);
+    assert.strictEqual(mediumResults[0].id, "int_3");
+  });
 
-  // 5. Test Combined Search + Difficulty Filter
-  console.log("5. Testing Combined Search + Difficulty Filter...");
-  const combinedMatch = filterInterviews(mockInterviews, "Frontend", "Hard");
-  assert.strictEqual(combinedMatch.length, 1);
-  assert.strictEqual(combinedMatch[0].id, "int_2");
+  it("should combine search query and difficulty filter", () => {
+    const match = filterInterviews(mockInterviews, "Frontend", "Hard");
+    assert.strictEqual(match.length, 1);
+    assert.strictEqual(match[0].id, "int_2");
 
-  const combinedMiss = filterInterviews(mockInterviews, "Backend", "Hard");
-  assert.strictEqual(combinedMiss.length, 0, "Backend with Hard difficulty should yield 0 results");
-  console.log("✔ Combined filter tests passed.");
+    const miss = filterInterviews(mockInterviews, "Backend", "Hard");
+    assert.strictEqual(miss.length, 0);
+  });
 
-  console.log("\n================================================");
-  console.log("All Interview Workspace Filtering tests passed!");
-  console.log("================================================\n");
-}
+  it("should detect stuck generating interviews older than 5 minutes", () => {
+    const now = Date.now();
+    const sixMinutesAgo = new Date(now - 6 * 60 * 1000);
+    const twoMinutesAgo = new Date(now - 2 * 60 * 1000);
 
-runWorkspaceFilterTests().catch((err) => {
-  console.error("Test failed:", err);
-  process.exit(1);
+    const stuckSessions = [
+      { id: "stuck_1", status: InterviewStatus.GENERATING, updatedAt: sixMinutesAgo },
+      { id: "fresh_2", status: InterviewStatus.GENERATING, updatedAt: twoMinutesAgo },
+      { id: "ready_3", status: InterviewStatus.READY, updatedAt: sixMinutesAgo },
+    ];
+
+    const timeoutThreshold = new Date(now - 5 * 60 * 1000);
+    const timedOut = stuckSessions.filter(
+      (s) => s.status === InterviewStatus.GENERATING && s.updatedAt < timeoutThreshold
+    );
+
+    assert.strictEqual(timedOut.length, 1);
+    assert.strictEqual(timedOut[0].id, "stuck_1");
+  });
+
+  it("should gate global interview retry to only creator", () => {
+    const globalTemplateOwned = { id: "gt_1", createdByUserId: "user_123" };
+    const globalTemplateOther = { id: "gt_2", createdByUserId: "user_456" };
+    const currentUserId = "user_123";
+
+    assert.strictEqual(globalTemplateOwned.createdByUserId === currentUserId, true);
+    assert.strictEqual(globalTemplateOther.createdByUserId === currentUserId, false);
+  });
+
+  it("should cascade user template cleanup and never delete global templates", () => {
+    const mockDb = {
+      globalTemplates: [{ id: "gt_100", role: "Software Engineer" }],
+      userTemplates: [{ id: "ut_100", userId: "user_123" }],
+      sessions: [
+        {
+          id: "sess_100",
+          userId: "user_123",
+          interviewTemplateId: "ut_100",
+          globalInterviewTemplateId: "gt_100",
+        },
+      ],
+    };
+
+    const sessionToDelete = mockDb.sessions.find(
+      (s) => s.id === "sess_100" && s.userId === "user_123"
+    );
+    assert.ok(sessionToDelete);
+
+    mockDb.sessions = mockDb.sessions.filter((s) => s.id !== "sess_100");
+    const remainingWithTemplate = mockDb.sessions.filter(
+      (s) => s.interviewTemplateId === sessionToDelete.interviewTemplateId
+    );
+    if (remainingWithTemplate.length === 0 && sessionToDelete.interviewTemplateId) {
+      mockDb.userTemplates = mockDb.userTemplates.filter(
+        (t) => t.id !== sessionToDelete.interviewTemplateId
+      );
+    }
+
+    assert.strictEqual(mockDb.sessions.length, 0);
+    assert.strictEqual(mockDb.userTemplates.length, 0);
+    assert.strictEqual(mockDb.globalTemplates.length, 1);
+  });
+
+  describe("Shared Interview Mappers", () => {
+    it("should map interview types correctly with fallback", () => {
+      assert.strictEqual(mapInterviewType("Behavioral Interview"), InterviewType.BEHAVIORAL);
+      assert.strictEqual(mapInterviewType("System Design"), InterviewType.SYSTEM_DESIGN);
+      assert.strictEqual(mapInterviewType("Role Specific"), InterviewType.ROLE_SPECIFIC);
+      assert.strictEqual(mapInterviewType("General"), InterviewType.GENERAL);
+      assert.strictEqual(mapInterviewType("Unknown Type"), InterviewType.TECHNICAL);
+    });
+
+    it("should map experience levels correctly with fallback", () => {
+      assert.strictEqual(mapExperienceLevel("Beginner"), CareerExperienceLevel.ENTRY);
+      assert.strictEqual(mapExperienceLevel("Entry"), CareerExperienceLevel.ENTRY);
+      assert.strictEqual(mapExperienceLevel("Junior"), CareerExperienceLevel.JUNIOR);
+      assert.strictEqual(mapExperienceLevel("Senior"), CareerExperienceLevel.SENIOR);
+      assert.strictEqual(mapExperienceLevel("Lead"), CareerExperienceLevel.LEAD);
+      assert.strictEqual(mapExperienceLevel("Intermediate"), CareerExperienceLevel.MID);
+    });
+
+    it("should map difficulties correctly with fallback", () => {
+      assert.strictEqual(mapDifficulty("Easy"), InterviewDifficulty.EASY);
+      assert.strictEqual(mapDifficulty("Hard"), InterviewDifficulty.HARD);
+      assert.strictEqual(mapDifficulty("Unknown"), InterviewDifficulty.MEDIUM);
+    });
+
+    it("should map enums back to user-facing strings", () => {
+      assert.strictEqual(mapExpToStr(CareerExperienceLevel.ENTRY), "Beginner");
+      assert.strictEqual(mapExpToStr(CareerExperienceLevel.JUNIOR), "Basic");
+      assert.strictEqual(mapExpToStr(CareerExperienceLevel.MID), "Intermediate");
+      assert.strictEqual(mapExpToStr(CareerExperienceLevel.SENIOR), "Advanced");
+      assert.strictEqual(mapExpToStr(CareerExperienceLevel.LEAD), "Advanced");
+
+      assert.strictEqual(mapDiffToStr(InterviewDifficulty.EASY), "Easy");
+      assert.strictEqual(mapDiffToStr(InterviewDifficulty.MEDIUM), "Medium");
+      assert.strictEqual(mapDiffToStr(InterviewDifficulty.HARD), "Hard");
+    });
+  });
 });

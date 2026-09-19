@@ -6,6 +6,9 @@ import { BuilderResumeArtifact } from "../../types";
 interface ResumeTemplateRendererProps {
   artifact: BuilderResumeArtifact;
   template?: string;
+  recompileTrigger?: number;
+  onRecompileStart?: () => void;
+  onRecompileEnd?: () => void;
 }
 
 function escapeHtml(value: string): string {
@@ -93,7 +96,21 @@ function buildFallbackPreviewHtml(artifact: BuilderResumeArtifact): string {
 
   return `
     <html>
-      <body style="margin:0;font-family:Arial,sans-serif;background:#fff;color:#111;line-height:1.5;">
+      <head>
+        <style>
+          html, body {
+            overflow: hidden !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+        </style>
+      </head>
+      <body style="margin:0;font-family:Arial,sans-serif;background:#fff;color:#111;line-height:1.5;overflow:hidden;">
         <div style="max-width:900px;margin:0 auto;padding:36px;">
           <h1 style="margin:0 0 6px;font-size:32px;">${escapeHtml(fullName)}</h1>
           <div style="display:flex;flex-direction:column;gap:2px;color:#374151;">${contact}</div>
@@ -112,6 +129,9 @@ function buildFallbackPreviewHtml(artifact: BuilderResumeArtifact): string {
 export function ResumeTemplateRenderer({
   artifact,
   template = "academic-cv-lite",
+  recompileTrigger = 0,
+  onRecompileStart,
+  onRecompileEnd,
 }: ResumeTemplateRendererProps) {
   const [html, setHtml] = useState<string>(() =>
     buildFallbackPreviewHtml(artifact)
@@ -120,14 +140,22 @@ export function ResumeTemplateRenderer({
   const [height, setHeight] = useState<number>(1130);
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
+  // Keep ref to latest artifact so recompilations always use current data
+  // without triggering re-render on artifact field edits.
+  const artifactRef = React.useRef(artifact);
+  useEffect(() => {
+    artifactRef.current = artifact;
+  }, [artifact]);
+
   useEffect(() => {
     const fetchPreview = async () => {
       setLoading(true);
+      onRecompileStart?.();
       try {
         const response = await fetch("/api/builder/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ artifact, template }),
+          body: JSON.stringify({ artifact: artifactRef.current, template }),
         });
 
         if (response.ok) {
@@ -145,27 +173,48 @@ export function ResumeTemplateRenderer({
         );
       } finally {
         setLoading(false);
+        onRecompileEnd?.();
       }
     };
 
-    // Debounce the preview fetch to avoid spamming the API on every keystroke (1200ms)
-    const timeoutId = setTimeout(fetchPreview, 1200);
-    return () => clearTimeout(timeoutId);
-  }, [artifact, template]);
+    fetchPreview();
+  }, [recompileTrigger, template]);
 
   // Adjust iframe height dynamically to match content height
   const handleIframeLoad = () => {
     if (iframeRef.current && iframeRef.current.contentWindow?.document?.body) {
       try {
         const doc = iframeRef.current.contentWindow.document;
-        const docHeight = Math.max(
-          doc.body.scrollHeight,
-          doc.documentElement.scrollHeight,
-          doc.body.offsetHeight,
-          doc.documentElement.offsetHeight,
-          1130
-        );
-        setHeight(docHeight);
+
+        // Force disable inner scrollbars inside the iframe document
+        if (doc.documentElement) {
+          doc.documentElement.style.overflow = "hidden";
+          doc.documentElement.style.scrollbarWidth = "none";
+        }
+        if (doc.body) {
+          doc.body.style.overflow = "hidden";
+        }
+
+        const updateHeight = () => {
+          try {
+            const docHeight = Math.max(
+              doc.body.scrollHeight,
+              doc.documentElement.scrollHeight,
+              doc.body.offsetHeight,
+              doc.documentElement.offsetHeight,
+              1130
+            );
+            setHeight(docHeight);
+          } catch {}
+        };
+
+        updateHeight();
+
+        // Listen for layout changes or late font/image renders inside iframe
+        if (typeof ResizeObserver !== "undefined" && doc.body) {
+          const resizeObserver = new ResizeObserver(updateHeight);
+          resizeObserver.observe(doc.body);
+        }
       } catch (e) {
         // Fallback to default A4 min-height
         setHeight(1130);
@@ -184,8 +233,9 @@ export function ResumeTemplateRenderer({
         ref={iframeRef}
         srcDoc={html || buildFallbackPreviewHtml(artifact)}
         onLoad={handleIframeLoad}
-        style={{ height: `${height}px` }}
-        className="w-full border-none block min-h-[1130px]"
+        scrolling="no"
+        style={{ height: `${height}px`, overflow: "hidden" }}
+        className="w-full border-none block min-h-[1130px] overflow-hidden"
         title="Resume Preview"
       />
     </div>

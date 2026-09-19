@@ -1,35 +1,61 @@
+"use client";
+
+import React, { useState } from "react";
 import { useInterviewRequestStore } from "../../hooks/use-interview-request";
-import { Navigation } from "./navigation";
 import { InterviewRequestService } from "../../services/interview-request.service";
 import { createInterviewJob } from "../../actions/interview-actions";
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Navigation } from "./navigation";
+import {
+  CheckCircle,
+  Code,
+  ShieldCheck,
+  Sparkles,
+  FastForward,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { normalizeError } from "@/lib/error-handler";
 
 export function ReviewStep() {
-  const { requestData, prevStep, setStep } = useInterviewRequestStore();
+  const { requestData, prevStep } = useInterviewRequestStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const isProfilePersonalized =
+    !requestData.personalization?.skipped &&
+    Boolean(requestData.personalization?.profile);
+
+  // Compile full payload for inspection
+  const compiledPayload = {
+    role: requestData.role || "",
+    experienceLevel: requestData.experienceLevel || "",
+    difficulty: requestData.difficulty || "",
+    interviewType: requestData.interviewType || "",
+    personalization: {
+      skipped: Boolean(requestData.personalization?.skipped),
+      profileContext: requestData.personalization?.profile || null,
+    },
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      // 1. Validate and build request object
       const finalRequest = InterviewRequestService.buildRequest(requestData);
+      const res = await createInterviewJob(finalRequest);
 
-      // 2. Trigger background generation job via server action
-      const { interviewId } = await createInterviewJob(finalRequest);
+      if (!res.success) {
+        setError(res.error.message || "Failed to generate interview.");
+        toast.error(res.error.message || "Failed to generate interview.");
+        return;
+      }
 
-      // 3. Notify user and redirect
       toast.success("Interview generation started!", {
         description: `Your ${finalRequest.role} interview is being generated.`,
       });
       router.push(`/dashboard/interviews`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       const appError = normalizeError(err);
       setError(appError.message);
@@ -38,101 +64,108 @@ export function ReviewStep() {
     }
   };
 
-
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Review Interview Request
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Verify your selections before we generate the interview.
-        </p>
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Ready Banner & Status Badges */}
+      <div className="flex items-center justify-between border-b border-border-subtle pb-4">
+        <div>
+          <h3 className="text-base font-display font-bold text-text-primary flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            Interview Request Ready
+          </h3>
+          <p className="text-xs font-sans text-text-secondary mt-0.5">
+            Input parameters ready. Validated payload compiled successfully.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isProfilePersonalized ? (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-display font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Personalized with Profile
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-display font-semibold bg-surface-muted text-text-secondary border border-border-subtle">
+              <FastForward className="w-3.5 h-3.5 text-text-muted" />
+              Personalization Skipped
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-display font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            Validated
+          </span>
+        </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Required Inputs</h3>
-          <button 
-            onClick={() => setStep(1)}
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            Edit
-          </button>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="bg-surface-muted p-4 rounded-xl border border-border-subtle">
+          <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+            Target Role
+          </span>
+          <span className="text-sm font-display font-bold text-text-primary mt-1 block truncate">
+            {requestData.role || "Not specified"}
+          </span>
         </div>
-        
-        <dl className="grid grid-cols-2 gap-y-4 text-sm">
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Target Role</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">{requestData.role}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Experience</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">{requestData.experienceLevel}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Difficulty</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">{requestData.difficulty}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Interview Type</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100 mt-1">
-              {requestData.interviewType}
-            </dd>
-          </div>
-        </dl>
+
+        <div className="bg-surface-muted p-4 rounded-xl border border-border-subtle">
+          <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+            Experience Level
+          </span>
+          <span className="text-sm font-display font-bold text-text-primary mt-1 block">
+            {requestData.experienceLevel || "Not specified"}
+          </span>
+        </div>
+
+        <div className="bg-surface-muted p-4 rounded-xl border border-border-subtle">
+          <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+            Difficulty
+          </span>
+          <span className="text-sm font-display font-bold text-text-primary mt-1 block">
+            {requestData.difficulty || "Not specified"}
+          </span>
+        </div>
+
+        <div className="bg-surface-muted p-4 rounded-xl border border-border-subtle">
+          <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
+            Interview Type
+          </span>
+          <span className="text-sm font-display font-bold text-text-primary mt-1 block">
+            {requestData.interviewType || "Not specified"}
+          </span>
+        </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Personalization</h3>
-          <button 
-            onClick={() => setStep(2)}
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            Edit
-          </button>
+      {/* Payload Inspection */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-display font-semibold text-text-primary flex items-center gap-1">
+            <Code className="w-3.5 h-3.5" />
+            Compiled InterviewRequest Payload (JSON)
+          </span>
+          <span className="text-[11px] font-sans text-text-muted">
+            Ready for Interview Generator
+          </span>
         </div>
-        
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          {requestData.personalization?.skipped 
-            ? "Skipped Profile Personalization" 
-            : "Personalized with Profile Data"}
-        </p>
+        <pre className="bg-dashboard-card border border-border-subtle text-text-primary font-mono text-xs p-4 rounded-xl overflow-x-auto max-h-60 shadow-inner">
+          {JSON.stringify(compiledPayload, null, 2)}
+        </pre>
       </div>
 
       {error && (
-        <div className="mt-6 p-4 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl text-sm font-medium border border-red-200 dark:border-red-900/50">
+        <div className="p-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-sans">
           {error}
         </div>
       )}
 
-      <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center">
-        <button
-          type="button"
-          onClick={prevStep}
-          disabled={isSubmitting}
-          className="px-5 py-2.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-        >
-          Back
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="flex items-center px-6 py-2.5 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-900 transition-colors"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Generating Request...
-            </>
-          ) : (
-            "Build Interview Request"
-          )}
-        </button>
-      </div>
+      {/* Wizard Navigation Footer */}
+      <Navigation
+        currentStep={3}
+        totalSteps={3}
+        canContinue={true}
+        isSubmitting={isSubmitting}
+        onBack={prevStep}
+        onNext={handleSubmit}
+      />
     </div>
   );
 }

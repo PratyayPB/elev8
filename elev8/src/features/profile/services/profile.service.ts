@@ -55,30 +55,6 @@ export class ProfileService {
   }
 
   /**
-   * Retrieves a Profile by Clerk ID.
-   */
-  static async getProfileByClerkId(clerkId: string): Promise<ProfileData | null> {
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-      include: {
-        profile: {
-          include: {
-            skills: {
-              orderBy: { name: "asc" },
-            },
-            desiredSkills: {
-              orderBy: { name: "asc" },
-            },
-          },
-        },
-      },
-    });
-
-    if (!user || !user.profile) return null;
-    return this.mapToProfileData(user.profile);
-  }
-
-  /**
    * Creates a new Profile for the user.
    * Fails with ProfileConflictError if a Profile already exists.
    */
@@ -332,15 +308,6 @@ export class ProfileService {
     // because we combined the mandatory and optional schemas.
     const createData = input as ProfileCreateInput;
     return this.createProfile(userId, createData);
-  }
-
-  /**
-   * Deletes a user profile (primarily for account cleanup).
-   */
-  static async deleteProfile(userId: string): Promise<void> {
-    await prisma.profile.deleteMany({
-      where: { userId },
-    });
   }
 
   /**

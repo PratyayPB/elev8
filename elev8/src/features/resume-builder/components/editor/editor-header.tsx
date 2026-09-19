@@ -1,9 +1,26 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Save, CheckCircle2, AlertCircle, Download, LayoutTemplate, UserCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Save, CheckCircle2, AlertCircle, Download, LayoutTemplate, UserCheck, Sparkles, RefreshCw } from "lucide-react";
 import { SaveStatus } from "../../hooks/use-resume-editor";
 import { BUILDER_ROUTES } from "../../constants/builder-routes";
 import { ResumeBuilderTemplate } from "../../types";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const TEMPLATE_CATEGORIES = [
+  { id: "ATS_FRIENDLY", label: "ATS Friendly" },
+  { id: "MINIMAL_MODERN", label: "Minimal & Modern" },
+  { id: "TWO_COLUMN", label: "2 Column" },
+  { id: "CREATIVE", label: "Creative" },
+] as const;
 
 interface EditorHeaderProps {
   title: string;
@@ -17,9 +34,12 @@ interface EditorHeaderProps {
   isTemplateUpdating?: boolean;
   onDownloadPdf: () => void;
   isPdfGenerating?: boolean;
+  downloadStep?: "idle" | "saving" | "generating";
   onImportProfile?: () => void;
   isImportingProfile?: boolean;
   onAiBuild?: () => void;
+  onRecompile?: () => void;
+  isRecompiling?: boolean;
 }
 
 export function EditorHeader({
@@ -34,20 +54,55 @@ export function EditorHeader({
   isTemplateUpdating = false,
   onDownloadPdf,
   isPdfGenerating = false,
+  downloadStep = "idle",
   onImportProfile,
   isImportingProfile = false,
   onAiBuild,
+  onRecompile,
+  isRecompiling = false,
 }: EditorHeaderProps) {
   const [templates, setTemplates] = React.useState<any[]>([]);
+  const [templateLoadError, setTemplateLoadError] = React.useState<boolean>(false);
 
-  React.useEffect(() => {
+  const fetchTemplates = React.useCallback(() => {
+    setTemplateLoadError(false);
     fetch("/api/builder/templates")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load templates");
+        return res.json();
+      })
+      .then((data) => {
         if (Array.isArray(data)) setTemplates(data);
       })
-      .catch(err => console.error("Failed to load templates", err));
+      .catch((err) => {
+        console.error("Failed to load templates", err);
+        setTemplateLoadError(true);
+      });
   }, []);
+
+  React.useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  // Standard throttle (1.5s) to prevent spamming recompile
+  const [isRecompileThrottled, setIsRecompileThrottled] = React.useState(false);
+  const lastRecompileTimeRef = React.useRef<number>(0);
+  const RECOMPILE_THROTTLE_MS = 1500;
+
+  const handleRecompileClick = () => {
+    const now = Date.now();
+    if (
+      now - lastRecompileTimeRef.current < RECOMPILE_THROTTLE_MS ||
+      isRecompiling ||
+      isRecompileThrottled
+    ) {
+      return;
+    }
+    lastRecompileTimeRef.current = now;
+    setIsRecompileThrottled(true);
+    setTimeout(() => setIsRecompileThrottled(false), RECOMPILE_THROTTLE_MS);
+    onRecompile?.();
+  };
 
   const getStatusBadge = () => {
     switch (saveStatus) {
@@ -151,61 +206,120 @@ export function EditorHeader({
           </button>
 
           {/* Template Selector */}
-          <div className="relative flex items-center">
-            <LayoutTemplate className="h-3.5 w-3.5 text-text-secondary absolute left-3 pointer-events-none" />
-            <select
-              value={currentTemplate}
-              disabled={isTemplateUpdating || templates.length === 0}
-              onChange={(e) => onTemplateChange(e.target.value as ResumeBuilderTemplate)}
-              className="pl-8 pr-8 py-2 rounded-xl bg-surface-muted border border-border text-xs font-semibold text-text-primary focus:outline-none focus:border-text-primary transition-all cursor-pointer disabled:opacity-50 appearance-none max-w-[200px] truncate"
+          <Select
+            value={currentTemplate}
+            onValueChange={(val) => onTemplateChange(val as ResumeBuilderTemplate)}
+            disabled={isTemplateUpdating || templates.length === 0}
+          >
+            <SelectTrigger
+              className="w-[175px] sm:w-[205px] h-9 bg-surface-muted hover:bg-surface-subtle border-border rounded-xl px-3 text-xs font-display font-semibold text-text-primary dark:text-foreground focus:ring-1 focus:ring-text-primary focus:border-text-primary transition-all shrink-0"
+              title="Change resume template"
             >
-              {templates.length === 0 ? (
-                <option value={currentTemplate}>Loading templates...</option>
+              <div className="flex items-center gap-1.5 truncate">
+                {isTemplateUpdating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-text-secondary shrink-0" />
+                ) : (
+                  <LayoutTemplate className="h-3.5 w-3.5 text-text-secondary shrink-0" />
+                )}
+                <SelectValue
+                  placeholder={
+                    templates.find((t) => t.slug === currentTemplate)?.name ||
+                    (templateLoadError
+                      ? "Failed to load"
+                      : templates.length === 0
+                      ? "Loading templates..."
+                      : "Select template")
+                  }
+                />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-surface dark:bg-surface-subtle border-border-subtle shadow-md rounded-xl p-1 z-50 max-h-80">
+              {templateLoadError ? (
+                <div className="py-2.5 px-3 text-xs text-red-500 text-center font-display space-y-1">
+                  <div>Failed to load templates</div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fetchTemplates();
+                    }}
+                    className="text-[11px] underline text-text-primary hover:text-text-secondary cursor-pointer"
+                  >
+                    Click to retry
+                  </button>
+                </div>
+              ) : templates.length === 0 ? (
+                <div className="py-2.5 px-3 text-xs text-text-muted text-center font-display">
+                  Loading templates...
+                </div>
               ) : (
-                <>
-                  <optgroup label="ATS Friendly">
-                    {templates.filter(t => t.category === "ATS_FRIENDLY").map(t => (
-                      <option key={t.slug} value={t.slug}>{t.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Minimal & Modern">
-                    {templates.filter(t => t.category === "MINIMAL_MODERN").map(t => (
-                      <option key={t.slug} value={t.slug}>{t.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="2 Column">
-                    {templates.filter(t => t.category === "TWO_COLUMN").map(t => (
-                      <option key={t.slug} value={t.slug}>{t.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Creative">
-                    {templates.filter(t => t.category === "CREATIVE").map(t => (
-                      <option key={t.slug} value={t.slug}>{t.name}</option>
-                    ))}
-                  </optgroup>
-                </>
+                TEMPLATE_CATEGORIES.map(({ id, label }, index) => {
+                  const groupTemplates = templates.filter((t) => t.category === id);
+                  if (groupTemplates.length === 0) return null;
+
+                  return (
+                    <React.Fragment key={id}>
+                      {index > 0 && <SelectSeparator className="my-1 bg-border-subtle" />}
+                      <SelectGroup>
+                        <SelectLabel className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                          {label}
+                        </SelectLabel>
+                        {groupTemplates.map((template) => (
+                          <SelectItem
+                            key={template.slug}
+                            value={template.slug}
+                            className="text-xs font-display cursor-pointer"
+                          >
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </React.Fragment>
+                  );
+                })
               )}
-            </select>
-            {isTemplateUpdating && (
-              <Loader2 className="h-3 w-3 animate-spin text-text-secondary absolute right-2.5 pointer-events-none" />
-            )}
-          </div>
+            </SelectContent>
+          </Select>
+
+          {/* Recompile Preview Button */}
+          {onRecompile && (
+            <button
+              type="button"
+              onClick={handleRecompileClick}
+              disabled={isRecompiling || isRecompileThrottled}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-surface-muted hover:bg-border-subtle text-text-primary font-display font-semibold text-xs transition-all disabled:opacity-50 shrink-0"
+              title="Recompile preview with your latest changes"
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 text-text-primary ${
+                  isRecompiling ? "animate-spin" : ""
+                }`}
+              />
+              <span className="hidden sm:inline">
+                {isRecompiling ? "Recompiling..." : "Recompile"}
+              </span>
+            </button>
+          )}
 
           {/* PDF Download Button */}
           <button
             type="button"
             onClick={onDownloadPdf}
-            disabled={isPdfGenerating}
+            disabled={isPdfGenerating || downloadStep === "saving" || downloadStep === "generating"}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-surface-muted hover:bg-border-subtle text-text-primary font-display font-semibold text-xs transition-all disabled:opacity-50"
             title="Download PDF version of your resume"
           >
-            {isPdfGenerating ? (
+            {isPdfGenerating || downloadStep === "saving" || downloadStep === "generating" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-text-primary" />
             ) : (
               <Download className="h-3.5 w-3.5 text-text-primary" />
             )}
             <span className="hidden sm:inline">
-              {isPdfGenerating ? "Generating..." : "Download PDF"}
+              {downloadStep === "saving"
+                ? "Saving..."
+                : downloadStep === "generating" || isPdfGenerating
+                ? "Generating..."
+                : "Download PDF"}
             </span>
           </button>
 

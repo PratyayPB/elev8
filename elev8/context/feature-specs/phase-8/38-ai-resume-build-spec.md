@@ -57,12 +57,12 @@ The user **MUST have a completed Profile** to use this feature.
 Use:
 
 ```text
-Profile.isMandatoryCompleted === true
+Profile.isCompleted === true
 ```
 
 as the business-policy gate.
 
-If `isMandatoryCompleted === false`:
+If `isCompleted === false`:
 
 - Do not open the AI generation form.
 - Notify the user that they must complete their Profile before using AI Resume Build.

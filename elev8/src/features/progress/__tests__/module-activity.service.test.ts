@@ -105,12 +105,51 @@ export async function runModuleActivityServiceTests() {
     console.log("✔ Resume Score Completed projects to COMPLETED (100%) with ATS score metadata");
   }
 
+  // 9. Input Validation & Edge Cases for getProgress and recordActivity
+  {
+    await assert.rejects(
+      async () => {
+        await ModuleActivityService.getProgress("");
+      },
+      {
+        message: "Valid userId is required to retrieve progress.",
+      },
+      "getProgress should reject empty userId"
+    );
+
+    await assert.rejects(
+      async () => {
+        await ModuleActivityService.recordActivity({
+          userId: "",
+          module: ModuleType.CAREER_ASSESSMENT,
+          eventType: ModuleActivityEventType.ASSESSMENT_STARTED,
+        });
+      },
+      {
+        message: "Valid userId is required to record module activity.",
+      },
+      "recordActivity should reject empty userId"
+    );
+
+    console.log("✔ Validation boundaries enforced for empty user identifiers");
+  }
+
+  // 10. Unknown or Default Module / Event Fallback
+  {
+    const state = ModuleActivityService.computeProgressState(
+      ModuleType.CAREER_ASSESSMENT,
+      "UNKNOWN_EVENT" as any
+    );
+    assert.strictEqual(state.careerAssessmentStatus, ModuleProgressStatus.IN_PROGRESS);
+    assert.strictEqual(state.careerAssessmentProgress, 50);
+    console.log("✔ Default fallback handled cleanly for unknown events");
+  }
+
   console.log("\nAll ModuleActivityService projection tests passed successfully!");
 }
 
-if (require.main === module) {
-  runModuleActivityServiceTests().catch((err) => {
-    console.error("Test failed:", err);
-    process.exit(1);
-  });
-}
+runModuleActivityServiceTests().catch((err) => {
+  console.error("ModuleActivityService Test Failed:", err);
+  process.exit(1);
+});
+

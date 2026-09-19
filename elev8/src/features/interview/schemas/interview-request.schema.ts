@@ -12,7 +12,7 @@ export const InterviewProfileContextSchema = z.object({
 });
 
 export const InterviewRequestStage1Schema = z.object({
-  role: z.string().min(2, "Role must be at least 2 characters"),
+  role: z.string().min(2, "Role must be at least 2 characters").max(100, "Role must be at most 100 characters"),
   experienceLevel: z.enum(EXPERIENCE_LEVELS, {
     required_error: "Please select an experience level",
   }),

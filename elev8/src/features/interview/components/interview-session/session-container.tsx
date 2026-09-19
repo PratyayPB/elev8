@@ -11,7 +11,7 @@ import { ProgressBar } from "./progress-bar";
 import { QuestionView } from "./question-view";
 import { AnswerEditor } from "./answer-editor";
 import { PauseDialog, SubmitDialog } from "./dialogs";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface SessionContainerProps {
   interviewId: string;
@@ -106,7 +106,13 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
       
       if (blobUrl && artifact) {
         // Trigger final submit action
-        await submitInterview(interviewId, blobUrl, artifact, durationSeconds);
+        const res = await submitInterview(interviewId, blobUrl, artifact, durationSeconds);
+        if (!res.success) {
+          toast.error("Submission failed", {
+            description: res.error?.message || "Failed to submit interview. Please try again.",
+          });
+          return;
+        }
         setIsSubmitOpen(false);
         toast.success("Interview submitted successfully!", {
           description: "Generating your assessment report...",

@@ -1,53 +1,83 @@
+import React from "react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+
 interface NavigationProps {
-  onNext?: () => void;
+  currentStep: number;
+  totalSteps?: number;
+  canContinue: boolean;
+  isSkipped?: boolean;
+  isSubmitting?: boolean;
   onBack?: () => void;
-  onSkip?: () => void;
-  isNextDisabled?: boolean;
+  onNext: () => void;
+  onSkipPersonalization?: () => void;
   nextLabel?: string;
 }
 
 export function Navigation({
-  onNext,
+  currentStep,
+  totalSteps = 3,
+  canContinue,
+  isSkipped = false,
+  isSubmitting = false,
   onBack,
-  onSkip,
-  isNextDisabled = false,
-  nextLabel = "Next",
+  onNext,
+  onSkipPersonalization,
+  nextLabel,
 }: NavigationProps) {
+  const isFirst = currentStep === 1;
+  const isLast = currentStep === totalSteps;
+  const isPersonalization = currentStep === 2;
+
   return (
-    <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200 dark:border-gray-800">
+    <div className="flex items-center justify-between pt-6 border-t border-border-subtle mt-8">
       <div>
-        {onBack && (
+        {!isFirst && onBack && (
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={onBack}
-            className="px-5 py-2.5 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-all disabled:opacity-50 cursor-pointer"
           >
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </button>
         )}
       </div>
 
-      <div className="flex gap-4">
-        {onSkip && (
+      <div className="flex items-center gap-3">
+        {isPersonalization && !isSkipped && onSkipPersonalization && (
           <button
             type="button"
-            onClick={onSkip}
-            className="px-5 py-2.5 rounded-xl font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            disabled={isSubmitting}
+            onClick={onSkipPersonalization}
+            className="px-4 py-2 rounded-xl text-xs font-display font-semibold text-text-secondary hover:text-text-primary transition-all disabled:opacity-50 cursor-pointer"
           >
-            Skip Personalization
+            Skip Stage
           </button>
         )}
 
-        {onNext && (
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={isNextDisabled}
-            className="px-5 py-2.5 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-900 transition-colors"
-          >
-            {nextLabel}
-          </button>
-        )}
+        <button
+          type="button"
+          disabled={!canContinue || isSubmitting}
+          onClick={onNext}
+          className={`inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-display font-bold shadow-sm transition-all ${
+            canContinue && !isSubmitting
+              ? "bg-text-primary text-white dark:text-brand-primary-900 hover:bg-black/80 dark:hover:bg-brand-secondary-200 cursor-pointer active:scale-[0.98]"
+              : "bg-surface-muted text-text-muted cursor-not-allowed border border-border-subtle"
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              Generating Interview <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            </>
+          ) : isLast ? (
+            "Generate Interview"
+          ) : (
+            <>
+              {nextLabel || "Continue"} <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

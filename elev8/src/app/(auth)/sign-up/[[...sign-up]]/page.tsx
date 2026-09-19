@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SignUp, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
   title: "Sign Up | Elev8",
@@ -12,17 +13,17 @@ export default function SignUpPage() {
       <h2 className="text-3xl font-display font-bold text-white mb-2">Sign up</h2>
       <div className="min-h-[340px] w-full flex flex-col">
         <ClerkLoading>
-          <div className="flex flex-col gap-4 w-full animate-pulse">
-            <div className="h-11 w-full bg-[#222222] rounded-md"></div>
-            <div className="h-11 w-full bg-[#222222] rounded-md"></div>
+          <div className="flex flex-col gap-4 w-full" aria-busy="true">
+            <Skeleton className="h-11 w-full bg-[#222222]" />
+            <Skeleton className="h-11 w-full bg-[#222222]" />
             <div className="flex items-center gap-2 my-2">
-              <div className="h-[1px] w-full bg-white/10"></div>
-              <div className="w-8 h-3 bg-white/10 rounded-full"></div>
-              <div className="h-[1px] w-full bg-white/10"></div>
+              <Skeleton className="h-[1px] w-full bg-white/10" animation="none" />
+              <Skeleton className="w-8 h-3 bg-white/10 rounded-full shrink-0" animation="none" />
+              <Skeleton className="h-[1px] w-full bg-white/10" animation="none" />
             </div>
-            <div className="h-11 w-full bg-[#222222] rounded-md"></div>
-            <div className="h-11 w-full bg-[#222222] rounded-md"></div>
-            <div className="h-11 w-full bg-white/80 rounded-md"></div>
+            <Skeleton className="h-11 w-full bg-[#222222]" />
+            <Skeleton className="h-11 w-full bg-[#222222]" />
+            <Skeleton className="h-11 w-full bg-white/80" />
           </div>
         </ClerkLoading>
         

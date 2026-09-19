@@ -27,8 +27,8 @@ import { ProjectsEditor } from "./projects-editor";
 import { SkillsEditor } from "./skills-editor";
 import { CertificationsEditor } from "./certifications-editor";
 import { AchievementsEditor } from "./achievements-editor";
-import { ResumePreview } from "../resume-preview/resume-preview";
 import { AiBuildDialog } from "../ai-build/ai-build-dialog";
+import { ResumeTemplateRenderer } from "../templates/resume-template-renderer";
 import { toast } from "sonner";
 
 interface ResumeEditorProps {
@@ -69,6 +69,8 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
   const [isImportingProfile, setIsImportingProfile] = useState(false);
   const [isProfileIncompleteModalOpen, setIsProfileIncompleteModalOpen] = useState(false);
   const [isAiBuildModalOpen, setIsAiBuildModalOpen] = useState(false);
+  const [recompileTrigger, setRecompileTrigger] = useState<number>(0);
+  const [isRecompiling, setIsRecompiling] = useState<boolean>(false);
 
   const hasExistingContent = Boolean(
     artifact.professionalSummary?.trim() ||
@@ -91,9 +93,14 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
           data.version || data.artifact.version,
           new Date()
         );
+        setRecompileTrigger((prev) => prev + 1);
+        toast.success("AI-generated resume loaded into editor");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to refresh artifact after AI build:", err);
+      toast.error("Failed to reload resume artifact", {
+        description: err?.message || "Please refresh the page to view the latest AI generated content.",
+      });
     }
   };
 
@@ -130,6 +137,7 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
           data.version,
           data.savedAt ? new Date(data.savedAt) : undefined
         );
+        setRecompileTrigger((prev) => prev + 1);
         toast.success("Profile data imported successfully!");
       }
     } catch (err: unknown) {
@@ -145,10 +153,24 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
     }
   };
 
-  // PDF download trigger
+  const [downloadStep, setDownloadStep] = useState<"idle" | "saving" | "generating">("idle");
+
+  // PDF download trigger with automatic pre-save
   const handleDownloadPdf = async () => {
     setIsPdfGenerating(true);
+    setDownloadStep("saving");
     try {
+      // 1. Run exact save task first to ensure backend artifact reflects latest edits
+      const saveSuccess = await save();
+      if (!saveSuccess) {
+        toast.error("Download cancelled", {
+          description: "Could not save your latest resume changes before downloading.",
+        });
+        return;
+      }
+
+      // 2. Once saved in backend, proceed with PDF generation
+      setDownloadStep("generating");
       const response = await fetch(BUILDER_API.PDF(resume.id));
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -175,11 +197,13 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
     } catch (err: unknown) {
       toast.error("Unable to generate PDF", {
         description:
+          (err as Error).message ||
           "An error occurred while creating the PDF. Please try again.",
       });
       console.error("PDF download error:", err);
     } finally {
       setIsPdfGenerating(false);
+      setDownloadStep("idle");
     }
   };
 
@@ -212,9 +236,12 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
         isTemplateUpdating={isTemplateUpdating}
         onDownloadPdf={handleDownloadPdf}
         isPdfGenerating={isPdfGenerating}
+        downloadStep={downloadStep}
         onImportProfile={handleImportProfile}
         isImportingProfile={isImportingProfile}
         onAiBuild={() => setIsAiBuildModalOpen(true)}
+        onRecompile={() => setRecompileTrigger((prev) => prev + 1)}
+        isRecompiling={isRecompiling}
       />
 
       {/* Mobile/Tablet view toggle tab (hidden on xl screens) */}
@@ -370,7 +397,17 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
             mobileTab === "edit" ? "hidden xl:block" : "block"
           }`}
         >
-          <ResumePreview artifact={artifact} template={currentTemplate} />
+          <div className="w-full h-[78vh] bg-slate-100 dark:bg-zinc-900/50 p-4 sm:p-6 overflow-y-auto rounded-2xl border border-border shadow-inner flex flex-col items-center">
+            <div className="w-full max-w-[800px] min-h-[1130px] bg-white shadow-xl rounded-sm overflow-hidden transition-all duration-300 transform origin-top flex flex-col flex-1">
+              <ResumeTemplateRenderer
+                artifact={artifact}
+                template={currentTemplate}
+                recompileTrigger={recompileTrigger}
+                onRecompileStart={() => setIsRecompiling(true)}
+                onRecompileEnd={() => setIsRecompiling(false)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

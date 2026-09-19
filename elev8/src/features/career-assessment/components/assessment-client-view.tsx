@@ -54,12 +54,12 @@ export function AssessmentClientView({
 
     try {
       const res = await createAssessmentAction();
-      if (res.success && res.assessment) {
-        setAssessment(res.assessment);
+      if (res.success) {
+        setAssessment(res.data.assessment);
         setIsStale(false);
         router.refresh();
       } else {
-        setError(res.error || "Failed to generate Career Assessment.");
+        setError(res.error.message || "Failed to generate Career Assessment.");
       }
     } catch (err: any) {
       setError(err?.message || "An unexpected error occurred.");

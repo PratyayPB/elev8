@@ -53,6 +53,10 @@ export class ModuleActivityService {
 
     const { userId, module, eventType, entityId, completionStatus, metadata } = input;
 
+    if (!userId || typeof userId !== "string" || !userId.trim()) {
+      throw new Error("Valid userId is required to record module activity.");
+    }
+
     // Compute discriminated entityId for repeating events
     const computeIdempotentEntityId = (
       event: ModuleActivityEventType,
@@ -361,11 +365,15 @@ export class ModuleActivityService {
     userId: string,
     limitDays: number = 90
   ): Promise<ModuleActivityRecord[]> {
+    if (!userId || typeof userId !== "string" || !userId.trim()) {
+      return [];
+    }
+
     const since = new Date(Date.now() - limitDays * 24 * 60 * 60 * 1000);
 
     const records = await prisma.moduleActivity.findMany({
       where: {
-        userId,
+        userId: userId.trim(),
         createdAt: { gte: since },
       },
       orderBy: { createdAt: "desc" },
@@ -390,9 +398,13 @@ export class ModuleActivityService {
     userId: string,
     module: ModuleType
   ): Promise<ModuleActivityRecord | null> {
+    if (!userId || typeof userId !== "string" || !userId.trim()) {
+      return null;
+    }
+
     const record = await prisma.moduleActivity.findFirst({
       where: {
-        userId,
+        userId: userId.trim(),
         module,
       },
       orderBy: { createdAt: "desc" },
@@ -416,14 +428,19 @@ export class ModuleActivityService {
    * Retrieves or initializes the current-state Progress projection for a user.
    */
   public static async getProgress(userId: string): Promise<ProgressProjection> {
+    if (!userId || typeof userId !== "string" || !userId.trim()) {
+      throw new Error("Valid userId is required to retrieve progress.");
+    }
+
+    const cleanUserId = userId.trim();
     let progress = await prisma.progress.findUnique({
-      where: { userId },
+      where: { userId: cleanUserId },
     });
 
     if (!progress) {
       progress = await prisma.progress.create({
         data: {
-          userId,
+          userId: cleanUserId,
         },
       });
     }

@@ -11,7 +11,7 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  ChevronLeft,
+  ArrowLeft,
 } from "lucide-react";
 
 export function PersonalizationStep() {
@@ -45,7 +45,7 @@ export function PersonalizationStep() {
 
   if (skipped) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="space-y-6 animate-in fade-in duration-200">
         <div className="bg-surface-muted/60 border border-border-subtle rounded-xl p-8 text-center space-y-4">
           <FastForward className="w-8 h-8 text-text-muted mx-auto" />
           <div>
@@ -60,28 +60,28 @@ export function PersonalizationStep() {
           <button
             type="button"
             onClick={handleUnskip}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 text-xs font-display font-semibold hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 text-xs font-display font-semibold hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all shadow-sm cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
             Review Personalization Options
           </button>
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-border-subtle">
+        <div className="flex justify-between items-center pt-6 border-t border-border-subtle mt-8">
           <button
             type="button"
             onClick={prevStep}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-all cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </button>
           <button
             type="button"
             onClick={handleContinue}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-display font-bold shadow-sm transition-all bg-text-primary text-white dark:text-brand-primary-900 hover:bg-black/80 dark:hover:bg-brand-secondary-200 cursor-pointer active:scale-[0.98]"
           >
-            Continue
+            Continue <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -91,8 +91,8 @@ export function PersonalizationStep() {
   if (hasOptedIn === true) {
     const ctx = profileStatus?.profileContext;
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 space-y-6 shadow-sm">
+      <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="bg-surface-muted/60 border border-border-subtle rounded-2xl p-8 space-y-6 shadow-sm">
           <div className="flex items-center gap-3 border-b border-border-subtle pb-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5" />
@@ -140,28 +140,28 @@ export function PersonalizationStep() {
             <button
               type="button"
               onClick={handleSkip}
-              className="text-xs font-display font-semibold text-text-secondary hover:text-text-primary underline underline-offset-2"
+              className="text-xs font-display font-semibold text-text-secondary hover:text-text-primary underline underline-offset-2 cursor-pointer"
             >
               Disable Profile Personalization
             </button>
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-border-subtle">
+        <div className="flex justify-between items-center pt-6 border-t border-border-subtle mt-8">
           <button
             type="button"
             onClick={prevStep}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-all cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </button>
           <button
             type="button"
             onClick={handleContinue}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-display font-bold shadow-sm transition-all bg-text-primary text-white dark:text-brand-primary-900 hover:bg-black/80 dark:hover:bg-brand-secondary-200 cursor-pointer active:scale-[0.98]"
           >
-            Continue
+            Continue <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -173,8 +173,8 @@ export function PersonalizationStep() {
 
   if (isProfileComplete) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 text-center space-y-6 shadow-sm">
+      <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="bg-surface-muted/60 border border-border-subtle rounded-2xl p-8 text-center space-y-6 shadow-sm">
           <div className="w-12 h-12 rounded-2xl bg-dashboard-metricHighlight/30 text-text-primary border border-dashboard-metricHighlight flex items-center justify-center mx-auto shadow-inner">
             <UserCheck className="w-6 h-6" />
           </div>
@@ -193,7 +193,7 @@ export function PersonalizationStep() {
             <button
               type="button"
               onClick={optIn}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-dashboard-metricHighlight" />
               Yes, Use Profile Data
@@ -201,7 +201,7 @@ export function PersonalizationStep() {
             <button
               type="button"
               onClick={handleSkip}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface-muted border border-border-subtle hover:bg-border-subtle text-text-primary text-xs font-display font-semibold transition-all cursor-pointer"
             >
               <FastForward className="w-4 h-4 text-text-muted" />
               Skip & Proceed
@@ -209,13 +209,13 @@ export function PersonalizationStep() {
           </div>
         </div>
 
-        <div className="flex justify-start pt-4 border-t border-border-subtle">
+        <div className="flex justify-start pt-6 border-t border-border-subtle mt-8">
           <button
             type="button"
             onClick={prevStep}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-all cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </button>
         </div>
@@ -225,8 +225,8 @@ export function PersonalizationStep() {
 
   // Profile is incomplete
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 text-center space-y-6 shadow-sm">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="bg-surface-muted/60 border border-border-subtle rounded-2xl p-8 text-center space-y-6 shadow-sm">
         <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto shadow-inner">
           <AlertCircle className="w-6 h-6" />
         </div>
@@ -251,7 +251,7 @@ export function PersonalizationStep() {
           <button
             type="button"
             onClick={() => router.push("/dashboard/profile")}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm cursor-pointer"
           >
             <span>Complete Profile</span>
             <ArrowRight className="w-4 h-4" />
@@ -259,7 +259,7 @@ export function PersonalizationStep() {
           <button
             type="button"
             onClick={handleSkip}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface-muted border border-border-subtle hover:bg-border-subtle text-text-primary text-xs font-display font-semibold transition-all cursor-pointer"
           >
             <FastForward className="w-4 h-4 text-text-muted" />
             Skip for now
@@ -267,13 +267,13 @@ export function PersonalizationStep() {
         </div>
       </div>
 
-      <div className="flex justify-start pt-4 border-t border-border-subtle">
+      <div className="flex justify-start pt-6 border-t border-border-subtle mt-8">
         <button
           type="button"
           onClick={prevStep}
-          className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border-subtle text-xs font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-all cursor-pointer"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           Back
         </button>
       </div>

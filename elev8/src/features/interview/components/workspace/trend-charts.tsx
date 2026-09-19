@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { InterviewSession } from "@prisma/client";
-import { TrendingUp, Award, Clock, ArrowUpRight, ArrowDownRight, Sparkles, CheckCircle } from "lucide-react";
+import { TrendingUp, Clock, ArrowUpRight, ArrowDownRight, Sparkles, CheckCircle, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { deleteInterview } from "../../actions/workspace-actions";
 import {
   AreaChart,
   Area,
@@ -92,12 +96,15 @@ export function TrendCharts({ completedInterviews }: TrendChartsProps) {
                     {single.interviewType.replace(/_/g, " ")} • {single.experienceLevel} Level • {dateFormatted}
                   </p>
                 </div>
-                <Link
-                  href={`/dashboard/interviews/${single.id}`}
-                  className="text-xs font-display font-bold text-text-primary underline hover:opacity-80 transition-opacity"
-                >
-                  View Full Report →
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/dashboard/interviews/${single.id}`}
+                    className="text-xs font-display font-bold text-text-primary underline hover:opacity-80 transition-opacity"
+                  >
+                    View Full Report →
+                  </Link>
+                  <DeleteBenchmarkButton interviewId={single.id} />
+                </div>
               </div>
 
               <div className="pt-3 border-t border-border-subtle flex items-center justify-between gap-4 text-xs font-sans text-text-secondary">
@@ -256,5 +263,39 @@ export function TrendCharts({ completedInterviews }: TrendChartsProps) {
         </ResponsiveContainer>
       </div>
     </div>
+  );
+}
+
+function DeleteBenchmarkButton({ interviewId }: { interviewId: string }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this benchmark assessment?")) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteInterview(interviewId);
+      if (res.success) {
+        toast.success("Benchmark assessment deleted");
+        router.refresh();
+      } else {
+        toast.error(res.error?.message || "Failed to delete assessment");
+      }
+    } catch (e) {
+      toast.error("Failed to delete assessment");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={isDeleting}
+      className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50 border border-transparent hover:border-rose-100 flex items-center justify-center"
+      title="Delete Benchmark Assessment"
+    >
+      {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+    </button>
   );
 }

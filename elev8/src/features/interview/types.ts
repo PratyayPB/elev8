@@ -1,6 +1,7 @@
 import {
   InterviewType,
   InterviewStatus,
+  InterviewDifficulty,
   InterviewTemplateSource,
   InterviewTemplateStatus,
   CareerExperienceLevel,
@@ -9,6 +10,7 @@ import {
 export {
   InterviewType,
   InterviewStatus,
+  InterviewDifficulty,
   InterviewTemplateSource,
   InterviewTemplateStatus,
   CareerExperienceLevel,
@@ -29,18 +31,6 @@ export type InterviewTypeOption =
   | "SYSTEM_DESIGN"
   | "ROLE_SPECIFIC"
   | "GENERAL";
-
-export interface Question {
-  id: string;
-  question: string;
-  type: "single" | "multi";
-  options: string[];
-}
-
-export interface Answer {
-  questionId: string;
-  selectedOptions: string[];
-}
 
 export interface InterviewProfileContext {
   currentStatus?: string | null;
@@ -183,3 +173,30 @@ export interface InterviewArtifact {
   assessment: AssessmentReport | null;
   status?: string; // Optional field used during session tracking
 }
+
+export interface LibraryGlobalInterview {
+  id: string;
+  role: string;
+  normalizedRole?: string;
+  experienceLevel: CareerExperienceLevel;
+  difficulty: InterviewDifficulty;
+  interviewType: InterviewType;
+  questionCount: number;
+  estimatedDuration: string | null;
+  status: InterviewTemplateStatus;
+  createdByUserId: string | null;
+  isOwner: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface GlobalInterviewsResponse {
+  interviews: LibraryGlobalInterview[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+

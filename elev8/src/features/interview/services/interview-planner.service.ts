@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { getInterviewGenAI, INTERVIEW_GEMINI_MODEL } from "./gemini";
 import { InterviewRequest, InterviewPlan } from "../types";
 import {
   INTERVIEW_PLANNER_SYSTEM_PROMPT,
@@ -12,16 +12,11 @@ export class InterviewPlannerService {
     request: InterviewRequest,
     targetQuestionCount: number = request.questionCount || DEFAULT_INTERVIEW_QUESTION_COUNT
   ): Promise<InterviewPlan> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is missing.");
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = getInterviewGenAI();
     const userPrompt = buildPlannerUserPrompt(request, targetQuestionCount);
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: INTERVIEW_GEMINI_MODEL,
       contents: [
         { role: "user", parts: [{ text: `${INTERVIEW_PLANNER_SYSTEM_PROMPT}\n\n${userPrompt}` }] },
       ],

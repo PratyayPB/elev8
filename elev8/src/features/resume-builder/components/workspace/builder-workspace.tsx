@@ -69,37 +69,57 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
   const handleRenameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resumeToRename) return;
-    if (!newTitle.trim()) {
+    const trimmedTitle = newTitle.trim();
+    if (!trimmedTitle) {
       setRenameError("Title cannot be empty.");
       return;
     }
-    if (newTitle.length > 100) {
+    if (trimmedTitle.length > 100) {
       setRenameError("Title cannot exceed 100 characters.");
       return;
     }
 
+    if (trimmedTitle.toLowerCase() === resumeToRename.title.trim().toLowerCase()) {
+      setRenameModalOpen(false);
+      setResumeToRename(null);
+      return;
+    }
+
+    const isDuplicate = resumes.some(
+      (r) =>
+        r.id !== resumeToRename.id &&
+        r.title.trim().toLowerCase() === trimmedTitle.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      setRenameError(`A resume named "${trimmedTitle}" already exists. Please choose a unique name.`);
+      return;
+    }
+
     setActionLoadingId(resumeToRename.id);
-    setRenameModalOpen(false);
 
     try {
       const res = await fetch(`${BUILDER_API.RESUMES}/${resumeToRename.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle.trim() }),
+        body: JSON.stringify({ title: trimmedTitle }),
       });
       
-      if (!res.ok) throw new Error("Failed to rename resume.");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to rename resume.");
+      }
       
       const data = await res.json();
       setResumes((prev) => prev.map((r) => (r.id === data.resume.id ? data.resume : r)));
       toast.success("Resume renamed successfully");
+      setRenameModalOpen(false);
+      setResumeToRename(null);
     } catch (err: unknown) {
-      toast.error("Rename failed", {
-        description: (err as Error).message || "Failed to rename resume.",
-      });
+      const msg = (err as Error).message || "Failed to rename resume.";
+      setRenameError(msg);
     } finally {
       setActionLoadingId(null);
-      setResumeToRename(null);
     }
   };
 
@@ -306,10 +326,22 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   maxLength={100}
-                  className="mt-1 block w-full rounded-md border border-border-subtle px-3 py-2 text-sm focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary"
+                  className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    renameError
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : "border-border-subtle focus:border-text-primary focus:ring-text-primary"
+                  }`}
                   autoFocus
                 />
-                {renameError && <p className="mt-1 flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-3 w-3" /> {renameError}</p>}
+                {renameError ? (
+                  <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+                    <AlertCircle className="h-3 w-3 shrink-0" /> {renameError}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-text-muted">
+                    Each resume must have a unique name within your account.
+                  </p>
+                )}
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button

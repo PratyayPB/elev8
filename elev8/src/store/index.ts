@@ -5,4 +5,4 @@ export * from "./dashboard.store";
 export * from "./career.store";
 export * from "./resume.store";
 export * from "./interview.store";
-export * from "./progress.store";
+

@@ -15,7 +15,6 @@ export * from "./roadmaps";
 export * from "./resume";
 export * from "./interview";
 export * from "./career";
-export * from "./progress";
 export * from "./profile";
 export * from "./ui";
 

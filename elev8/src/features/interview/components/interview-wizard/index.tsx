@@ -17,13 +17,34 @@ export function InterviewWizard() {
   }, [reset]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8">
+    <div className="w-full max-w-3xl mx-auto bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 sm:p-8 shadow-sm">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-display font-bold text-text-primary tracking-tight">
+          Interview Generator Wizard
+        </h2>
+        <p className="text-sm font-sans text-text-secondary mt-1 max-w-md mx-auto">
+          Configure your interview parameters to generate a custom mock interview.
+        </p>
+      </div>
+
       <StepIndicator currentStep={currentStep} />
       
-      <div className="mt-8">
-        {currentStep === 1 && <Stage1Step />}
-        {currentStep === 2 && <PersonalizationStep />}
-        {currentStep === 3 && <ReviewStep />}
+      <div className="min-h-[320px] flex flex-col justify-between pt-2">
+        {currentStep === 1 && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <Stage1Step />
+          </div>
+        )}
+        {currentStep === 2 && (
+          <div className="animate-in fade-in duration-200">
+            <PersonalizationStep />
+          </div>
+        )}
+        {currentStep === 3 && (
+          <div className="animate-in fade-in duration-200">
+            <ReviewStep />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   InterviewType,
   InterviewDifficulty,
   InterviewTemplateSource,
+  InterviewTemplateStatus,
   InterviewStatus,
 } from "@prisma/client";
 import { ModuleActivityService } from "@/features/progress/services";
@@ -175,17 +176,38 @@ export const generateInterviewTask = schemaTask({
             templateBlobUrl: blobUrl,
           });
         }
+
+        if (interviewTemplateId) {
+          await prisma.interviewTemplate.update({
+            where: { id: interviewTemplateId },
+            data: {
+              templateBlobUrl: blobUrl,
+              estimatedDuration: plan.estimatedDuration,
+              status: InterviewTemplateStatus.ACTIVE,
+            },
+          }).catch(() => {});
+        }
       }
 
-      // Point InterviewSession to the generated artifact/template blob and mark as READY
-      await prisma.interviewSession.update({
+      // Point InterviewSession to the generated artifact/template blob and mark as READY (if session was not deleted)
+      const existingSession = await prisma.interviewSession.findUnique({
         where: { id: interviewId },
-        data: {
-          blobUrl,
-          status: InterviewStatus.READY,
-          estimatedDuration: plan.estimatedDuration,
-        },
       });
+
+      if (existingSession) {
+        await prisma.interviewSession.update({
+          where: { id: interviewId },
+          data: {
+            blobUrl,
+            status: InterviewStatus.READY,
+            estimatedDuration: plan.estimatedDuration,
+          },
+        }).catch((err) => {
+          console.warn(`[generateInterviewTask] Failed to update session ${interviewId}:`, err);
+        });
+      } else {
+        console.warn(`[generateInterviewTask] InterviewSession ${interviewId} was not found (it may have been deleted during generation). Skipping session update.`);
+      }
 
       // If global template, update any other pending sessions waiting on this template
       if (globalInterviewTemplateId) {
@@ -224,6 +246,22 @@ export const generateInterviewTask = schemaTask({
       }).catch((updateError) =>
         console.warn("[generateInterviewTask] Failed to mark interview failed:", updateError)
       );
+      if (globalInterviewTemplateId) {
+        await prisma.globalInterviewTemplate.update({
+          where: { id: globalInterviewTemplateId },
+          data: { status: InterviewTemplateStatus.FAILED },
+        }).catch((updateError) =>
+          console.warn("[generateInterviewTask] Failed to mark global template failed:", updateError)
+        );
+      }
+      if (interviewTemplateId) {
+        await prisma.interviewTemplate.update({
+          where: { id: interviewTemplateId },
+          data: { status: InterviewTemplateStatus.FAILED },
+        }).catch((updateError) =>
+          console.warn("[generateInterviewTask] Failed to mark template failed:", updateError)
+        );
+      }
       await ModuleActivityService.recordActivity({
         userId,
         module: ModuleType.INTERVIEW_PRACTICE,

@@ -1,17 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
+import { getInterviewGenAI, INTERVIEW_GEMINI_MODEL } from "./gemini";
 import { InterviewArtifact, QuestionFeedback } from "../types";
 import { BULK_QUESTION_ASSESSMENT_PROMPT } from "./assessment-prompts";
 import { BulkQuestionAssessmentSchema } from "../assessment-schema";
-import { z } from "zod";
 
 export class QuestionAssessmentService {
   public static async assessQuestions(artifact: InterviewArtifact): Promise<Record<string, QuestionFeedback>> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is missing.");
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = getInterviewGenAI();
 
     // Prepare the payload for the AI
     const payload = artifact.questions.map((q) => {
@@ -31,7 +25,7 @@ export class QuestionAssessmentService {
     const userPrompt = `Assess the following questions and answers:\n\n${JSON.stringify(payload, null, 2)}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: INTERVIEW_GEMINI_MODEL,
       contents: [
         {
           role: "user",

@@ -1,7 +1,7 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
-import { ResumeBuilderService } from "@/features/resume-builder/services/resume-builder.service";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getAuth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+import { ResumeBuilderService, ResumeBuilderError } from "@/features/resume-builder/services/resume-builder.service";
 import { builderToJsonResume } from "@/features/resume-builder/adapters/builder-to-json-resume";
 import { RESUME_TEMPLATE_REGISTRY } from "@/features/resume-builder/templates/registry";
 import { ModuleActivityService } from "@/features/progress/services";
@@ -11,19 +11,28 @@ import {
   ModuleType,
 } from "@/features/progress/types";
 
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
+  let browser: any = null;
+
   try {
-    const auth = getAuth(req);
-    if (!auth.userId) {
+    const { userId: clerkId } = getAuth(req);
+    if (!clerkId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
     const dbUser = await prisma.user.findUnique({
-      where: { clerkId: auth.userId },
+      where: { clerkId },
+      select: { id: true },
     });
 
     if (!dbUser) {
@@ -31,13 +40,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { resumeId } = req.query;
-    if (typeof resumeId !== 'string') {
+    if (!resumeId || typeof resumeId !== "string") {
       return res.status(400).json({ error: "Invalid resumeId" });
     }
 
     // Verify ownership and get metadata
     const resume = await ResumeBuilderService.getResume(dbUser.id, resumeId);
-    
+
     // Fetch artifact
     const artifact = await ResumeBuilderService.getResumeArtifact(dbUser.id, resumeId);
 
@@ -49,15 +58,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const jsonResume = builderToJsonResume(artifact);
     const themeHtml = await renderer(jsonResume);
 
-    // Dynamically import puppeteer to handle environment constraints cleanly
+    // Dynamically import puppeteer
     const puppeteer = await import("puppeteer");
 
-    const browser = await puppeteer.default.launch({
+    browser = await puppeteer.default.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      timeout: 30000,
     });
 
     const page = await browser.newPage();
+    page.setDefaultNavigationTimeout(30000);
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -85,9 +96,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       </html>
     `;
 
-    await page.setContent(fullHtml, { waitUntil: "domcontentloaded" });
+    await page.setContent(fullHtml, { waitUntil: "domcontentloaded", timeout: 30000 });
 
-    // Generate PDF (returns Uint8Array in modern Puppeteer)
     const pdfUint8Array = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -99,9 +109,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    await browser.close();
-
-    // Convert Uint8Array to Node.js Buffer to prevent Next.js from serializing it as JSON
     const pdfBuffer = Buffer.from(pdfUint8Array);
 
     await ModuleActivityService.recordActivity({
@@ -120,18 +127,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn("[ResumePdfApi] Failed to record PDF activity:", activityError)
     );
 
-    // Sanitize filename
     const sanitizedTitle = (resume.title || "Resume")
       .replace(/[\/\\?%*:|"<>]/g, "")
       .trim()
       .replace(/\s+/g, "-");
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.pdf"`);
-    res.setHeader('Content-Length', pdfBuffer.length.toString());
-    return res.status(200).end(pdfBuffer);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${sanitizedTitle}.pdf"`);
+    res.setHeader("Content-Length", pdfBuffer.length.toString());
+
+    return res.status(200).send(pdfBuffer);
   } catch (error: any) {
+    if (error instanceof ResumeBuilderError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
     console.error("GET /api/builder/resumes/[resumeId]/pdf error:", error);
-    res.status(500).json({ error: "Failed to generate PDF. Please try again." });
+    return res.status(500).json({ error: "Failed to generate PDF. Please try again." });
+  } finally {
+    if (browser) {
+      await browser.close().catch((err: any) => console.warn("Error closing puppeteer browser:", err));
+    }
   }
 }

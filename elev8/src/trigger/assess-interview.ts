@@ -1,6 +1,7 @@
-import { task } from "@trigger.dev/sdk/v3";
+import { schemaTask } from "@trigger.dev/sdk/v3";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { JobStatus, JobType, InterviewStatus } from "@prisma/client";
+import { JobStatus, InterviewStatus } from "@prisma/client";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { InterviewArtifact, AssessmentReport } from "@/features/interview/types";
 import { QuestionAssessmentService } from "@/features/interview/services/question-assessment.service";
@@ -13,12 +14,18 @@ import {
 } from "@/features/progress/types";
 import { normalizeError } from "@/lib/error-handler";
 
-export const assessInterviewJob = task({
+export const AssessInterviewPayloadSchema = z.object({
+  jobId: z.string(),
+  interviewId: z.string(),
+});
+
+export const assessInterviewJob = schemaTask({
   id: "assess-interview",
+  schema: AssessInterviewPayloadSchema,
   retry: {
     maxAttempts: 3,
   },
-  run: async (payload: { jobId: string; interviewId: string }) => {
+  run: async (payload) => {
     const { jobId, interviewId } = payload;
 
     const updateJob = async (progress: number, step: string) => {
@@ -92,7 +99,7 @@ export const assessInterviewJob = task({
       });
 
       return { success: true, interviewId };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const appError = normalizeError(error);
       console.error("Assessment Job Failed:", appError.message, error);
 
@@ -113,7 +120,7 @@ export const assessInterviewJob = task({
         const failedInterview = await prisma.interviewSession.update({
           where: { id: interviewId },
           data: {
-            status: InterviewStatus.FAILED,
+            status: InterviewStatus.ASSESSMENT_FAILED,
           },
         });
         await ModuleActivityService.recordActivity({

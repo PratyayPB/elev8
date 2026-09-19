@@ -111,6 +111,13 @@ Phase 7.2: Release & Production Verification
   - Implemented Copy-on-Write (CoW) in `session-actions.ts` (`saveSessionProgress` and `submitInterview`) to protect shared template blobs from accidental deletion when users save interview answers.
   - Updated Trigger.dev `generate-interview` task to populate pre-created global template records without creating duplicate session blobs during generation.
   - Verified 100% type-checking (`npx tsc --noEmit`) and successful Next.js production build.
+- [x] **Interview Module Tabbed Workspace, Dual Storage & Authorization Hardening**:
+  - Refactored storage model for non-personalized interview generation: generic interviews now persist canonical `GlobalInterviewTemplate` records and simultaneously generate user-scoped `InterviewTemplate` records, enabling complete tracking across both views.
+  - Redesigned `/dashboard/interviews` workspace UI with tabbed navigation ("My Interviews" and "Global Interviews") mirroring `/dashboard/roadmaps` design system.
+  - Created `GlobalInterviewCard` component for browsing community interview templates with direct "Start Interview" instant session creation.
+  - Hardened authorization for interview deletion: `deleteInterview` cascades deletion to user-owned `InterviewTemplate` records (if unreferenced by other sessions) while `GlobalInterviewTemplate` records are protected and never deleted.
+  - Enforced creator authorization on template retries: "Try Again" on global interview templates is strictly restricted to the original creator (`createdByUserId === currentUserId`), hidden entirely for all other users.
+  - Verified 100% type safety with `npx tsc --noEmit` and passed all unit test suites.
 - [x] **Interview Personalization & Timing Updates (`interview-personalization-and-timing-updates.md`)**:
   - Removed user-facing question-count inputs from the interview creation wizard and schemas, making count strictly backend-configured (default 10).
   - Reworked Interview Step 2 personalization to mirror Roadmap profile integration: prompts users with complete profiles to opt-in or skip, and users with incomplete profiles to complete profile or skip.
@@ -236,12 +243,219 @@ Phase 7.2: Release & Production Verification
   - Updated Trigger.dev `generateInterviewTask` to pass difficulty to global template creation.
   - Implemented real-time client-side difficulty filtering in `use-interview-workspace.ts` hook.
   - Added difficulty metadata badge to `InterviewCard.tsx` on the `/dashboard/interviews` workspace.
-- [x] **Interview Module: Workspace Filter Refactor & Dropdown Design System Alignment**:
-  - Removed status filter dropdown and related filtering logic from `use-interview-workspace.ts`, `workspace-container.tsx`, and `filters-and-search.tsx`.
-  - Refactored Difficulty and Sorting dropdowns to use `shadcn` UI (`Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`).
-  - Styled dropdowns to match the primary/secondary (black and white) design system from the Roadmap module (`/dashboard/roadmaps`).
-  - Updated unit tests in `src/features/interview/__tests__/interview-workspace.test.ts` (All 29 test suites passing, zero TypeScript errors).
-
+- [x] **Interview Module: Graceful Error Handling & Stalled Background Job Timeout**:
+  - Added `FAILED` status to `InterviewTemplateStatus` in `prisma/schema.prisma` and synchronized database schema.
+  - Implemented automatic timeout detection in `getWorkspaceInterviews` for sessions in `GENERATING` state older than 5 minutes (marking sessions, jobs, and unfinished templates as `FAILED`).
+  - Updated `generateInterviewTask` catch block to mark `GlobalInterviewTemplate` and `InterviewTemplate` as `FAILED` on background task error.
+  - Updated `createInterviewJob` to safely detect stalled or failed global templates and re-dispatch generation with the existing template ID, resolving unique constraint blockages.
+  - Updated `useInterviewForm` and `InterviewCard` to support full parameter preservation (`role`, `experience`, `difficulty`, `type`) on retry/re-generation.
+  - Added timeout detection unit tests in `src/features/interview/__tests__/interview-workspace.test.ts` (All 29 test suites passing, zero TypeScript errors).
+- [x] **Interview Module: Workspace Separation, Assessment Retry & Robust Error Handling**:
+  - Restructured `/dashboard/interviews` workspace to clearly separate user-owned `InterviewTemplate`s from `InterviewSession`s.
+  - Added `ASSESSMENT_FAILED` status to `InterviewStatus` enum in `prisma/schema.prisma` to decouple assessment evaluation errors from template generation errors.
+  - Implemented `retryAssessmentAction` and wired up dedicated "Assessment Failed — Try Again" handlers without wiping user answers.
+  - Resolved `handleRetry` ReferenceError in `InterviewCard.tsx` by introducing `handleRetryGeneration` wired to `retryInterviewGenerationAction` and maintaining `handleRetryAssessment`.
+  - Added delete option on single-session Benchmark Assessment card in `trend-charts.tsx`.
+  - Resolved Prisma `P2025` race condition (`Record to update not found`) in `generate-interview.ts` and `AssessmentArtifactService` when an interview session is deleted while a background generation or assessment task is executing.
+  - Updated `deleteInterview` action to cancel active/running background `Job` records upon deletion.
+  - Removed risky manual `del()` calls during deterministic blob overwrites in `session-actions.ts` to prevent race condition 404s.
+- [x] **Phase 8 (Spec 41): Interview Module Cleanup, Testing, Optimization, Security & Error Handling**:
+  - **Security Fix (IDOR)**: Fixed IDOR vulnerability in `[interviewId]/page.tsx` by scoping the session fallback query to `userId: dbUser.id`, preventing authenticated users from probing whether arbitrary `interviewId` values exist or accessing failure metadata.
+  - **Security & Validation**: Added `z.string().min(2).max(100)` constraint to `role` in `InterviewRequestStage1Schema` to guard against prompt injection/oversized payloads. Sanitized all ID parameters across server actions.
+  - **Dead Code Cleanup**:
+    - Deleted `interview-personalization.service.ts` (Phase 3.1 mock with hardcoded questions and 800ms artificial delay).
+    - Deleted `data/interview-roles.ts` (unreferenced 18-role array and type).
+    - Deleted legacy `dynamic-question.tsx` component (MCQ remnants from personalization mock).
+    - Removed dead `Question` and `Answer` interfaces from `types.ts`.
+    - Removed shadowing `constants.ts` (empty array stub) and empty `utils.ts` stub.
+    - Dropped dead `assessment Json?` column from `InterviewSession` via Prisma schema synchronization and generated fresh client.
+  - **Shared Utilities & AI Singleton**:
+    - Created `src/features/interview/utils/interview-mappers.ts` consolidating duplicate `mapInterviewType`, `mapExperienceLevel`, `mapDifficulty`, `mapExpToStr`, and `mapDiffToStr` implementations.
+    - Created `src/features/interview/services/gemini.ts` providing lazy singleton `getInterviewGenAI()` across all 4 AI service files (`interview-generation`, `interview-planner`, `question-assessment`, `overall-assessment`).
+    - Migrated `assess-interview` Trigger.dev task from untyped `task` to typed `schemaTask` using `AssessInterviewPayloadSchema`.
+  - **Graceful Error Handling (`safeAction`)**:
+    - Wrapped all 13 exported server action functions in `interview-actions.ts`, `session-actions.ts`, and `workspace-actions.ts` with `safeAction` from `@/lib/error-handler` (returning `{ success: true, data: T } | { success: false, error: AppError }`).
+    - Updated all client consumer components and hooks (`review-step.tsx`, `interview-card.tsx`, `global-interview-card.tsx`, `personal-template-card.tsx`, `trend-charts.tsx`, `session-container.tsx`, `use-autosave.ts`, `workspace-container.tsx`, and route pages) to cleanly handle discriminated union responses with Sonner toasts.
+    - Created dedicated error boundaries following the Grovia design system:
+      - `src/app/(dashboard)/dashboard/interviews/error.tsx`
+      - `src/app/(dashboard)/dashboard/interviews/new/error.tsx`
+      - `src/app/(dashboard)/dashboard/interviews/[interviewId]/error.tsx`
+      - `src/app/(dashboard)/dashboard/interviews/[interviewId]/session/error.tsx`
+    - Fixed pre-existing TypeScript error in `[interviewId]/page.tsx` line 86 (`<form action={handleRetry}>` bound action signature mismatch).
+  - **Database Performance Optimization**:
+    - Added strict Prisma `select` projections to `getWorkspaceInterviews` (eliminating full session fetch and unused `profileSnapshot`), `getPerformanceStats` (`select: { status: true, overallScore: true }`), `getGlobalInterviews`, and `deleteInterview`.
+  - **Comprehensive Testing**:
+    - Migrated `interview-workspace.test.ts` to `node:test` runner.
+    - Added `interview-schemas.test.ts` (testing all request, plan, question, and assessment Zod schemas).
+    - Added `interview-services.test.ts` (testing role normalization, plan validation, question validation, analytics calculations, and request service).
+    - Added `interview-actions.test.ts` (testing input sanitization, schema validation, and unauthenticated session boundaries).
+    - Added `session-actions.test.ts` (testing session artifact fetch, progress save, submit, and retry input/auth boundaries).
+    - Verified 100% type safety (`tsc --noEmit` = 0 errors) and all 91 test assertions passing across 24 suites (`npm test`).
+    - `use-interview-workspace.ts` polls `router.refresh()` every 3 seconds while sessions are generating. Documented for future replacement with Trigger.dev Realtime (`useRealtimeRun`).
+- [x] **Resume Builder Module Cleanup, Security, Performance & Test Audit (Spec 41)**:
+  - **Endpoint Architecture & Theme SSR (Pages Router)**:
+    - Retained Preview (`src/pages/api/builder/preview.ts`) and PDF (`src/pages/api/builder/resumes/[resumeId]/pdf.ts`) in the Pages Router because React 19 App Router Route Handlers run under the `react-server` compilation condition, which omits `createContext` and client hooks needed by `styled-components`-based resume themes (`art-school-modern`, `art-deco`, `brutalist`).
+    - Added full Clerk authentication via `getAuth(req)` to both endpoints (previously missing on preview), along with Zod artifact schema validation, Puppeteer `finally` browser cleanup, and activity logging.
+  - **Activity Logging & Signal Optimization**:
+    - Removed `RESUME_VIEWED` side-effect DB writes from `getResume()`.
+    - Removed `RESUME_UPDATED` activity logging on debounced autosaves in `updateResumeArtifact`.
+  - **Dead Code Removal**:
+    - Removed unused components (`builder-layout`, `builder-sidebar`, `builder-toolbar`, `template-selector`, `coming-soon`, `empty-builder`, `resume-preview`).
+    - Removed dead hooks and state store (`use-builder.ts`, `use-builder-state.ts`, `use-builder-validation.ts`, `builder.service.ts`, `builder-validation.service.ts`, `resume-builder.schema.ts`, `constants/builder-sections.ts`).
+    - Removed duplicate `PUT` handler in `artifact/route.ts` and unused `BUILDER_ROUTES.TEMPLATES`.
+    - Cleaned up dead types in `types.ts` (`BuilderState`, `BuilderSection`, `ValidationState`, `Template`).
+  - **Security & Input Validation Hardening**:
+    - Replaced raw string/generic errors in `AiResumeBuildService` with structured `ResumeBuilderError` codes (`PROFILE_INCOMPLETE`, `RESUME_NOT_FOUND`, `RESUME_FORBIDDEN`, `JOB_NOT_FOUND`, `JOB_FORBIDDEN`).
+    - Added resume ownership validation on `GET /api/builder/resumes/[resumeId]/ai-build`.
+    - Added input validation on `import-profile`, `artifact`, and `ai-build/status` routes.
+  - **Performance Optimization**:
+    - Added strict Prisma `select` projections and `take: 50` limit to `listUserResumes` (excluding all AI metadata fields: `targetJobTitle`, `jobDescription`, `targetCompany`, `targetCompanyType`, `isAiGenerated`, `aiGeneratedAt`, `aiModel`, `aiPromptVersion`, keeping payloads minimal for builder workspace listing while preserving them in schema for future re-generation/history features).
+    - Replaced N+1 while-loop queries in `duplicateResume` with single `findMany` and in-memory title collision detection.
+    - Eliminated duplicate `getResume` query in `importProfileData`.
+  - **Error Boundaries & Resilience**:
+    - Created `error.tsx` and `loading.tsx` for `/dashboard/resumes/builder` and `/dashboard/resumes/builder/[resumeId]`.
+    - Added retry UI and error tracking for template dropdown in `editor-header.tsx`.
+    - Added polling timeout guard (120s max) in `ai-build-dialog.tsx`.
+    - Added user-facing error toast in `handleAiBuildSuccess`.
+  - **Standardized & Expanded Test Suite**:
+    - Standardized all tests to `node:test` runner.
+    - Expanded test coverage to 114 passing tests across 30 suites (all passing, 0 failures).
+    - Verified 100% type safety (`tsc --noEmit` clean) and Next.js production build (`npm run build` exit code 0).
+  - **Resume Template Rendering Runtime Resolution**:
+    - JSX/styled-components templates (`art-school-modern`, `art-deco`, `brutalist`) run on Pages Router preview/PDF endpoints to avoid React 19 `react-server` `createContext` absence.
+    - Handlebars themes (`macchiato`, `elegant`, `even`) using filesystem access (`fs.readFileSync(__dirname + "/src/style.css")`) configured as `serverExternalPackages` in `next.config.ts` to prevent webpack bundle relocation `ENOENT` errors.
+  - **Manual Preview Recompile & API Throttling Elimination**:
+    - Dropped debounced automatic preview re-render on keystroke completely.
+    - Added standard-throttled (1.5s cooldown) "Recompile" button in `EditorHeader` navbar next to Download PDF and Save buttons.
+    - Template selection in dropdown auto-recompiles preview immediately, while input form edits only recompile when user clicks "Recompile".
+    - Connected AI build reload and profile data import to automatically recompile preview upon state change.
+- [x] **Phase 8 Task 41: Profile Module Cleanup, Security & Performance Audit**:
+  - **Dead Code & Wrapper Removal**:
+    - Deleted redundant wrapper components `profile-edit-form.tsx` and `profile-setup-form.tsx`; rendered `ProfileForm` directly across `/dashboard/profile` and `/dashboard/settings`.
+    - Removed unused `useProfile` hook (`use-profile.ts`).
+    - Removed unused `getProfileByClerkId` and `deleteProfile` methods from `ProfileService`.
+  - **API Surface Hardening**:
+    - Removed unused and redundant REST mutation handlers (`POST`, `PATCH`, `PUT`) from `src/app/api/profile/route.ts`, strictly standardizing all profile writes on type-safe Server Actions.
+  - **Resilience & Error Boundaries**:
+    - Created dedicated error boundary (`error.tsx`) and skeleton loading state (`loading.tsx`) for `/dashboard/profile`.
+  - **Verification**:
+    - Zero type errors (`npx tsc --noEmit` passed).
+    - 114 tests passing across 30 suites with zero regressions (`npm test` passed).
+- [x] **Phase 8 Task 41: Resume Score Module Cleanup, Testing & Security Audit**:
+  - **Database Cleanup & Optimization**:
+    - Removed confirmed unused fields `personalized`, `profileSnapshot`, and `deletedAt` from `ResumeScore` model in `schema.prisma`.
+    - Generated clean SQL migration script `20260918115500_drop_unused_resume_score_fields/migration.sql` to drop unused columns safely without breaking data integrity.
+    - Updated Prisma Client via `prisma generate`.
+  - **Input Validation & Security Hardening**:
+    - Implemented `ServerResumeAssessmentSchema` using Zod in `src/features/resume/schemas/resume-request.schema.ts` to strictly validate `FormData` inputs on the server boundary.
+    - Enforced validation rules on file type (strict PDF verification), file size (10MB max limit), non-empty payload, role title length (min 2, max 100), and valid experience levels.
+  - **Graceful Error Handling & Standardization**:
+    - Standardized `createResumeAssessmentJob` and `deleteResume` Server Actions using `safeAction` and `normalizeError` from `@/lib/error-handler`.
+    - Replaced raw exception throwing with structured `{ success: true, data } | { success: false, error }` responses, preventing internal stack traces or database errors from leaking to the client.
+    - Updated UI components (`ReviewStep`) and hooks (`useResumeWorkspace`) to handle safe structured error payloads, render clear user notifications, and safely restore UI states upon failure.
+  - **Automated Testing**:
+    - Created comprehensive test suite in `src/features/resume/__tests__/resume-actions.test.ts` covering input sanitization, server-side Zod validation rules, rejected file types and sizes, and unauthenticated session enforcement.
+    - Verified all 115 tests passing across 30 suites with zero regressions (`npm test` passed).
+    - Verified zero TypeScript compilation errors (`tsc --noEmit` passed).
+- [x] **Phase 8 Task 41: Career Assessment Module Cleanup, Testing & Security Audit**:
+  - **Dead Code & Route Cleanup**:
+    - Excised dead API route `src/app/api/career-assessment/route.ts` and directory after confirming all client interactions happen via Server Actions.
+    - Removed unused `getLatestAssessmentAction` from `src/features/career-assessment/services/actions.ts` since page fetching directly invokes the domain service layer.
+  - **Anti-Spam & Rate Limiting Guard**:
+    - Ported the 10-second assessment creation debounce/ratelimit query from the obsolete API route directly into `createAssessmentAction`.
+  - **Safe Error Handling Standardization**:
+    - Wrapped `createAssessmentAction` in `safeAction` from `@/lib/error-handler`.
+    - Standardized error outcomes to `{ success: true, data } | { success: false, error: AppError }`, preventing internal server/ORM details from leaking to the browser.
+    - Updated `AssessmentClientView` to cleanly handle discriminated union results and surface user-friendly notifications.
+  - **Automated Testing & Verification**:
+    - Implemented test suite `src/features/career-assessment/__tests__/career-assessment-actions.test.ts` testing auth session enforcement and safe error normalization.
+    - Verified 116 tests passing across 30 suites with 0 regressions (`npm test` passed).
+    - Verified zero TypeScript errors (`npx tsc --noEmit` passed).
+    - Verified complete Next.js production build (`npm run build` passed).
+- [x] **Phase 8 Task 41: Progress Tracker Module Cleanup, Testing & Error Boundary Implementation**:
+  - **Dead Code & Scaffolding Cleanup**:
+    - Deleted unused Zustand store `src/store/progress.store.ts` and pruned `export * from "./progress.store"` in `src/store/index.ts`.
+    - Removed empty directory `src/components/progress` and pruned dead export from `src/components/index.ts`.
+    - Removed empty `src/features/progress/hooks` directory and dead placeholder scaffolding `src/features/progress/constants.ts` and `src/features/progress/utils.ts`.
+    - Cleaned up feature entrypoint in `src/features/progress/index.ts` to cleanly export types, components, and services.
+  - **Input Validation & Service Hardening**:
+    - Enforced strict string trimming and `userId` presence validation across `ProgressService.getDashboardData`, `ModuleActivityService.recordActivity`, `getProgress`, `getRecentActivity`, and `getLatestForModule`.
+    - Added fallback handling in `ModuleActivityService.computeProgressState` for unhandled module/event combinations.
+  - **Dedicated Error Boundary & Page Protection**:
+    - Created `src/app/(dashboard)/dashboard/progress/error.tsx` matching Elev8 design tokens, handling both auth/permission errors and unexpected exceptions with "Try Again" and "Back to Dashboard" recovery routes.
+    - Hardened `src/app/(dashboard)/dashboard/progress/page.tsx` with explicit `redirect(ROUTES.SIGN_IN)` for unauthenticated sessions and `redirect(ROUTES.ONBOARDING)` for non-onboarded users, preventing blank screens.
+  - **Automated Testing & Verification**:
+    - Added `src/features/progress/__tests__/progress.service.test.ts` testing input rejection on empty, whitespace-only, and null user IDs.
+    - Expanded `src/features/progress/__tests__/module-activity.service.test.ts` with boundary tests and top-level runner execution.
+    - Verified 117 tests passing across 30 test suites (`npm test` passed).
+    - Verified 0 TypeScript errors (`npx tsc --noEmit` passed).
+- [x] **Phase 8 Task 42: Elev8 Skeleton Loading UI & React Suspense Implementation (`42-elev8-skeleton-loading-suspense-implementation.md`)**:
+  - **Reusable Composable Skeletons**:
+    - Created `src/components/skeletons/` with `PageHeaderSkeleton`, `CardSkeleton`, `StatsCardSkeleton`, `ListSkeleton`, and `ChartSkeleton` adhering strictly to Grovia/Elev8 tokens and `aria-busy="true"` accessibility conventions.
+    - Exported all reusable skeletons through `src/components/skeletons/index.ts`.
+  - **Root & Public Loading States**:
+    - Replaced raw "Loading..." placeholder in `src/app/loading.tsx` with a branded structural loading layout using `Skeleton`.
+  - **Dashboard Home Optimization & Loading State**:
+    - Optimized data fetching waterfall in `src/app/(dashboard)/dashboard/page.tsx` by fetching `profile` and `recentActivities` in parallel via `Promise.all`.
+    - Created `src/app/(dashboard)/dashboard/loading.tsx` representing Hero welcome, assessment CTA, metric cards, recent activity ledger, and profile completeness.
+  - **Profile Module Loading**:
+    - Refactored `src/app/(dashboard)/dashboard/profile/loading.tsx` from custom unstyled `div`s with `animate-pulse` to standardized `PageHeaderSkeleton` and `Skeleton` elements matching the 7-section form geometry.
+  - **Career Assessment Module Loading**:
+    - Created `src/app/(dashboard)/dashboard/career-assessment/loading.tsx` matching the 2-column analytics view (action bar, circular readiness gauge, competency radar, metrics chart, strengths/gaps cards, and focus areas).
+  - **Progress Tracker Module Loading**:
+    - Created `src/app/(dashboard)/dashboard/progress/loading.tsx` matching `PageHeaderSkeleton`, 5-module `ModuleProgressGrid`, and chronological `ActivityLedgerTimeline`.
+  - **Interview Practice Module Loading & Suspense Upgrades**:
+    - Replaced generic spinner fallback (`Loader2`) in `src/app/(dashboard)/dashboard/interviews/page.tsx` with `InterviewsWorkspaceSkeleton`.
+    - Created route loading state `src/app/(dashboard)/dashboard/interviews/loading.tsx`.
+    - Created report loading state `src/app/(dashboard)/dashboard/interviews/[interviewId]/loading.tsx` matching the visual reporting suite.
+    - Created wizard loading state `src/app/(dashboard)/dashboard/interviews/new/loading.tsx` matching step indicator and inputs.
+    - Created session loading state `src/app/(dashboard)/dashboard/interviews/[interviewId]/session/loading.tsx` and updated `SessionClientWrapper` to eliminate raw spinner flash during initialization.
+  - **Resume Module Loading & Builder Refactoring**:
+    - Created `src/app/(dashboard)/dashboard/resumes/loading.tsx` matching upload dropzone, performance cards, and resume grid.
+    - Created `src/app/(dashboard)/dashboard/resumes/[resumeId]/loading.tsx` matching the 7-tab Resume Improvement Hub.
+    - Refactored `src/app/(dashboard)/dashboard/resumes/builder/loading.tsx` using `PageHeaderSkeleton` and `CardSkeleton`.
+    - Refactored `src/app/(dashboard)/dashboard/resumes/builder/[resumeId]/loading.tsx` from raw `Loader2` spinner to a full split-pane editor skeleton matching `EditorHeader`, active form section, and live preview card.
+    - Created `src/app/(dashboard)/dashboard/resumes/builder/new/loading.tsx`.
+  - **Roadmaps Module Loading & Suspense Upgrades**:
+    - Replaced generic spinner fallback (`Loader2`) in `src/app/(dashboard)/dashboard/roadmaps/page.tsx` with `RoadmapsWorkspaceSkeleton`.
+    - Created `src/app/(dashboard)/dashboard/roadmaps/loading.tsx`.
+  - **Settings Route Loading**:
+    - Created `src/app/(dashboard)/dashboard/settings/loading.tsx` matching profile settings form.
+  - **Automated Testing & Typecheck**:
+    - Created unit tests in `src/components/skeletons/__tests__/skeletons.test.ts` verifying rendering, child counts, and accessibility `aria-busy="true"` tags across all skeleton primitives.
+    - Verified 122 tests passing across 31 test suites with 0 failures (`npm test`).
+    - Verified zero TypeScript compilation errors (`npx tsc --noEmit`).
+- [x] **Manual Fixes: Skeleton Loading Animation & Shimmer Treatment (`elev8-skeleton-animation-fix-plan.md`)**:
+  - Identified root cause of static appearance: Tailwind's default `animate-pulse` opacity modulation was visually imperceptible against Elev8's subtle `--muted` and `--background` tokens in light and dark themes.
+  - Added GPU-compositor-friendly `shimmer` keyframes and animation in `tailwind.config.ts`.
+  - Refactored `src/components/ui/skeleton.tsx` to support centralized `shimmer` (default), `pulse`, and `none` variants with accessible `motion-safe:` animations and `motion-reduce:after:hidden`.
+  - Removed deprecated redundant `src/components/dashboard/skeleton/LoadingSkeleton.tsx` and unexported it from `src/components/dashboard/index.ts`.
+  - Upgraded Clerk loading placeholders in `src/app/(auth)/sign-in/[[...sign-in]]/page.tsx` and `src/app/(auth)/sign-up/[[...sign-up]]/page.tsx` to use the unified `Skeleton` component with inherited shimmer.
+  - Expanded unit test suite in `src/components/skeletons/__tests__/skeletons.test.ts` to test all Skeleton animation variants and accessibility attributes.
+  - Verified 124 unit tests passing (100%) and 0 TypeScript compilation errors (`npx tsc --noEmit`).
+- [x] **Phase 8 Task 43: Elev8 Settings Page Implementation (`43-elev8-settings-page-implementation.md`)**:
+  - **Data Model & Schema Migration**:
+    - Added `LLMPreference` enum (`FAST`, `BALANCED`, `THINK`) and `llmPreference` field with default `BALANCED` on `User` in `prisma/schema.prisma`.
+    - Pushed database changes to Postgres with `prisma db push` and regenerated Prisma Client.
+  - **Centralized LLM Selector Service**:
+    - Created `src/lib/llm/llm-selector.service.ts` as the single resolution point for model selection across the application.
+    - Mapped all abstract tiers (`FAST`, `BALANCED`, `THINK`) to `gemini-3.7-flash` with graceful fallbacks.
+    - Integrated dynamic model resolution into `CareerAssessmentLLMService` via `profile.userId`.
+  - **Settings Backend Actions & Security**:
+    - Created `updateLLMPreferenceAction` with Clerk authentication, enum validation, database persistence, and safe user-facing error reporting.
+    - Created `deleteAccountAction` with Clerk authentication, cascading database cleanup in Prisma, and permanent user deletion via Clerk's Backend API (`clerkClient().users.deleteUser()`).
+  - **SaaS Settings UI Architecture**:
+    - Overhauled `/dashboard/settings` with a 6-section responsive SaaS layout strictly excluding Profile data:
+      - **Account**: Primary email, Active plan badge ("Free Plan"), and Auth provider.
+      - **AI Preferences**: Interactive radio cards with Fast, Balanced, and Think abstract tiers and optimistic Sonner notifications.
+      - **Notifications**: Frontend-only interactive switches for Product Updates, Offers & Promotions, and Newsletter with session state.
+      - **Security**: Functional "Manage Account" button invoking Clerk's native `openUserProfile()` modal.
+      - **Billing & Subscription**: Current Plan card and disabled "Manage Subscription (Coming Soon)" action.
+      - **Danger Zone**: Destructive card with confirmation Dialog, cascading Prisma deletion, Clerk deletion, sign-out, and redirection.
+    - Updated `src/app/(dashboard)/dashboard/settings/loading.tsx` skeleton layout to match the new 6-card geometry.
+  - **Testing & Verification**:
+    - Created unit test suite in `src/features/settings/__tests__/settings.test.ts` testing default preference, model mappings, fallbacks, and validation.
+    - Verified 100% type-checking (`npx tsc --noEmit` = 0 errors) and all tests passing.
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**
 

@@ -2,7 +2,6 @@ export const BUILDER_ROUTES = {
   HOME: "/dashboard/resumes/builder",
   NEW: "/dashboard/resumes/builder/new",
   EDITOR: (resumeId: string) => `/dashboard/resumes/builder/${resumeId}`,
-  TEMPLATES: "/dashboard/resumes/builder/templates",
 };
 
 export const BUILDER_API = {

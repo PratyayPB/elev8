@@ -50,7 +50,7 @@ export function useResumeEditor({
     };
   }, []);
 
-  const save = useCallback(async () => {
+  const save = useCallback(async (): Promise<boolean> => {
     setSaveStatus("saving");
     setSaveError(null);
 
@@ -83,10 +83,12 @@ export function useResumeEditor({
       setTimeout(() => {
         setSaveStatus((prev) => (prev === "saved" ? "clean" : prev));
       }, 3000);
+      return true;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save changes.";
       setSaveError(msg);
       setSaveStatus("error");
+      return false;
     }
   }, [resumeId]);
 

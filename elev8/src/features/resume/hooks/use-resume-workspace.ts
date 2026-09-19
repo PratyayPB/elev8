@@ -45,7 +45,14 @@ export function useResumeWorkspace(initialResumes: ResumeSummary[]) {
     const backup = [...resumes];
     setResumes((prev) => prev.filter((r) => r.id !== id));
     try {
-      await deleteResumeAction(id);
+      const res = await deleteResumeAction(id);
+      if (!res.success) {
+        setResumes(backup);
+        toast.error("Failed to delete resume", {
+          description: res.error.message,
+        });
+        return;
+      }
       toast.success("Resume assessment deleted successfully");
     } catch (error) {
       console.error("Failed to delete resume:", error);

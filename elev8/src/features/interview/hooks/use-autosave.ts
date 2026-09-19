@@ -17,9 +17,13 @@ export function useAutosave(interviewId: string) {
     isSavingRef.current = true;
     setStatus("saving");
     try {
-      const newBlobUrl = await saveSessionProgress(interviewId, blobUrl, artifact, durationSeconds);
-      setBlobUrl(newBlobUrl);
-      setStatus("saved");
+      const res = await saveSessionProgress(interviewId, blobUrl, artifact, durationSeconds);
+      if (res.success) {
+        setBlobUrl(res.data);
+        setStatus("saved");
+      } else {
+        setStatus("error");
+      }
 
       if (statusTimerRef.current) {
         clearTimeout(statusTimerRef.current);

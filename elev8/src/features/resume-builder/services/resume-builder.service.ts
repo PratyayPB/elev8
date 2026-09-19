@@ -35,17 +35,50 @@ export class ResumeBuilderService {
     userId: string,
     input: CreateResumeInput
   ): Promise<BuilderResumeRecord> {
-    // Generate deterministic artifact path using standard cuid or timestamp ID
-    // We create Prisma record first with empty blob URL, or create ID then upload blob then create Prisma record
-    // Creating Prisma record first with transaction or pre-allocating ID
-    const dummyRecord = await prisma.resumeBuild.create({
-      data: {
+    const trimmedTitle = input.title.trim();
+    if (!trimmedTitle) {
+      throw new ResumeBuilderError(
+        "Resume title is required.",
+        "INVALID_RESUME_TITLE",
+        400
+      );
+    }
+
+    const existing = await prisma.resumeBuild.findFirst({
+      where: {
         userId,
-        title: input.title,
-        template: (input.template as ResumeBuilderTemplate) || "CLASSIC",
-        status: ResumeBuildStatus.DRAFT,
+        title: { equals: trimmedTitle, mode: "insensitive" },
       },
     });
+
+    if (existing) {
+      throw new ResumeBuilderError(
+        `A resume named "${trimmedTitle}" already exists. Please choose a unique name.`,
+        "RESUME_TITLE_EXISTS",
+        409
+      );
+    }
+
+    let dummyRecord;
+    try {
+      dummyRecord = await prisma.resumeBuild.create({
+        data: {
+          userId,
+          title: trimmedTitle,
+          template: (input.template as ResumeBuilderTemplate) || "CLASSIC",
+          status: ResumeBuildStatus.DRAFT,
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === "P2002") {
+        throw new ResumeBuilderError(
+          `A resume named "${trimmedTitle}" already exists. Please choose a unique name.`,
+          "RESUME_TITLE_EXISTS",
+          409
+        );
+      }
+      throw error;
+    }
 
     const resumeId = dummyRecord.id;
 
@@ -114,21 +147,6 @@ export class ResumeBuilderService {
       );
     }
 
-    await ModuleActivityService.recordActivity({
-      userId,
-      module: ModuleType.RESUME_BUILD,
-      eventType: ModuleActivityEventType.RESUME_VIEWED,
-      entityId: resumeId,
-      metadata: {
-        source: "RESUME_BUILDER_GET_RESUME",
-        resumeId,
-        title: resume.title,
-        template: resume.template,
-      },
-    }).catch((error) =>
-      console.warn("[ResumeBuilderService] Failed to record resume view activity:", error)
-    );
-
     return resume as unknown as BuilderResumeRecord;
   }
 
@@ -138,7 +156,18 @@ export class ResumeBuilderService {
   public static async listUserResumes(userId: string): Promise<BuilderResumeRecord[]> {
     const resumes = await prisma.resumeBuild.findMany({
       where: { userId },
+      select: {
+        id: true,
+        userId: true,
+        title: true,
+        status: true,
+        template: true,
+        artifactBlobUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: { updatedAt: "desc" },
+      take: 50,
     });
 
     return resumes as unknown as BuilderResumeRecord[];
@@ -154,14 +183,56 @@ export class ResumeBuilderService {
   ): Promise<BuilderResumeRecord> {
     const existingResume = await this.getResume(userId, resumeId);
 
-    const updated = await prisma.resumeBuild.update({
-      where: { id: resumeId },
-      data: {
-        ...(input.title !== undefined && { title: input.title }),
-        ...(input.template !== undefined && { template: input.template as ResumeBuilderTemplate }),
-        ...(input.status !== undefined && { status: input.status as ResumeBuildStatus }),
-      },
-    });
+    let trimmedTitle: string | undefined = undefined;
+    if (input.title !== undefined) {
+      trimmedTitle = input.title.trim();
+      if (!trimmedTitle) {
+        throw new ResumeBuilderError(
+          "Resume title cannot be empty.",
+          "INVALID_RESUME_TITLE",
+          400
+        );
+      }
+
+      if (trimmedTitle.toLowerCase() !== existingResume.title.trim().toLowerCase()) {
+        const duplicate = await prisma.resumeBuild.findFirst({
+          where: {
+            userId,
+            title: { equals: trimmedTitle, mode: "insensitive" },
+            id: { not: resumeId },
+          },
+        });
+
+        if (duplicate) {
+          throw new ResumeBuilderError(
+            `A resume named "${trimmedTitle}" already exists. Please choose a unique name.`,
+            "RESUME_TITLE_EXISTS",
+            409
+          );
+        }
+      }
+    }
+
+    let updated;
+    try {
+      updated = await prisma.resumeBuild.update({
+        where: { id: resumeId },
+        data: {
+          ...(trimmedTitle !== undefined && { title: trimmedTitle }),
+          ...(input.template !== undefined && { template: input.template as ResumeBuilderTemplate }),
+          ...(input.status !== undefined && { status: input.status as ResumeBuildStatus }),
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === "P2002") {
+        throw new ResumeBuilderError(
+          `A resume named "${trimmedTitle}" already exists. Please choose a unique name.`,
+          "RESUME_TITLE_EXISTS",
+          409
+        );
+      }
+      throw error;
+    }
 
     if (input.status === "READY" && existingResume.status !== "READY") {
       try {
@@ -304,20 +375,6 @@ export class ResumeBuilderService {
         },
       });
 
-      await ModuleActivityService.recordActivity({
-        userId,
-        module: ModuleType.RESUME_BUILD,
-        eventType: ModuleActivityEventType.RESUME_UPDATED,
-        entityId: resumeId,
-        metadata: {
-          source: "RESUME_BUILDER_ARTIFACT_AUTOSAVE",
-          resumeId,
-          version: newVersion,
-        },
-      }).catch((error) =>
-        console.warn("[ResumeBuilderService] Failed to record resume update activity:", error)
-      );
-
       return {
         artifact: validArtifact,
         version: newVersion,
@@ -345,16 +402,47 @@ export class ResumeBuilderService {
     // 2. Fetch the original artifact
     const originalArtifact = await this.getResumeArtifact(userId, originalResumeId);
 
-    // 3. Create a new Prisma record (DRAFT)
-    const duplicateTitle = `${originalResume.title} - Copy`;
-    const newRecord = await prisma.resumeBuild.create({
-      data: {
+    // 3. Find unique title for duplicate (e.g. "Title - Copy", "Title - Copy (2)")
+    const baseTitle = originalResume.title.replace(/ - Copy( \(\d+\))?$/, "");
+    const copyPrefix = `${baseTitle} - Copy`;
+
+    const existingResumes = await prisma.resumeBuild.findMany({
+      where: {
         userId,
-        title: duplicateTitle.substring(0, 100), // Enforce MVP maximum length
-        template: originalResume.template,
-        status: "DRAFT",
+        title: { startsWith: copyPrefix, mode: "insensitive" },
       },
+      select: { title: true },
     });
+    const existingTitles = new Set(existingResumes.map((r) => r.title.toLowerCase()));
+
+    let candidateTitle = copyPrefix.substring(0, 100);
+    let counter = 2;
+
+    while (existingTitles.has(candidateTitle.toLowerCase())) {
+      candidateTitle = `${baseTitle} - Copy (${counter})`.substring(0, 100);
+      counter++;
+    }
+
+    let newRecord;
+    try {
+      newRecord = await prisma.resumeBuild.create({
+        data: {
+          userId,
+          title: candidateTitle,
+          template: originalResume.template,
+          status: "DRAFT",
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === "P2002") {
+        throw new ResumeBuilderError(
+          `A resume named "${candidateTitle}" already exists. Please choose a unique name.`,
+          "RESUME_TITLE_EXISTS",
+          409
+        );
+      }
+      throw error;
+    }
 
     const newResumeId = newRecord.id;
 
@@ -404,7 +492,7 @@ export class ResumeBuilderService {
     savedAt?: Date;
   }> {
     // 1. Validate resume ownership
-    await this.getResume(userId, resumeId);
+    const resume = await this.getResume(userId, resumeId);
 
     // 2. Fetch user and profile with skills
     const user = await prisma.user.findUnique({
@@ -423,8 +511,21 @@ export class ResumeBuilderService {
     }
 
     // 3. Determine base artifact: prefer client's active state to preserve unsaved local changes
-    const baseArtifact =
-      clientArtifact || (await this.getResumeArtifact(userId, resumeId));
+    let baseArtifact = clientArtifact;
+    if (!baseArtifact) {
+      if (!resume.artifactBlobUrl) {
+        throw new ResumeBuilderError("Resume artifact URL missing", "BLOB_READ_FAILED", 404);
+      }
+      try {
+        baseArtifact = await BlobStorageService.fetchJson<BuilderResumeArtifact>(resume.artifactBlobUrl);
+      } catch (error) {
+        throw new ResumeBuilderError(
+          `Failed to fetch resume artifact: ${(error as Error).message}`,
+          "BLOB_READ_FAILED",
+          500
+        );
+      }
+    }
 
     const mergedArtifact = mergeProfileIntoResumeArtifact(
       baseArtifact,

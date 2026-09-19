@@ -90,14 +90,13 @@ enum ResumeBuildStatus {
   ARCHIVED
 }
 
-
-
 enum InterviewStatus {
   GENERATING
   READY
   IN_PROGRESS
   COMPLETED
   FAILED
+  ASSESSMENT_FAILED
   ABANDONED
 }
 
@@ -123,6 +122,7 @@ enum InterviewTemplateSource {
 enum InterviewTemplateStatus {
   ACTIVE
   ARCHIVED
+  FAILED
 }
 
 enum CareerAssessmentStatus {
@@ -248,6 +248,12 @@ enum ModuleActivityEventType {
   RESUME_SCORE_VIEWED
 }
 
+enum LLMPreference {
+  FAST
+  BALANCED
+  THINK
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -256,19 +262,20 @@ model User {
   id      String  @id @default(cuid())
   clerkId String  @unique
   email   String?
+  llmPreference LLMPreference @default(BALANCED)
 
-  profile            Profile?
-  careerAssessments  CareerAssessment[]
-  roadmaps           Roadmap[]
-  resumeScores       ResumeScore[]
-  resumeBuilds       ResumeBuild[]
-  interviewTemplates InterviewTemplate[]
-  interviewSessions  InterviewSession[]
-  notifications      Notification[]
-  jobs               Job[]
-  moduleActivities   ModuleActivity[]
-  progress           Progress?
-  globalRoadmaps     GlobalRoadmap[]
+  profile                  Profile?
+  careerAssessments        CareerAssessment[]
+  roadmaps                 Roadmap[]
+  resumeScores             ResumeScore[]
+  resumeBuilds             ResumeBuild[]
+  interviewTemplates       InterviewTemplate[]
+  interviewSessions        InterviewSession[]
+  notifications            Notification[]
+  jobs                     Job[]
+  moduleActivities         ModuleActivity[]
+  progress                 Progress?
+  globalRoadmaps           GlobalRoadmap[]
   globalInterviewTemplates GlobalInterviewTemplate[]
 
   createdAt DateTime @default(now())
@@ -447,13 +454,9 @@ model ResumeScore {
 
   artifactBlobUrl String?
 
-  personalized    Boolean?
-  profileSnapshot Json?
-
   status ResumeScoreStatus @default(PROCESSING)
 
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([status])
@@ -467,9 +470,9 @@ model ResumeBuild {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title           String
-  template        String                @default("academic-cv-lite")
+  template        String            @default("academic-cv-lite")
   artifactBlobUrl String?
-  status          ResumeBuildStatus     @default(DRAFT)
+  status          ResumeBuildStatus @default(DRAFT)
 
   targetJobTitle    String?
   jobDescription    String?
@@ -484,6 +487,7 @@ model ResumeBuild {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, title])
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -505,8 +509,8 @@ model ResumeTemplate {
   supportedSections String[]
   previewImage      String                 @default("")
 
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("resume_templates")
 }
@@ -599,7 +603,6 @@ model InterviewSession {
 
   overallScore    Int?
   durationSeconds Int?
-  assessment      Json?
 
   personalized    Boolean @default(false)
   profileSnapshot Json?
@@ -667,9 +670,9 @@ model Notification {
 }
 
 model RoleSkillProfile {
-  id              String                @id @default(cuid())
-  role            String
-  normalizedRole  String
+  id             String @id @default(cuid())
+  role           String
+  normalizedRole String
 
   skills RoleSkillRequirement[]
 
@@ -716,7 +719,6 @@ model ModuleActivity {
   @@index([userId, eventType, createdAt])
   @@map("module_activities")
 }
-
 
 model Progress {
   id     String @id @default(cuid())

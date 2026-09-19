@@ -1,4 +1,4 @@
-import { InterviewPlan, GeneratedQuestion, InterviewArtifact } from "../types";
+import { InterviewPlan, GeneratedQuestion } from "../types";
 import { InterviewPlanSchema, GeneratedQuestionsListSchema } from "../constants/interview-schema";
 
 export class InterviewValidator {

@@ -14,10 +14,15 @@ export const metadata: Metadata = {
 export default async function NewResumePage() {
   const dbUser = await getOrCreateDbUser();
 
-  const profile = await prisma.profile.findUnique({
-    where: { userId: dbUser.id },
-    select: { currentRole: true },
-  });
+  let profile = null;
+  try {
+    profile = await prisma.profile.findUnique({
+      where: { userId: dbUser.id },
+      select: { currentRole: true },
+    });
+  } catch (err) {
+    console.warn("[NewResumePage] Failed to fetch profile pre-fill:", err);
+  }
 
   const defaultTargetRole = profile?.currentRole || "";
 

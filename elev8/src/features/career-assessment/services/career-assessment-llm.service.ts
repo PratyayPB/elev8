@@ -8,6 +8,7 @@ import {
 import {
   ASSESSMENT_MODEL,
 } from "../constants";
+import { LLMSelectorService } from "@/lib/llm";
 import { AssessmentOutputSchema } from "../schemas";
 import { CareerAssessmentPromptBuilder } from "./assessment-prompt-builder";
 
@@ -36,10 +37,14 @@ export class CareerAssessmentLLMService {
       gapAnalysis
     );
 
+    const model = profile.userId
+      ? await LLMSelectorService.getModelForUser(profile.userId)
+      : ASSESSMENT_MODEL;
+
     const startTime = performance.now();
 
     const response = await ai.models.generateContent({
-      model: ASSESSMENT_MODEL,
+      model,
       contents: [
         {
           role: "user",
@@ -70,7 +75,7 @@ export class CareerAssessmentLLMService {
 
     return {
       output: parsedOutput,
-      model: ASSESSMENT_MODEL,
+      model,
       processingDurationMs,
     };
   }

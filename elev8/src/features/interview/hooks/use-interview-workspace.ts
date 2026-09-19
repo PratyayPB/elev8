@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { InterviewSession, InterviewStatus } from "@prisma/client";
+import { InterviewSession, InterviewStatus, InterviewTemplate } from "@prisma/client";
 
-export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
+export function useInterviewWorkspace(initialData: { sessions: InterviewSession[]; templates: InterviewTemplate[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
@@ -10,30 +10,31 @@ export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
 
   // Auto-refresh when any interview is in GENERATING state or being assessed
   useEffect(() => {
-    const hasActiveJob = initialInterviews.some(
+    const hasActiveSession = initialData.sessions.some(
       (i) =>
         i.status === InterviewStatus.GENERATING ||
         (i.status === InterviewStatus.COMPLETED && (i.overallScore === null || i.overallScore === undefined))
     );
+    const hasActiveTemplate = initialData.templates.some(
+      (t) => t.status === "ACTIVE" && !t.templateBlobUrl 
+    );
 
-    if (!hasActiveJob) return;
+    if (!hasActiveSession && !hasActiveTemplate) return;
 
     const interval = setInterval(() => {
       router.refresh();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [initialInterviews, router]);
+  }, [initialData, router]);
 
-  const filteredInterviews = useMemo(() => {
-    return initialInterviews.filter((item) => {
-      // Search
+  const filterAndSort = (items: any[]) => {
+    return items.filter((item) => {
       const matchesSearch =
         search === "" ||
         item.role.toLowerCase().includes(search.toLowerCase()) ||
         (item.interviewType && item.interviewType.toLowerCase().includes(search.toLowerCase()));
 
-      // Difficulty
       const matchesDifficulty =
         difficultyFilter === "ALL" ||
         (item.difficulty && item.difficulty.toLowerCase() === difficultyFilter.toLowerCase());
@@ -54,19 +55,22 @@ export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
       }
       return 0;
     });
-  }, [initialInterviews, search, difficultyFilter, sortOption]);
+  };
+
+  const filteredSessions = useMemo(() => filterAndSort(initialData.sessions), [initialData.sessions, search, difficultyFilter, sortOption]);
+  const filteredTemplates = useMemo(() => filterAndSort(initialData.templates), [initialData.templates, search, difficultyFilter, sortOption]);
 
   const inProgressList = useMemo(() => {
-    return filteredInterviews.filter((i) => i.status === "IN_PROGRESS");
-  }, [filteredInterviews]);
+    return filteredSessions.filter((i) => i.status === "IN_PROGRESS");
+  }, [filteredSessions]);
 
   const completedList = useMemo(() => {
-    return filteredInterviews.filter((i) => i.status === "COMPLETED");
-  }, [filteredInterviews]);
+    return filteredSessions.filter((i) => i.status === "COMPLETED");
+  }, [filteredSessions]);
 
   const otherList = useMemo(() => {
-    return filteredInterviews.filter((i) => i.status !== "IN_PROGRESS" && i.status !== "COMPLETED");
-  }, [filteredInterviews]);
+    return filteredSessions.filter((i) => i.status !== "IN_PROGRESS" && i.status !== "COMPLETED");
+  }, [filteredSessions]);
 
   return {
     search,
@@ -75,7 +79,8 @@ export function useInterviewWorkspace(initialInterviews: InterviewSession[]) {
     setDifficultyFilter,
     sortOption,
     setSortOption,
-    filteredInterviews,
+    filteredSessions,
+    filteredTemplates,
     inProgressList,
     completedList,
     otherList,

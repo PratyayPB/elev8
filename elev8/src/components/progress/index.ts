@@ -1,2 +1,0 @@
-// Progress components module
-export {};

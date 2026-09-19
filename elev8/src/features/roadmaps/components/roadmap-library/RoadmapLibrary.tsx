@@ -188,16 +188,16 @@ export const RoadmapLibrary: React.FC = () => {
           onValueChange={handleTabChange}
           className="w-full sm:w-auto"
         >
-          <TabsList className="grid grid-cols-2 w-full sm:w-[360px] bg-surface-muted rounded-xl">
+          <TabsList className="grid grid-cols-2 w-full sm:w-[360px] bg-surface-muted rounded-xl p-1 h-auto">
             <TabsTrigger
               value="mine"
-              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-e-2xl data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-lg data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all cursor-pointer"
             >
               <User className="w-3.5 h-3.5" /> My Roadmaps
             </TabsTrigger>
             <TabsTrigger
               value="global"
-              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-s-2xl data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 text-xs font-display font-bold rounded-lg data-[state=active]:bg-dashboard-card data-[state=active]:text-text-primary data-[state=active]:shadow-sm transition-all cursor-pointer"
             >
               <Globe className="w-3.5 h-full" /> Global Roadmaps
             </TabsTrigger>

@@ -43,6 +43,16 @@ async function handleSave(
       );
     }
 
+    if (
+      clientVersion !== undefined &&
+      (typeof clientVersion !== "number" || !Number.isInteger(clientVersion) || clientVersion < 0)
+    ) {
+      return NextResponse.json(
+        { error: "clientVersion must be a non-negative integer", code: "INVALID_CLIENT_VERSION" },
+        { status: 400 }
+      );
+    }
+
     const { version, savedAt } = await ResumeBuilderService.updateResumeArtifact(
       dbUser.id,
       resumeId,
@@ -71,14 +81,6 @@ async function handleSave(
     console.error("Save /api/builder/resumes/[resumeId]/artifact error:", error);
     return NextResponse.json({ error: "Internal server error", code: "INTERNAL_ERROR" }, { status: 500 });
   }
-}
-
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ resumeId: string }> }
-) {
-  const { resumeId } = await params;
-  return handleSave(req, resumeId);
 }
 
 export async function PATCH(

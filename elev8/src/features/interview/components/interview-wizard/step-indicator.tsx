@@ -1,58 +1,58 @@
+import React from "react";
 import { Check } from "lucide-react";
-import { clsx } from "clsx";
 
 interface StepIndicatorProps {
   currentStep: number;
+  totalSteps?: number;
 }
 
+const STEPS = [
+  { id: 1, label: "Core Requirements" },
+  { id: 2, label: "AI Personalization" },
+  { id: 3, label: "Summary & Payload" },
+];
+
 export function StepIndicator({ currentStep }: StepIndicatorProps) {
-  const steps = [
-    { num: 1, label: "Required Inputs" },
-    { num: 2, label: "Personalization" },
-    { num: 3, label: "Review" },
-  ];
-
   return (
-    <div className="flex items-center justify-center space-x-4 mb-8">
-      {steps.map((step, index) => {
-        const isCompleted = currentStep > step.num;
-        const isCurrent = currentStep === step.num;
+    <div className="w-full max-w-2xl mx-auto mb-8">
+      <div className="flex items-center justify-between relative">
+        {/* Connecting line */}
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border-subtle -z-10 -translate-y-1/2" />
+        <div
+          className="absolute top-1/2 left-0 h-0.5 bg-text-primary transition-all duration-300 -z-10 -translate-y-1/2"
+          style={{
+            width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%`,
+          }}
+        />
 
-        return (
-          <div key={step.num} className="flex items-center">
-            <div
-              className={clsx(
-                "flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-bold transition-colors",
-                isCompleted
-                  ? "bg-green-500 border-green-500 text-white"
-                  : isCurrent
-                  ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                  : "border-gray-300 text-gray-400 dark:border-gray-700 dark:text-gray-600"
-              )}
-            >
-              {isCompleted ? <Check className="w-5 h-5" /> : step.num}
-            </div>
-            <span
-              className={clsx(
-                "ml-2 text-sm font-medium",
-                isCompleted || isCurrent
-                  ? "text-gray-900 dark:text-gray-100"
-                  : "text-gray-400 dark:text-gray-600"
-              )}
-            >
-              {step.label}
-            </span>
-            {index < steps.length - 1 && (
+        {STEPS.map((step) => {
+          const isCompleted = currentStep > step.id;
+          const isCurrent = currentStep === step.id;
+
+          return (
+            <div key={step.id} className="flex flex-col items-center gap-2 bg-dashboard-card px-2">
               <div
-                className={clsx(
-                  "w-12 h-1 mx-4 rounded-full transition-colors",
-                  isCompleted ? "bg-green-500" : "bg-gray-200 dark:bg-gray-800"
-                )}
-              />
-            )}
-          </div>
-        );
-      })}
+                className={`w-9 h-9 rounded-full flex items-center justify-center font-display font-semibold text-sm transition-all duration-200 ${
+                  isCompleted
+                    ? "bg-text-primary text-white dark:text-brand-primary-900"
+                    : isCurrent
+                    ? "bg-text-primary text-white dark:text-brand-primary-900 ring-4 ring-black/10 dark:ring-white/10"
+                    : "bg-surface-muted text-text-muted border border-border-subtle"
+                }`}
+              >
+                {isCompleted ? <Check className="w-5 h-5 text-white" /> : step.id}
+              </div>
+              <span
+                className={`text-xs font-display ${
+                  isCurrent ? "text-text-primary font-bold" : "text-text-secondary font-medium"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -5,5 +5,5 @@ export * from "./page-header/PageHeader";
 export * from "./metric-card/MetricCard";
 export * from "./section-header/SectionHeader";
 export * from "./empty-state/EmptyState";
-export * from "./skeleton/LoadingSkeleton";
 export * from "./theme-toggle";
+

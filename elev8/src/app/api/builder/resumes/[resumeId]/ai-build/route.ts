@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateDbUser } from "@/lib/auth";
+import { ResumeBuilderService, ResumeBuilderError } from "@/features/resume-builder/services/resume-builder.service";
 import { AiResumeBuildService } from "@/features/resume-builder/services/ai-resume-build.service";
 import { AiBuildResumeInputSchema } from "@/features/resume-builder/schemas/ai-build.schema";
 
@@ -9,11 +10,20 @@ export async function GET(
 ) {
   try {
     const dbUser = await getOrCreateDbUser();
-    await params;
+    const { resumeId } = await params;
+
+    // Verify user owns the resume before checking AI build eligibility
+    await ResumeBuilderService.getResume(dbUser.id, resumeId);
 
     const profileStatus = await AiResumeBuildService.checkProfileCompletion(dbUser.id);
     return NextResponse.json(profileStatus, { status: 200 });
   } catch (error: any) {
+    if (error instanceof ResumeBuilderError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.statusCode }
+      );
+    }
     if (error?.message?.includes("Unauthorized")) {
       return NextResponse.json(
         { error: "Unauthorized", code: "UNAUTHORIZED" },
@@ -35,7 +45,7 @@ export async function POST(
   try {
     const dbUser = await getOrCreateDbUser();
     const { resumeId } = await params;
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
 
     const parseResult = AiBuildResumeInputSchema.safeParse(body);
     if (!parseResult.success) {
@@ -57,21 +67,21 @@ export async function POST(
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
+    if (error instanceof ResumeBuilderError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.statusCode }
+      );
+    }
     if (error?.message?.includes("Unauthorized")) {
       return NextResponse.json(
         { error: "Unauthorized", code: "UNAUTHORIZED" },
         { status: 401 }
       );
     }
-    if (error?.message?.includes("Mandatory profile information is incomplete")) {
-      return NextResponse.json(
-        { error: error.message, code: "PROFILE_INCOMPLETE" },
-        { status: 400 }
-      );
-    }
     console.error("POST /api/builder/resumes/[resumeId]/ai-build error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to trigger AI resume build", code: "TRIGGER_FAILED" },
+      { error: error?.message || "Failed to trigger AI resume build", code: "TRIGGER_FAILED" },
       { status: 500 }
     );
   }

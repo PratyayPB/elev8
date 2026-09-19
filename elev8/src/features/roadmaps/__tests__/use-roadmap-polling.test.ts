@@ -75,7 +75,7 @@ async function runPollingAndStageTests() {
       this.isActive = true;
       this.timerId = setInterval(() => {
         this.pollCount++;
-      }, 50);
+      }, 20);
     }
 
     public stop() {
@@ -111,7 +111,7 @@ async function runPollingAndStageTests() {
   );
 
   // Wait for intervals to fire
-  await new Promise((res) => setTimeout(res, 120));
+  await new Promise((res) => setTimeout(res, 150));
   assert.ok(controller.pollCount >= 2, `Expected at least 2 polls, got ${controller.pollCount}`);
 
   // Test Case D: Job finishes (isLoading = false) -> Polling terminates immediately

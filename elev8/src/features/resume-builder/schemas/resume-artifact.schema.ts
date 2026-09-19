@@ -83,12 +83,21 @@ export const ResumeBuildStatusEnum = z.enum(["DRAFT", "READY", "ARCHIVED"]);
 export const BuilderResumeStatusEnum = ResumeBuildStatusEnum;
 
 export const CreateResumeInputSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title is too long"),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Resume title is required")
+    .max(100, "Resume title cannot exceed 100 characters"),
   template: z.string().optional().default("academic-cv-lite"),
 });
 
 export const UpdateResumeInputSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title is too long").optional(),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Resume title is required")
+    .max(100, "Resume title cannot exceed 100 characters")
+    .optional(),
   template: z.string().optional(),
   status: ResumeBuildStatusEnum.optional(),
 });

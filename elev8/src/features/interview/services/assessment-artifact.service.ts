@@ -35,7 +35,16 @@ export class AssessmentArtifactService {
       updatedArtifact
     );
 
-    // 3. Update Prisma
+    // 3. Update Prisma (if session still exists)
+    const existingInterview = await prisma.interviewSession.findUnique({
+      where: { id: interviewId },
+    });
+
+    if (!existingInterview) {
+      console.warn(`[AssessmentArtifactService] Interview ${interviewId} no longer exists. Skipping DB update.`);
+      return newBlobUrl;
+    }
+
     const interview = await prisma.interviewSession.update({
       where: { id: interviewId },
       data: {

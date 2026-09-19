@@ -94,9 +94,9 @@ export const buildAiResumeTask = schemaTask({
         throw new Error(`User ${userId} not found.`);
       }
 
-      if (!user.profile || !user.profile.isMandatoryCompleted) {
+      if (!user.profile || !user.profile.isCompleted) {
         throw new Error(
-          "Profile is incomplete. A completed profile is mandatory for AI Resume Build."
+          "Profile is incomplete. A 100% completed profile is required for AI Resume Build."
         );
       }
 

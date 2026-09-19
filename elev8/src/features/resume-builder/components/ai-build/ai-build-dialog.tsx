@@ -102,7 +102,21 @@ export function AiBuildDialog({
   useEffect(() => {
     if (step !== "generating" || !jobId) return;
 
+    let attempts = 0;
+    const maxAttempts = 80; // 80 * 1500ms = 120 seconds (2 minutes max)
+
     const interval = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(interval);
+        setErrorMessage("AI generation timed out. Please check back later or try again.");
+        setStep("error");
+        toast.error("AI Resume Build timed out", {
+          description: "The background task took longer than expected.",
+        });
+        return;
+      }
+
       try {
         const res = await fetch(
           `/api/builder/resumes/${resumeId}/ai-build/status?jobId=${jobId}`

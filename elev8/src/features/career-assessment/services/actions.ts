@@ -6,77 +6,19 @@ import { prisma } from "@/lib/prisma";
 import { ProfileService, calculateProfileCompleteness } from "@/features/profile/services";
 import { CareerAssessmentService } from "./career-assessment.service";
 import { ModuleActivityContextService } from "./module-activity-context.service";
-import { CareerAssessmentResult } from "../types";
 import { ModuleActivityService } from "@/features/progress/services";
 import {
   ModuleActivityEventType,
   ModuleCompletionStatus,
   ModuleType,
 } from "@/features/progress/types";
+import { safeAction } from "@/lib/error-handler";
 
-export async function getLatestAssessmentAction(): Promise<{
-  assessment: CareerAssessmentResult | null;
-  isStale: boolean;
-  profileComplete: boolean;
-}> {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
-    return { assessment: null, isStale: false, profileComplete: false };
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { clerkId },
-  });
-
-  if (!user) {
-    return { assessment: null, isStale: false, profileComplete: false };
-  }
-
-  const profile = await ProfileService.getProfile(user.id);
-  const completeness = calculateProfileCompleteness(profile);
-  const profileComplete = completeness.state === "COMPLETED";
-
-  if (!profile) {
-    return { assessment: null, isStale: false, profileComplete: false };
-  }
-
-  const assessment = await CareerAssessmentService.getLatestAssessment(
-    user.id,
-    profile.profileVersion
-  );
-
-  if (assessment) {
-    await ModuleActivityService.recordActivity({
-      userId: user.id,
-      module: ModuleType.CAREER_ASSESSMENT,
-      eventType: ModuleActivityEventType.ASSESSMENT_VIEWED,
-      entityId: assessment.id,
-      metadata: {
-        source: "CAREER_ASSESSMENT_PAGE",
-        assessmentId: assessment.id,
-        readinessScore: assessment.readinessScore,
-      },
-    }).catch((error) =>
-      console.warn("[CareerAssessmentActions] Failed to record view activity:", error)
-    );
-  }
-
-  return {
-    assessment,
-    isStale: assessment?.isStale || false,
-    profileComplete,
-  };
-}
-
-export async function createAssessmentAction(): Promise<{
-  success: boolean;
-  assessment?: CareerAssessmentResult;
-  error?: string;
-}> {
-  try {
+export async function createAssessmentAction() {
+  return safeAction(async () => {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
-      return { success: false, error: "Unauthorized" };
+      throw new Error("Unauthorized: You must be logged in to generate a Career Assessment.");
     }
 
     const user = await prisma.user.findUnique({
@@ -84,7 +26,20 @@ export async function createAssessmentAction(): Promise<{
     });
 
     if (!user) {
-      return { success: false, error: "User not found" };
+      throw new Error("User record not found.");
+    }
+
+    // Rate-limiting / anti-spam guard: prevent multiple submissions within 10 seconds
+    const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
+    const recentDuplicate = await prisma.careerAssessment.findFirst({
+      where: {
+        userId: user.id,
+        createdAt: { gte: tenSecondsAgo },
+      },
+    });
+
+    if (recentDuplicate) {
+      throw new Error("An assessment was just generated. Please wait a moment before trying again.");
     }
 
     await ModuleActivityService.recordActivity({
@@ -100,18 +55,12 @@ export async function createAssessmentAction(): Promise<{
 
     const profile = await ProfileService.getProfile(user.id);
     if (!profile) {
-      return {
-        success: false,
-        error: "You must create your profile before taking an assessment.",
-      };
+      throw new Error("You must create your profile before taking an assessment.");
     }
 
     const completeness = calculateProfileCompleteness(profile);
     if (completeness.state !== "COMPLETED") {
-      return {
-        success: false,
-        error: "Your profile must be 100% complete before taking a Career Assessment.",
-      };
+      throw new Error("Your profile must be 100% complete before taking a Career Assessment.");
     }
 
     await ModuleActivityService.recordActivity({
@@ -138,12 +87,6 @@ export async function createAssessmentAction(): Promise<{
     revalidatePath("/dashboard/career-assessment");
     revalidatePath("/dashboard");
 
-    return { success: true, assessment };
-  } catch (error: any) {
-    console.error("[createAssessmentAction] Error:", error);
-    return {
-      success: false,
-      error: error?.message || "Failed to generate Career Assessment.",
-    };
-  }
+    return { assessment };
+  });
 }

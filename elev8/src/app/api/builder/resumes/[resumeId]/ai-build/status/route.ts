@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOrCreateDbUser } from "@/lib/auth";
 import { AiResumeBuildService } from "@/features/resume-builder/services/ai-resume-build.service";
+import { ResumeBuilderError } from "@/features/resume-builder/services/resume-builder.service";
 
 export async function GET(
   req: Request,
@@ -11,11 +12,11 @@ export async function GET(
     await params;
 
     const { searchParams } = new URL(req.url);
-    const jobId = searchParams.get("jobId");
+    const jobId = searchParams.get("jobId")?.trim();
 
-    if (!jobId) {
+    if (!jobId || jobId.length < 5) {
       return NextResponse.json(
-        { error: "jobId query parameter is required", code: "MISSING_JOB_ID" },
+        { error: "A valid jobId query parameter is required", code: "INVALID_JOB_ID" },
         { status: 400 }
       );
     }
@@ -23,16 +24,16 @@ export async function GET(
     const job = await AiResumeBuildService.getJobStatus(dbUser.id, jobId);
     return NextResponse.json({ job }, { status: 200 });
   } catch (error: any) {
+    if (error instanceof ResumeBuilderError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.statusCode }
+      );
+    }
     if (error?.message?.includes("Unauthorized")) {
       return NextResponse.json(
         { error: "Unauthorized", code: "UNAUTHORIZED" },
         { status: 401 }
-      );
-    }
-    if (error?.message?.includes("Job not found")) {
-      return NextResponse.json(
-        { error: "Job not found", code: "NOT_FOUND" },
-        { status: 404 }
       );
     }
     console.error("GET /api/builder/resumes/[resumeId]/ai-build/status error:", error);

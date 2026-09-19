@@ -1,12 +1,11 @@
 import assert from "node:assert";
+import { describe, it } from "node:test";
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { BuilderResumeArtifact } from "../types";
 import { ResumeTemplateRenderer } from "../components/templates/resume-template-renderer";
 
-export async function runTemplateRendererTests() {
-  console.log("Running template renderer unit tests...");
-
+describe("Resume Template Renderer Component", () => {
   const mockArtifact: BuilderResumeArtifact = {
     resumeId: "test_res_123",
     version: 1,
@@ -68,57 +67,44 @@ export async function runTemplateRendererTests() {
     ],
   };
 
-  // Test 1: Classic Template HTML Rendering
-  const classicHtml = ReactDOMServer.renderToStaticMarkup(
-    React.createElement(ResumeTemplateRenderer, { artifact: mockArtifact, template: "CLASSIC" })
-  );
-  assert.ok(classicHtml.includes("Jane Architect"));
-  assert.ok(classicHtml.includes("Lead Architect"));
-  assert.ok(classicHtml.includes("MIT"));
-  assert.ok(classicHtml.includes("TypeScript"));
-
-  // Test 2: Modern Template HTML Rendering
-  const modernHtml = ReactDOMServer.renderToStaticMarkup(
-    React.createElement(ResumeTemplateRenderer, { artifact: mockArtifact, template: "MODERN" })
-  );
-  assert.ok(modernHtml.includes("Jane Architect"));
-  assert.ok(modernHtml.includes("Acme Corp"));
-  assert.ok(modernHtml.includes("AWS Solutions Architect"));
-
-  // Test 3: Minimal Template HTML Rendering
-  const minimalHtml = ReactDOMServer.renderToStaticMarkup(
-    React.createElement(ResumeTemplateRenderer, { artifact: mockArtifact, template: "MINIMAL" })
-  );
-  assert.ok(minimalHtml.includes("Jane Architect"));
-  assert.ok(minimalHtml.includes("Top Innovator Award"));
-
-  // Test 4: Empty sections handling (must not throw or render broken blocks)
-  const emptyArtifact: BuilderResumeArtifact = {
-    resumeId: "empty_res",
-    version: 1,
-    personalInformation: { fullName: "Simple User", email: "user@example.com" },
-    professionalSummary: "",
-    education: [],
-    experience: [],
-    projects: [],
-    skills: [],
-    certifications: [],
-    achievements: [],
-  };
-
-  const emptyClassic = ReactDOMServer.renderToStaticMarkup(
-    React.createElement(ResumeTemplateRenderer, { artifact: emptyArtifact, template: "CLASSIC" })
-  );
-  assert.ok(emptyClassic.includes("Simple User"));
-  assert.strictEqual(emptyClassic.includes("Work Experience"), false);
-  assert.strictEqual(emptyClassic.includes("Education"), false);
-
-  console.log("All template renderer unit tests passed!");
-}
-
-if (require.main === module) {
-  runTemplateRendererTests().catch((err) => {
-    console.error("Test failure:", err);
-    process.exit(1);
+  it("renders academic-cv-lite template fallback markup", () => {
+    const html = ReactDOMServer.renderToStaticMarkup(
+      React.createElement(ResumeTemplateRenderer, { artifact: mockArtifact, template: "academic-cv-lite" })
+    );
+    assert.ok(html.includes("Jane Architect"));
+    assert.ok(html.includes("Lead Architect"));
+    assert.ok(html.includes("MIT"));
+    assert.ok(html.includes("TypeScript"));
   });
-}
+
+  it("renders developer-mono template fallback markup", () => {
+    const html = ReactDOMServer.renderToStaticMarkup(
+      React.createElement(ResumeTemplateRenderer, { artifact: mockArtifact, template: "developer-mono" })
+    );
+    assert.ok(html.includes("Jane Architect"));
+    assert.ok(html.includes("Acme Corp"));
+    assert.ok(html.includes("AWS Solutions Architect"));
+  });
+
+  it("safely handles empty sections without throwing", () => {
+    const emptyArtifact: BuilderResumeArtifact = {
+      resumeId: "empty_res",
+      version: 1,
+      personalInformation: { fullName: "Simple User", email: "user@example.com" },
+      professionalSummary: "",
+      education: [],
+      experience: [],
+      projects: [],
+      skills: [],
+      certifications: [],
+      achievements: [],
+    };
+
+    const emptyHtml = ReactDOMServer.renderToStaticMarkup(
+      React.createElement(ResumeTemplateRenderer, { artifact: emptyArtifact, template: "academic-cv-lite" })
+    );
+    assert.ok(emptyHtml.includes("Simple User"));
+    assert.strictEqual(emptyHtml.includes("Work Experience"), false);
+    assert.strictEqual(emptyHtml.includes("Education"), false);
+  });
+});

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { getInterviewGenAI, INTERVIEW_GEMINI_MODEL } from "./gemini";
 import { InterviewArtifact, QuestionFeedback, OverallAssessment, Analytics } from "../types";
 import { OVERALL_ASSESSMENT_PROMPT } from "./assessment-prompts";
 import { OverallAssessmentSchema } from "../assessment-schema";
@@ -8,12 +8,7 @@ export class OverallAssessmentService {
     artifact: InterviewArtifact,
     questionAssessments: Record<string, QuestionFeedback>
   ): Promise<OverallAssessment> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is missing.");
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = getInterviewGenAI();
 
     // Prepare payload
     const payload = {
@@ -35,7 +30,7 @@ export class OverallAssessmentService {
     const userPrompt = `Synthesize an overall assessment based on this data:\n\n${JSON.stringify(payload, null, 2)}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: INTERVIEW_GEMINI_MODEL,
       contents: [
         {
           role: "user",

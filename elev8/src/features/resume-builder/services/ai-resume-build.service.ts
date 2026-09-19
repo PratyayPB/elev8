@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { JobService } from "@/services/jobs/job.service";
 import { JobType, JobStatus } from "@prisma/client";
+import { ResumeBuilderError } from "./resume-builder.service";
 import { AiBuildResumeInput } from "../schemas/ai-build.schema";
 import { buildAiResumeTask } from "@/trigger/build-ai-resume";
 import { ModuleActivityService } from "@/features/progress/services";
@@ -30,7 +31,7 @@ export class AiResumeBuildService {
     }
 
     return {
-      isCompleted: Boolean(user.profile.isMandatoryCompleted),
+      isCompleted: Boolean(user.profile.isCompleted),
     };
   }
 
@@ -45,8 +46,10 @@ export class AiResumeBuildService {
     // 1. Verify user profile completion
     const profileStatus = await this.checkProfileCompletion(userId);
     if (!profileStatus.isCompleted) {
-      throw new Error(
-        "Mandatory profile information is incomplete. Please complete your profile before using AI Resume Build."
+      throw new ResumeBuilderError(
+        "Profile is incomplete. A 100% completed profile is required before using AI Resume Build.",
+        "PROFILE_INCOMPLETE",
+        400
       );
     }
 
@@ -56,11 +59,11 @@ export class AiResumeBuildService {
     });
 
     if (!resume) {
-      throw new Error("Resume not found.");
+      throw new ResumeBuilderError("Resume not found.", "RESUME_NOT_FOUND", 404);
     }
 
     if (resume.userId !== userId) {
-      throw new Error("Unauthorized access to resume.");
+      throw new ResumeBuilderError("Unauthorized access to resume.", "RESUME_FORBIDDEN", 403);
     }
 
     // 3. Create tracking Job record
@@ -147,11 +150,11 @@ export class AiResumeBuildService {
     });
 
     if (!job) {
-      throw new Error("Job not found.");
+      throw new ResumeBuilderError("Job not found.", "JOB_NOT_FOUND", 404);
     }
 
     if (job.userId !== userId) {
-      throw new Error("Unauthorized access to job.");
+      throw new ResumeBuilderError("Unauthorized access to job.", "JOB_FORBIDDEN", 403);
     }
 
     return {

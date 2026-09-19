@@ -11,11 +11,13 @@ interface InterviewSessionPageProps {
 export default async function InterviewSessionPage({ params }: InterviewSessionPageProps) {
   try {
     const { interviewId } = await params;
-    const { interview, artifact } = await fetchSessionArtifact(interviewId);
+    const res = await fetchSessionArtifact(interviewId);
 
-    if (!artifact) {
+    if (!res.success || !res.data?.artifact || !res.data?.interview?.blobUrl) {
       return notFound();
     }
+
+    const { interview, artifact } = res.data;
 
     return (
       <SessionClientWrapper 
@@ -27,7 +29,6 @@ export default async function InterviewSessionPage({ params }: InterviewSessionP
     );
   } catch (error) {
     console.error("Failed to load interview session:", error);
-    // You could render a custom error page here
     return notFound();
   }
 }

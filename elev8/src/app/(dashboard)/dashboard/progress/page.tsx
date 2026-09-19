@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, SectionHeader } from "@/components/dashboard";
@@ -7,6 +8,7 @@ import {
   ModuleProgressGrid,
   ActivityLedgerTimeline,
 } from "@/features/progress/components";
+import { ROUTES } from "@/constants/routes";
 
 export const metadata: Metadata = {
   title: "Progress Tracker | Elev8",
@@ -16,10 +18,14 @@ export const metadata: Metadata = {
 
 export default async function ProgressPage() {
   const { userId: clerkId } = await auth();
-  if (!clerkId) return null;
+  if (!clerkId) {
+    redirect(ROUTES.SIGN_IN);
+  }
 
   const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-  if (!dbUser) return null;
+  if (!dbUser) {
+    redirect(ROUTES.ONBOARDING);
+  }
 
   const data = await ProgressService.getDashboardData(dbUser.id);
 

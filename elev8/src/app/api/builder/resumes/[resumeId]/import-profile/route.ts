@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getOrCreateDbUser } from "@/lib/auth";
 import {
   ResumeBuilderService,
   ResumeBuilderError,
 } from "@/features/resume-builder/services/resume-builder.service";
+import { BuilderResumeArtifactSchema } from "@/features/resume-builder/schemas/resume-artifact.schema";
+
+const ImportProfileRequestSchema = z.object({
+  currentArtifact: BuilderResumeArtifactSchema.optional(),
+  clientVersion: z.number().int().nonnegative().optional(),
+});
 
 export async function POST(
   req: Request,
@@ -12,8 +19,28 @@ export async function POST(
   try {
     const dbUser = await getOrCreateDbUser();
     const { resumeId } = await params;
-    const body = await req.json().catch(() => ({}));
-    const { currentArtifact, clientVersion } = body;
+    const body = await req.json().catch(() => null);
+
+    if (body !== null && typeof body !== "object") {
+      return NextResponse.json(
+        { error: "Invalid JSON payload", code: "INVALID_BODY" },
+        { status: 400 }
+      );
+    }
+
+    const parseResult = ImportProfileRequestSchema.safeParse(body ?? {});
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid request payload",
+          details: parseResult.error.format(),
+          code: "INVALID_PAYLOAD",
+        },
+        { status: 400 }
+      );
+    }
+
+    const { currentArtifact, clientVersion } = parseResult.data;
 
     const result = await ResumeBuilderService.importProfileData(
       dbUser.id,

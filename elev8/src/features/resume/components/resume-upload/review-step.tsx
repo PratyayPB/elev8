@@ -42,7 +42,9 @@ export function ReviewStep() {
 
       if (response.success) {
         reset();
-        router.push(`/dashboard/resumes?jobId=${response.jobId}`);
+        router.push(`/dashboard/resumes?jobId=${response.data.jobId}`);
+      } else {
+        setError(response.error.message);
       }
     } catch (err: any) {
       console.error(err);

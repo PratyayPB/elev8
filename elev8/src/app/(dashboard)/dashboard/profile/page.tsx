@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { getProfileAction } from "@/features/profile/services/actions";
 import {
   ProfileCompletenessCard,
-  ProfileEditForm,
-  ProfileSetupForm,
+  ProfileForm,
 } from "@/features/profile/components";
-import { ProfileSummary } from "@/components/profile/profile-summary";
 import { PageHeader } from "@/components/dashboard";
 
 export const metadata: Metadata = {
@@ -36,9 +34,9 @@ export default async function ProfilePage() {
         </div>
 
         {profile ? (
-          <ProfileEditForm initialProfile={profile} />
+          <ProfileForm initialProfile={profile} mode="edit" />
         ) : (
-          <ProfileSetupForm />
+          <ProfileForm mode="create" />
         )}
       </div>
     </div>
