@@ -17,4 +17,5 @@ export * from "./interview";
 export * from "./career";
 export * from "./profile";
 export * from "./ui";
+export * from "./errors";
 

@@ -1,4 +1,4 @@
-import { Header, Footer, ChatButton } from "@/components/landing";
+import { Header, Footer, ChatButton, ForceLightTheme } from "@/components/landing";
 
 export default function PublicLayout({
   children,
@@ -7,8 +7,10 @@ export default function PublicLayout({
 }) {
   return (
     <div 
-      className="min-h-screen text-foreground flex flex-col selection:bg-[#84E6F6] selection:text-black"
+      className="min-h-screen light bg-background text-foreground flex flex-col selection:bg-[#84E6F6] selection:text-black"
+      data-theme="light"
     >
+      <ForceLightTheme />
       <Header />
       <main className="flex-grow">{children}</main>
       <Footer />

@@ -7,6 +7,7 @@ export const ROUTES = {
   ROADMAPS: "/dashboard/roadmaps",
   RESUMES: "/dashboard/resumes",
   RESUME_BUILDER: "/dashboard/resumes/builder",
+  RESUME_SCORER: "/dashboard/resumes/new",
   INTERVIEWS: "/dashboard/interviews",
   PROGRESS: "/dashboard/progress",
   PROFILE: "/dashboard/profile",

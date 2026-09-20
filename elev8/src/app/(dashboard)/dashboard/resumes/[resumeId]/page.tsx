@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ResumeScoreStatus } from "@prisma/client";
 import Link from "next/link";
 import { AlertCircle, ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
+import { RocketLoader } from "@/components/loading";
 
 interface ResumePageProps {
   params: Promise<{
@@ -90,13 +91,11 @@ export default async function ResumeDetailPage({ params }: ResumePageProps) {
     return (
       <div className="max-w-2xl mx-auto py-20 px-4 text-center">
         <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-8 shadow-sm space-y-4">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-dashboard-metricHighlight/20 flex items-center justify-center">
-            <Loader2 className="w-7 h-7 animate-spin text-text-primary" />
-          </div>
-          <h2 className="text-xl font-display font-bold text-text-primary">
-            Analyzing Your Resume
-          </h2>
-          <p className="text-sm text-text-secondary max-w-md mx-auto">
+          <RocketLoader
+            message="Analyzing your resume..."
+            size="md"
+          />
+          <p className="text-xs text-text-secondary max-w-md mx-auto">
             Our AI pipeline is currently extracting sections and evaluating ATS match.
             This may take a few moments.
           </p>

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ProfileService, calculateProfileCompleteness } from "@/features/profile/services";
 import { CareerAssessmentService } from "@/features/career-assessment/services";
 import { AssessmentClientView } from "@/features/career-assessment/components";
-import { PageHeader } from "@/components/dashboard";
+import { PageHeader, RecommendedActions } from "@/components/dashboard";
 
 export const metadata: Metadata = {
   title: "Career Assessment | Elev8",
@@ -55,6 +55,8 @@ export default async function CareerAssessmentPage() {
         profileComplete={profileComplete}
         currentProfileVersion={currentProfileVersion}
       />
+
+      <RecommendedActions currentModule="career-assessment" />
     </div>
   );
 }

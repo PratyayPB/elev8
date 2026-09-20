@@ -137,12 +137,6 @@ enum SkillImportance {
   SUPPORTING
 }
 
-enum NotificationStatus {
-  UNREAD
-  READ
-  ARCHIVED
-}
-
 enum JobStatus {
   QUEUED
   RUNNING
@@ -271,7 +265,6 @@ model User {
   resumeBuilds             ResumeBuild[]
   interviewTemplates       InterviewTemplate[]
   interviewSessions        InterviewSession[]
-  notifications            Notification[]
   jobs                     Job[]
   moduleActivities         ModuleActivity[]
   progress                 Progress?
@@ -648,25 +641,6 @@ model Job {
   @@index([status])
   @@index([createdAt])
   @@map("jobs")
-}
-
-model Notification {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title  String
-  body   String?
-  status NotificationStatus @default(UNREAD)
-  readAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("notifications")
 }
 
 model RoleSkillProfile {

@@ -7,11 +7,25 @@ import {
   ProfileCompletenessCard,
   ProgressivePromptBanner,
 } from "@/features/profile/components";
-import { MetricCard, SectionHeader } from "@/components/dashboard";
+import {
+  MetricCard,
+  SectionHeader,
+  ModuleNavigationGrid,
+} from "@/components/dashboard";
 import { ROUTES } from "@/constants/routes";
-import { ArrowRight, FileText, Compass, Trophy, Target, Activity } from "lucide-react";
+import {
+  ArrowRight,
+  FileText,
+  Compass,
+  Trophy,
+  Target,
+  Activity,
+} from "lucide-react";
 import { CareerAssessmentService } from "@/features/career-assessment/services/career-assessment.service";
-import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleActivityService,
+  getActivityEventDetails,
+} from "@/features/progress";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
@@ -31,7 +45,9 @@ export default async function DashboardPage() {
     getProfileAction(),
     ModuleActivityService.getRecentActivity(dbUser.id, 30),
   ]);
-  const latestAssessment = profile ? await CareerAssessmentService.getLatestAssessment(dbUser.id) : null;
+  const latestAssessment = profile
+    ? await CareerAssessmentService.getLatestAssessment(dbUser.id)
+    : null;
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto pb-10">
@@ -45,7 +61,8 @@ export default async function DashboardPage() {
             Welcome back{profile?.name ? `, ${profile.name}` : ""}
           </h1>
           <p className="text-base font-sans text-text-secondary mb-8">
-            Continue building the skills that move you closer to your target career.
+            Continue building the skills that move you closer to your target
+            career.
           </p>
         </div>
       </section>
@@ -58,7 +75,9 @@ export default async function DashboardPage() {
               <Compass className="w-6 h-6 text-text-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-display font-bold text-text-primary">Career Assessment</h3>
+              <h3 className="text-lg font-display font-bold text-text-primary">
+                Career Assessment
+              </h3>
               <p className="text-sm font-sans text-text-secondary mt-1 max-w-md">
                 {!latestAssessment
                   ? "Take your first career assessment to align your profile and explore structured career insights."
@@ -86,7 +105,11 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <MetricCard
             label="Career Readiness"
-            value={latestAssessment ? `${Math.round(latestAssessment.readinessScore)}%` : "N/A"}
+            value={
+              latestAssessment
+                ? `${Math.round(latestAssessment.readinessScore)}%`
+                : "N/A"
+            }
             trend={latestAssessment ? "Current" : "Needs assessment"}
             trendDirection="neutral"
             highlighted={true}
@@ -102,40 +125,16 @@ export default async function DashboardPage() {
           <MetricCard
             label="Skills Acquired"
             value={profile ? `${profile.skills.length}` : "0"}
-            trend={profile ? `Goal: ${profile.desiredSkills.length + profile.skills.length}` : "Setup profile"}
+            trend={
+              profile
+                ? `Goal: ${profile.desiredSkills.length + profile.skills.length}`
+                : "Setup profile"
+            }
             trendDirection="neutral"
             icon={<Trophy className="h-5 w-5" />}
           />
         </div>
       </section>
-
-      {/* 3. Recent Module Activity */}
-      {recentActivities.length > 0 && (
-        <section>
-          <SectionHeader title="Recent Activity" />
-          <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 shadow-sm">
-            <div className="space-y-4">
-              {recentActivities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-4 bg-surface-muted/50 rounded-xl border border-border-subtle">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm">
-                      <Activity className="w-4 h-4 text-zinc-500" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-text-primary">
-                        {activity.eventType ? activity.eventType.replace(/_/g, " ") : `${activity.module.replace(/_/g, " ")} ${activity.completionStatus || ""}`}
-                      </h4>
-                      <p className="text-xs text-text-secondary mt-0.5">
-                        {new Date(activity.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Profile Completeness & Overview */}
       <section>
@@ -149,6 +148,46 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* 3. Core Modules (2x2 Grid) */}
+      <section>
+        <SectionHeader title="Core Modules" />
+        <ModuleNavigationGrid />
+      </section>
+
+      {/* 4. Recent Module Activity */}
+      {recentActivities.length > 0 && (
+        <section>
+          <SectionHeader title="Recent Activity" />
+          <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 shadow-sm">
+            <div className="space-y-4">
+              {recentActivities.slice(0, 5).map((activity) => {
+                const details = getActivityEventDetails(activity);
+                return (
+                  <div
+                    key={activity.id}
+                    className="flex items-center justify-between p-4 bg-surface-muted/50 rounded-xl border border-border-subtle"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm">
+                        {details.icon}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-text-primary">
+                          {details.title}
+                        </h4>
+                        <p className="text-xs text-text-secondary mt-0.5">
+                          {new Date(activity.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

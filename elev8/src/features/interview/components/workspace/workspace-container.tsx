@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LibraryGlobalInterview } from "../../types";
 import { getGlobalInterviews } from "../../actions/workspace-actions";
 import { toast } from "sonner";
+import { RocketLoader } from "@/components/loading";
 
 interface WorkspaceContainerProps {
   initialInterviews: {
@@ -34,7 +35,10 @@ interface WorkspaceContainerProps {
   };
 }
 
-export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContainerProps) {
+export function WorkspaceContainer({
+  initialInterviews,
+  stats,
+}: WorkspaceContainerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -48,7 +52,9 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
   const [globalDifficulty, setGlobalDifficulty] = useState("ALL");
   const [globalSort, setGlobalSort] = useState("NEWEST");
   const [globalPage, setGlobalPage] = useState(1);
-  const [globalInterviews, setGlobalInterviews] = useState<LibraryGlobalInterview[]>([]);
+  const [globalInterviews, setGlobalInterviews] = useState<
+    LibraryGlobalInterview[]
+  >([]);
   const [globalPagination, setGlobalPagination] = useState({
     total: 0,
     page: 1,
@@ -126,8 +132,12 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
     otherList,
   } = useInterviewWorkspace(initialInterviews);
 
-  const latestInProgress = initialInterviews.sessions.find((i) => i.status === "IN_PROGRESS");
-  const latestCompleted = initialInterviews.sessions.find((i) => i.status === "COMPLETED");
+  const latestInProgress = initialInterviews.sessions.find(
+    (i) => i.status === "IN_PROGRESS"
+  );
+  const latestCompleted = initialInterviews.sessions.find(
+    (i) => i.status === "COMPLETED"
+  );
 
   return (
     <div className="space-y-8 pb-10 text-text-primary">
@@ -137,7 +147,10 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
         title="Interview Workspace"
         description="Practice, track performance, and continuous technical growth."
         action={
-          <QuickActions latestInProgress={latestInProgress} latestCompleted={latestCompleted} />
+          <QuickActions
+            latestInProgress={latestInProgress}
+            latestCompleted={latestCompleted}
+          />
         }
       />
 
@@ -198,9 +211,13 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
               <div className="p-4 bg-dashboard-metricHighlight/30 text-text-primary rounded-full w-fit mx-auto">
                 <HelpCircle className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-display font-bold text-text-primary">No Interviews Found</h3>
+              <h3 className="text-xl font-display font-bold text-text-primary">
+                No Interviews Found
+              </h3>
               <p className="text-sm font-sans text-text-secondary max-w-md mx-auto leading-relaxed">
-                You haven&apos;t generated any interviews matching your search or filters yet. Get started by practicing your first mock session.
+                You haven&apos;t generated any interviews matching your search
+                or filters yet. Get started by practicing your first mock
+                session.
               </p>
               <Link
                 href="/dashboard/interviews/new"
@@ -258,7 +275,9 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
           {/* Other Statuses (Generating/Failed) */}
           {otherList.length > 0 && (
             <div className="space-y-4 mt-6">
-              <h3 className="text-lg font-display font-bold text-text-primary">Other Sessions</h3>
+              <h3 className="text-lg font-display font-bold text-text-primary">
+                Other Sessions
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {otherList.map((interview) => (
                   <InterviewCard key={interview.id} interview={interview} />
@@ -294,9 +313,11 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
           />
 
           {loadingGlobals ? (
-            <div className="flex flex-col items-center justify-center min-h-[300px] py-20 text-text-muted">
-              <Loader2 className="w-8 h-8 animate-spin text-text-primary mb-3" />
-              <p className="text-sm font-sans">Loading global interview templates...</p>
+            <div className="flex flex-col items-center justify-center min-h-[300px] py-20">
+              <RocketLoader
+                message="Loading global interview templates..."
+                size="md"
+              />
             </div>
           ) : globalInterviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] text-center p-8">
@@ -334,8 +355,8 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
           {globalPagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 border-t border-border-subtle text-xs font-sans text-text-secondary">
               <div>
-                Showing Page {globalPagination.page} of {globalPagination.totalPages} (
-                {globalPagination.total} total)
+                Showing Page {globalPagination.page} of{" "}
+                {globalPagination.totalPages} ({globalPagination.total} total)
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -347,7 +368,9 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
                 </button>
                 <button
                   onClick={() =>
-                    setGlobalPage((p) => Math.min(globalPagination.totalPages, p + 1))
+                    setGlobalPage((p) =>
+                      Math.min(globalPagination.totalPages, p + 1)
+                    )
                   }
                   disabled={globalPage === globalPagination.totalPages}
                   className="px-3.5 py-2 bg-surface-muted border border-border-subtle rounded-xl hover:bg-border-subtle text-text-primary font-display font-medium disabled:opacity-40 transition-colors cursor-pointer"
@@ -359,11 +382,6 @@ export function WorkspaceContainer({ initialInterviews, stats }: WorkspaceContai
           )}
         </>
       )}
-
-      {/* Recommended Actions */}
-      <RecommendedActions />
     </div>
   );
 }
-
-

@@ -60,7 +60,6 @@ User (clerkId: unique)
 - **`InterviewStatus`**: `IN_PROGRESS`, `COMPLETED`, `ABANDONED`
 - **`InterviewDifficulty`**: `EASY`, `MEDIUM`, `HARD`
 - **`InterviewCategory`**: `BEHAVIORAL`, `TECHNICAL`, `SYSTEM_DESIGN`, `ROLE_SPECIFIC`, `GENERAL`
-- **`NotificationStatus`**: `UNREAD`, `READ`, `ARCHIVED`
 
 ---
 

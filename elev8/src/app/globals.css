@@ -121,6 +121,45 @@
     --dm-elevated: #242424;
   }
 
+  .light,
+  [data-theme="light"] {
+    --background: var(--brand-secondary-50);
+    --foreground: var(--brand-primary-900);
+
+    --card: #ffffff;
+    --card-foreground: var(--brand-primary-900);
+
+    --popover: #ffffff;
+    --popover-foreground: var(--brand-primary-900);
+
+    --primary: var(--brand-primary-900);
+    --primary-foreground: var(--brand-secondary-50);
+
+    --secondary: var(--brand-secondary-200);
+    --secondary-foreground: var(--brand-primary-900);
+
+    --muted: var(--brand-secondary-200);
+    --muted-foreground: var(--brand-primary-500);
+
+    --accent: var(--brand-secondary-200);
+    --accent-foreground: var(--brand-primary-900);
+
+    --destructive: #e11d48;
+    --destructive-foreground: #ffffff;
+
+    --border: var(--brand-secondary-300);
+    --input: var(--brand-secondary-300);
+    --ring: var(--brand-primary-900);
+
+    --surface-primary: #ffffff;
+    --surface-muted: var(--brand-secondary-200);
+    --text-primary: var(--brand-primary-900);
+    --text-secondary: var(--brand-primary-500);
+    --text-muted: var(--brand-primary-400);
+    --border-subtle: var(--brand-secondary-300);
+    --border-strong: var(--brand-primary-900);
+  }
+
   .dark {
     /* Semantic Tokens - Dark Mode Depth Architecture (#000000, #111111, #1F1F1F, #242424) */
     --background: #000000;

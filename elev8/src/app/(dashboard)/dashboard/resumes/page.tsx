@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { ResumeWorkspace } from "@/features/resume/components/workspace/resume-workspace";
 import { ResumeSummary } from "@/features/resume/types/workspace";
+import { RecommendedActions } from "@/components/dashboard";
 
 export default async function ResumesPage() {
   const { userId: clerkId } = await auth();
@@ -35,5 +36,12 @@ export default async function ResumesPage() {
     }
   }
 
-  return <ResumeWorkspace initialResumes={initialResumes} />;
+  return (
+    <div className="space-y-8 pb-12">
+      <ResumeWorkspace initialResumes={initialResumes} />
+      <div className="container mx-auto px-6 max-w-7xl">
+        <RecommendedActions currentModule="resumes" />
+      </div>
+    </div>
+  );
 }

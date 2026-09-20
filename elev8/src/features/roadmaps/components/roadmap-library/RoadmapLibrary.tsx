@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/dashboard";
 import { LibraryRoadmap } from "@/features/roadmaps/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { RocketLoader } from "@/components/loading";
 
 export const RoadmapLibrary: React.FC = () => {
   const router = useRouter();
@@ -231,13 +232,15 @@ export const RoadmapLibrary: React.FC = () => {
 
       {/* Roadmap Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[400px] py-20 text-text-muted">
-          <Loader2 className="w-8 h-8 animate-spin text-text-primary mb-3" />
-          <p className="text-sm font-sans">
-            {section === "mine"
-              ? "Loading your roadmaps..."
-              : "Loading global roadmaps..."}
-          </p>
+        <div className="flex flex-col items-center justify-center min-h-[400px] py-20">
+          <RocketLoader
+            message={
+              section === "mine"
+                ? "Loading your roadmaps..."
+                : "Loading global roadmaps..."
+            }
+            size="md"
+          />
         </div>
       ) : roadmaps.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] text-center p-8">

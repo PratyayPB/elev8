@@ -234,6 +234,11 @@ Phase 7.2: Release & Production Verification
   - Updated client components (`RoadmapLibrary`, `RoadmapWizard`, `RoadmapViewer`) to consume the discriminated union responses and present clean, user-friendly toasts without UI disruption.
   - Refactored server action test suite to assert on structured error responses.
   - Verified 100% type safety and passed all 28 test suites repository-wide.
+- [x] **Manual Fix: Elev8 Rocket Loading Animation (`elev8-rocket-loading-animation.md`)**:
+  - Created `<RocketLoader>` in `src/components/loading/` with native CSS modules and keyframe animations.
+  - Implemented 4.5s seamless flight loop with aerodynamic drift and energetic 0.15s thruster exhaust pulsing.
+  - Integrated `prefers-reduced-motion` support.
+  - Integrated into `src/features/roadmaps/components/roadmap-viewer/LoadingOverlay.tsx`, replacing the generic lucide-react spinner.
 - [x] **Interview Module: Difficulty Attribute DB Persistence & Workspace Filtering**:
   - Added `InterviewDifficulty` enum (`EASY`, `MEDIUM`, `HARD`) to `prisma/schema.prisma`.
   - Added `difficulty` column with `@default(MEDIUM)` and indexes to `InterviewSession`, `InterviewTemplate`, and `GlobalInterviewTemplate` models.
@@ -456,6 +461,59 @@ Phase 7.2: Release & Production Verification
   - **Testing & Verification**:
     - Created unit test suite in `src/features/settings/__tests__/settings.test.ts` testing default preference, model mappings, fallbacks, and validation.
     - Verified 100% type-checking (`npx tsc --noEmit` = 0 errors) and all tests passing.
+- [x] **Dashboard Navbar Notification Icon & In-App Notification Backend Removal**:
+  - Removed `Bell` icon and unread notification indicator button from `src/components/dashboard/header/DashboardHeader.tsx`.
+  - Removed `model Notification` and `enum NotificationStatus` from `prisma/schema.prisma` along with `notifications Notification[]` relation on `User`.
+  - Updated PostgreSQL database schema via `prisma db push` and regenerated Prisma Client.
+  - Cleaned up documentation references in `docs/database.md`.
+  - Verified 100% type safety with `npx tsc --noEmit` and successful Next.js production build (`npm run build`).
+- [x] **Cross-Module Recommended Next Actions UI Component**:
+  - Created reusable `RecommendedActions` component in `src/components/dashboard/recommended-actions/` matching the visual reference design.
+  - Implemented card layout with top-left icon pill, title, description, and hover arrow CTA link.
+  - Wired module mappings across the requested 4 dashboard pages:
+    - `/dashboard/resumes`: Career Assessment, Interview Practice, Learning Roadmaps.
+    - `/dashboard/interviews`: Career Assessment, Resume Analysis, Learning Roadmaps.
+    - `/dashboard/roadmaps`: Career Assessment, Resume Analysis, Interview Practice.
+    - `/dashboard/career-assessment`: Interview Practice, Learning Roadmaps, Resume Analysis.
+  - Added unit test suite in `src/components/dashboard/recommended-actions/__tests__/recommended-actions.test.ts`.
+- [x] **Dashboard Navbar Searchbar Removal**:
+  - Removed disabled placeholder search input (`<input placeholder="Search..." disabled />`) and `Search` icon from `src/components/dashboard/header/DashboardHeader.tsx`.
+  - Confirmed no global `/api/search` backend route exists and no search UI in mobile navigation or landing page.
+  - Verified 100% type safety with `npx tsc --noEmit` (0 errors).
+- [x] **Global 4xx & 5xx HTTP Error Handling Architecture**:
+  - Created centralized `<HttpErrorView />` component in `src/components/errors/http-error-view.tsx` with Elev8 design system styling, dark mode support, and resilient error recovery.
+  - Implemented intelligent HTTP status code resolution mapping status properties, string-embedded codes (`[400]`, `status 503`), and keyword inferences to standard status names and user-friendly issue descriptions across 4xx and 5xx codes (excluding 404 which is handled by Next.js `not-found.tsx`).
+  - Added actionable "Try Again" (`reset()`) and "Go Back" (`router.back()` with fallback) buttons.
+  - Refactored root boundaries `src/app/error.tsx` and `src/app/global-error.tsx`, and all 10 domain error boundaries across `/dashboard/interviews/**`, `/dashboard/roadmaps/**`, `/dashboard/resumes/**`, `/dashboard/profile`, and `/dashboard/progress`.
+  - Added unit test suite in `src/components/errors/__tests__/http-error-view.test.ts` (100% pass) and verified production build (`npm run build`).
+- [x] **Recent Activity & Progress Timeline Text Synchronization**:
+  - Extracted shared `getActivityEventDetails` utility into `src/features/progress/utils/activity-details.tsx` to standardize activity title and icon resolution across the application.
+  - Updated `/dashboard` Recent Activity list to use `getActivityEventDetails`, aligning message copy (e.g., "Interview Workflow Failed" instead of raw "INTERVIEW FAILED") and contextual icons with `/dashboard/progress` Activity Timeline.
+  - Verified clean Next.js build (`npm run build`).
+- [x] **Dashboard Module Navigation 2x2 Grid**:
+  - Implemented `ModuleNavigationGrid` component in `src/components/dashboard/module-grid/module-grid.tsx` using `shadcn/ui` `Card`, `CardHeader`, `CardTitle`, `CardDescription`, and `CardContent`.
+  - Configured four core modules in a 2x2 responsive grid:
+    - **Roadmap Generator** (`/dashboard/roadmaps`)
+    - **Interview Simulation** (`/dashboard/interviews`)
+    - **Resume Builder** (`/dashboard/resumes/builder`)
+    - **Resume Scorer** (`/dashboard/resumes/new`)
+  - Added subtle, sleek micro-interactions: card elevation (`hover:-translate-y-1 hover:shadow-lg`), tactile active press (`active:scale-[0.99]`), squircle icon scale with slight rotation, ambient corner glow on hover, and animated arrow-link indicators.
+  - Integrated `ModuleNavigationGrid` into the `/dashboard` page within a dedicated "Core Modules" section.
+  - Verified 100% type safety (`tsc --noEmit`) and passing test suite.
+- [x] **Landing Page Skeleton Layout Alignment**:
+  - Replaced the generic centered block skeleton in `src/app/loading.tsx` with a tailored `LandingSkeleton` component (`src/components/landing/landing-skeleton.tsx`) that faithfully mirrors the actual landing page.
+  - Skeleton structure reflects:
+    - Fixed pill navigation header capsule with logo, navigation links, and CTA button.
+    - Two-column hero section with staggered headline lines, descriptive text, CTA pill buttons, and dual overlapping rotated cards.
+    - Dashboard preview section frame with mockup top bar and 3 analytical card skeletons.
+  - Added `src/app/(public)/loading.tsx` to handle App Router segment suspense smoothly within `(public)/layout.tsx`.
+  - Verified with 100% type safety (`tsc --noEmit`) and production build.
+- [x] **Theme Isolation: Dashboard vs. Landing Page**:
+  - Scoped `ThemeProvider` strictly to `src/app/(dashboard)/layout.tsx`, eliminating root-level next-themes scripts from executing or injecting dark mode classes onto the landing page.
+  - Created `DashboardThemeGuard` inside dashboard layout to synchronize the active theme and ensure clean removal of `.dark` upon unmounting/navigating away.
+  - Added `ForceLightTheme` guard to `src/app/(public)/layout.tsx` alongside an active `MutationObserver` to guarantee `document.documentElement` stays in light mode whenever browsing public routes.
+  - Added `.light, [data-theme="light"]` token rules in `globals.css` ensuring light tokens (`--background: #FCFBFA`, `--text-primary: #171816`, etc.) are enforced on the public container.
+  - Removed stray `dark:hover:` classes from landing buttons (`Hero`, `Header`, `ChatButton`, `Testimonial`, `LandingSkeleton`), preserving authentic Grovia light aesthetics.
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**
 

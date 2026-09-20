@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getWorkspaceInterviews, getPerformanceStats } from "@/features/interview/actions/workspace-actions";
 import { WorkspaceContainer } from "@/features/interview/components/workspace/workspace-container";
 import { InterviewsWorkspaceSkeleton } from "./loading";
+import { RecommendedActions } from "@/components/dashboard";
 
 export const metadata: Metadata = {
   title: "Interview Workspace | Elev8",
@@ -32,12 +33,15 @@ export default async function InterviewsPage() {
       };
 
   return (
-    <Suspense fallback={<InterviewsWorkspaceSkeleton />}>
-      <WorkspaceContainer
-        initialInterviews={initialInterviews as any}
-        stats={initialStats}
-      />
-    </Suspense>
+    <div className="space-y-8 pb-12">
+      <Suspense fallback={<InterviewsWorkspaceSkeleton />}>
+        <WorkspaceContainer
+          initialInterviews={initialInterviews as any}
+          stats={initialStats}
+        />
+      </Suspense>
+      <RecommendedActions currentModule="interviews" />
+    </div>
   );
 }
 

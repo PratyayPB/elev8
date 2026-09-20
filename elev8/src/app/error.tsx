@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-export default function Error({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _error,
+import { HttpErrorView } from "@/components/errors";
+
+export default function RootError({
+  error,
   reset,
 }: {
-  _error: Error & { digest?: string };
+  error: Error & { digest?: string };
   reset: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-      <h2>Something went wrong!</h2>
-      <button onClick={() => reset()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md">
-        Try again
-      </button>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <HttpErrorView
+        error={error}
+        reset={reset}
+        fallbackRoute="/"
+        logPrefix="[RootError]"
+      />
     </div>
   );
 }

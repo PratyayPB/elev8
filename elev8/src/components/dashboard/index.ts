@@ -6,4 +6,6 @@ export * from "./metric-card/MetricCard";
 export * from "./section-header/SectionHeader";
 export * from "./empty-state/EmptyState";
 export * from "./theme-toggle";
+export * from "./recommended-actions";
+export * from "./module-grid";
 

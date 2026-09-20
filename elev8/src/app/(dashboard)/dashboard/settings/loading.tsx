@@ -40,13 +40,13 @@ export default function SettingsLoading() {
         </div>
 
         {/* 3. Notifications */}
-        <CardSkeleton className="p-6" lines={4} hasHeader hasFooter={false} />
+        <CardSkeleton className="p-6" hasFooter={false} />
 
         {/* 4. Security */}
-        <CardSkeleton className="p-6" lines={2} hasHeader hasFooter={false} />
+        <CardSkeleton className="p-6" hasFooter={false} />
 
         {/* 5. Billing */}
-        <CardSkeleton className="p-6" lines={2} hasHeader hasFooter={false} />
+        <CardSkeleton className="p-6" hasFooter={false} />
 
         {/* 6. Danger Zone */}
         <div className="rounded-xl border border-destructive/20 bg-destructive/[0.02] p-6 space-y-4">

@@ -13,3 +13,5 @@ export { Pricing } from "./pricing/Pricing";
 export { Testimonial } from "./testimonial/Testimonial";
 export { FAQ } from "./faq/FAQ";
 export { CTA } from "./cta/CTA";
+export { LandingSkeleton } from "./landing-skeleton";
+export { ForceLightTheme } from "./force-light-theme";

@@ -3,6 +3,7 @@
 import React from "react";
 import { CheckCircle2, Loader2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RocketLoader } from "@/components/loading";
 
 export const ROADMAP_STAGES = [
   "Analyzing your career goals",
@@ -30,9 +31,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ progress = 0 }) 
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
       <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 max-w-md w-full shadow-xl space-y-6">
         <div className="flex flex-col items-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface-muted text-text-primary border border-border-subtle">
-            <Loader2 className="w-6 h-6 animate-spin text-text-primary" />
-          </div>
+          <RocketLoader size="md" />
           <div>
             <h3 className="text-xl font-display font-bold text-text-primary">
               Crafting Your Custom Roadmap

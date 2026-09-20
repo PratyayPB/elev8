@@ -1,6 +1,7 @@
 import { DashboardShell } from "@/components/dashboard";
-import { OnboardingProvider } from "@/providers";
+import { OnboardingProvider, ThemeProvider } from "@/providers";
 import { OnboardingModal } from "@/components/modals";
+import { DashboardThemeGuard } from "@/components/dashboard/theme-toggle";
 
 export default function DashboardLayout({
   children,
@@ -8,9 +9,17 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <OnboardingProvider>
-      <DashboardShell>{children}</DashboardShell>
-      <OnboardingModal />
-    </OnboardingProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <DashboardThemeGuard />
+      <OnboardingProvider>
+        <DashboardShell>{children}</DashboardShell>
+        <OnboardingModal />
+      </OnboardingProvider>
+    </ThemeProvider>
   );
 }

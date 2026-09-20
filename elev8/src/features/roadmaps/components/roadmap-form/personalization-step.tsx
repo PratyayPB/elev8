@@ -12,6 +12,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { RocketLoader } from "@/components/loading";
 
 interface PersonalizationStepProps {
   skipped: boolean;
@@ -38,10 +39,10 @@ export function PersonalizationStep({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-        <Loader2 className="w-8 h-8 animate-spin text-text-primary" />
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-2">
+        <RocketLoader size="sm" />
         <h3 className="text-base font-display font-bold text-text-primary">
-          Checking Profile Status
+          Analyzing Your Profile
         </h3>
         <p className="text-xs font-sans text-text-secondary max-w-sm">
           Retrieving your career profile context for personalization...
