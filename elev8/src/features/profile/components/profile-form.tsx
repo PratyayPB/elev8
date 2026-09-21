@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ProfileData,
@@ -48,12 +48,20 @@ interface ProfileFormProps {
   initialProfile?: ProfileData | null;
   mode?: "create" | "edit";
   onSuccess?: (profile: ProfileData) => void;
+  formRef?: React.RefObject<HTMLFormElement | null>;
+  onDirtyChange?: (isDirty: boolean) => void;
+  onSubmittingChange?: (isSubmitting: boolean) => void;
+  showBottomSubmit?: boolean;
 }
 
 export function ProfileForm({
   initialProfile,
   mode = initialProfile ? "edit" : "create",
   onSuccess,
+  formRef,
+  onDirtyChange,
+  onSubmittingChange,
+  showBottomSubmit = false,
 }: ProfileFormProps) {
   const router = useRouter();
 
@@ -151,6 +159,128 @@ export function ProfileForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Baseline snapshot for dirty checking
+  const [baselineSnapshot, setBaselineSnapshot] = useState(() => ({
+    name: initialProfile?.name?.trim() || "",
+    age: typeof initialProfile?.age === "number" ? initialProfile.age : 22,
+    country: initialProfile?.country?.trim() || "",
+    phoneCountryCode: initialProfile?.phoneCountryCode?.trim() || "",
+    phoneNumber: initialProfile?.phoneNumber?.trim() || "",
+    currentStatus: initialProfile?.currentStatus || "STUDENT",
+    otherStatus: "",
+    currentRole: initialProfile?.currentRole?.trim() || "",
+    yearsOfExperience:
+      typeof initialProfile?.yearsOfExperience === "number"
+        ? initialProfile.yearsOfExperience
+        : 0,
+    highestQualification:
+      initialProfile?.education?.highestQualification?.trim() || "",
+    fieldOfStudy: initialProfile?.education?.fieldOfStudy?.trim() || "",
+    primaryGoal: initialProfile?.careerGoals?.primaryGoal || "LAND_A_JOB",
+    targetRole: initialProfile?.careerGoals?.targetRole?.trim() || "",
+    skills: (initialProfile?.skills || []).map((s) => ({
+      name: s.name.trim().toLowerCase(),
+      proficiency: s.proficiency,
+    })),
+    desiredSkills: (initialProfile?.desiredSkills || []).map((s) =>
+      s.trim().toLowerCase()
+    ),
+    targetCompanyType: initialProfile?.targetCompanyType || "STARTUP",
+    weeklyLearningHours:
+      typeof initialProfile?.weeklyLearningHours === "number"
+        ? initialProfile.weeklyLearningHours
+        : 10,
+  }));
+
+  const isDirty = useMemo(() => {
+    const current = {
+      name: name.trim(),
+      age: age === "" ? 0 : Number(age),
+      country: country.trim(),
+      phoneCountryCode: phoneCountryCode.trim(),
+      phoneNumber: phoneNumber.trim(),
+      currentStatus,
+      otherStatus: otherStatus.trim(),
+      currentRole: currentRole.trim(),
+      yearsOfExperience:
+        yearsOfExperience === "" ? 0 : Number(yearsOfExperience),
+      highestQualification: highestQualification.trim(),
+      fieldOfStudy: fieldOfStudy.trim(),
+      primaryGoal,
+      targetRole: targetRole.trim(),
+      skills: skills.map((s) => ({
+        name: s.name.trim().toLowerCase(),
+        proficiency: s.proficiency,
+      })),
+      desiredSkills: desiredSkills.map((s) => s.trim().toLowerCase()),
+      targetCompanyType,
+      weeklyLearningHours:
+        typeof weeklyLearningHours === "number" ? weeklyLearningHours : 0,
+    };
+
+    if (current.name !== baselineSnapshot.name) return true;
+    if (current.age !== baselineSnapshot.age) return true;
+    if (current.country !== baselineSnapshot.country) return true;
+    if (current.phoneCountryCode !== baselineSnapshot.phoneCountryCode) return true;
+    if (current.phoneNumber !== baselineSnapshot.phoneNumber) return true;
+    if (current.currentStatus !== baselineSnapshot.currentStatus) return true;
+    if (current.otherStatus !== baselineSnapshot.otherStatus) return true;
+    if (current.currentRole !== baselineSnapshot.currentRole) return true;
+    if (current.yearsOfExperience !== baselineSnapshot.yearsOfExperience) return true;
+    if (current.highestQualification !== baselineSnapshot.highestQualification) return true;
+    if (current.fieldOfStudy !== baselineSnapshot.fieldOfStudy) return true;
+    if (current.primaryGoal !== baselineSnapshot.primaryGoal) return true;
+    if (current.targetRole !== baselineSnapshot.targetRole) return true;
+    if (current.targetCompanyType !== baselineSnapshot.targetCompanyType) return true;
+    if (current.weeklyLearningHours !== baselineSnapshot.weeklyLearningHours) return true;
+
+    if (current.skills.length !== baselineSnapshot.skills.length) return true;
+    for (let i = 0; i < current.skills.length; i++) {
+      if (
+        current.skills[i].name !== baselineSnapshot.skills[i]?.name ||
+        current.skills[i].proficiency !== baselineSnapshot.skills[i]?.proficiency
+      ) {
+        return true;
+      }
+    }
+
+    if (current.desiredSkills.length !== baselineSnapshot.desiredSkills.length) return true;
+    for (let i = 0; i < current.desiredSkills.length; i++) {
+      if (current.desiredSkills[i] !== baselineSnapshot.desiredSkills[i]) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [
+    name,
+    age,
+    country,
+    phoneCountryCode,
+    phoneNumber,
+    currentStatus,
+    otherStatus,
+    currentRole,
+    yearsOfExperience,
+    highestQualification,
+    fieldOfStudy,
+    primaryGoal,
+    targetRole,
+    skills,
+    desiredSkills,
+    targetCompanyType,
+    weeklyLearningHours,
+    baselineSnapshot,
+  ]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onSubmittingChange?.(isSubmitting);
+  }, [isSubmitting, onSubmittingChange]);
+
   const handleAddSkill = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmed = newSkillName.trim();
@@ -238,6 +368,32 @@ export function ProfileForm({
         const res = await createProfileAction(payload);
         if (res.success && res.profile) {
           setSuccessMessage("Profile created successfully!");
+          setBaselineSnapshot({
+            name: name.trim(),
+            age: age === "" ? 0 : Number(age),
+            country: country.trim(),
+            phoneCountryCode: phoneCountryCode.trim(),
+            phoneNumber: phoneNumber.trim(),
+            currentStatus,
+            otherStatus: otherStatus.trim(),
+            currentRole: currentRole.trim(),
+            yearsOfExperience:
+              yearsOfExperience === "" ? 0 : Number(yearsOfExperience),
+            highestQualification: highestQualification.trim(),
+            fieldOfStudy: fieldOfStudy.trim(),
+            primaryGoal,
+            targetRole: targetRole.trim(),
+            skills: skills.map((s) => ({
+              name: s.name.trim().toLowerCase(),
+              proficiency: s.proficiency,
+            })),
+            desiredSkills: desiredSkills.map((s) => s.trim().toLowerCase()),
+            targetCompanyType: targetCompanyType || "STARTUP",
+            weeklyLearningHours:
+              typeof weeklyLearningHours === "number"
+                ? weeklyLearningHours
+                : 0,
+          });
           if (onSuccess) {
             onSuccess(res.profile);
           } else {
@@ -251,6 +407,32 @@ export function ProfileForm({
         const res = await updateProfileAction(payload);
         if (res.success && res.profile) {
           setSuccessMessage("Profile updated successfully!");
+          setBaselineSnapshot({
+            name: name.trim(),
+            age: age === "" ? 0 : Number(age),
+            country: country.trim(),
+            phoneCountryCode: phoneCountryCode.trim(),
+            phoneNumber: phoneNumber.trim(),
+            currentStatus,
+            otherStatus: otherStatus.trim(),
+            currentRole: currentRole.trim(),
+            yearsOfExperience:
+              yearsOfExperience === "" ? 0 : Number(yearsOfExperience),
+            highestQualification: highestQualification.trim(),
+            fieldOfStudy: fieldOfStudy.trim(),
+            primaryGoal,
+            targetRole: targetRole.trim(),
+            skills: skills.map((s) => ({
+              name: s.name.trim().toLowerCase(),
+              proficiency: s.proficiency,
+            })),
+            desiredSkills: desiredSkills.map((s) => s.trim().toLowerCase()),
+            targetCompanyType: targetCompanyType || "STARTUP",
+            weeklyLearningHours:
+              typeof weeklyLearningHours === "number"
+                ? weeklyLearningHours
+                : 0,
+          });
           if (onSuccess) {
             onSuccess(res.profile);
           } else {
@@ -270,7 +452,12 @@ export function ProfileForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form
+      id="profile-form"
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className="space-y-8"
+    >
       {errorMessage && (
         <div className="flex items-center gap-3 p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-sm font-sans">
           <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />
@@ -633,7 +820,7 @@ export function ProfileForm({
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle text-sm text-text-primary font-sans"
               >
                 <span className="font-medium">{skill.name}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-dashboard-metricHighlight text-black font-display font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-dashboard-metricHighlight text-white dark:text-black font-display font-medium">
                   {skill.proficiency}
                 </span>
                 <button
@@ -787,25 +974,27 @@ export function ProfileForm({
         </div>
       </div>
 
-      {/* Submit Button */}
-      <div className="flex items-center justify-end gap-4 pt-4">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-all disabled:opacity-50 shadow-sm"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving Profile...
-            </>
-          ) : mode === "create" ? (
-            "Complete Profile Setup"
-          ) : (
-            "Save Profile Changes"
-          )}
-        </button>
-      </div>
+      {/* Submit Button (Optional bottom placement) */}
+      {showBottomSubmit && (
+        <div className="flex items-center justify-end gap-4 pt-4">
+          <button
+            type="submit"
+            disabled={isSubmitting || !isDirty}
+            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-sm hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-all disabled:opacity-50 shadow-sm"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving Profile...
+              </>
+            ) : mode === "create" ? (
+              "Complete Profile Setup"
+            ) : (
+              "Save Profile Changes"
+            )}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

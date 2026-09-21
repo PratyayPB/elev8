@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { ProfileService, calculateProfileCompleteness } from "@/features/profile/services";
+import {
+  ProfileService,
+  calculateProfileCompleteness,
+} from "@/features/profile/services";
 import { CareerAssessmentService } from "@/features/career-assessment/services";
 import { AssessmentClientView } from "@/features/career-assessment/components";
 import { PageHeader, RecommendedActions } from "@/components/dashboard";
 
 export const metadata: Metadata = {
   title: "Career Assessment | Elev8",
-  description: "AI-powered career readiness analysis, strengths, gaps, and focus areas",
+  description:
+    "AI-powered career readiness analysis, strengths, gaps, and focus areas",
 };
 
 export default async function CareerAssessmentPage() {
@@ -43,12 +47,6 @@ export default async function CareerAssessmentPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-14">
-      <PageHeader
-        title="Career Assessment"
-        description="Comprehensive AI analysis evaluating your career alignment, verified proficiencies, growth opportunities, and strategic focus areas."
-        section="AI Career Intelligence"
-      />
-
       <AssessmentClientView
         initialAssessment={initialAssessment}
         initialIsStale={isStale}

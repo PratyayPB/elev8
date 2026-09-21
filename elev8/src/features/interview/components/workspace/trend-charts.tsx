@@ -130,7 +130,7 @@ export function TrendCharts({ completedInterviews }: TrendChartsProps) {
               </div>
               <Link
                 href="/dashboard/interviews/new"
-                className="px-3.5 py-1.5 rounded-lg text-xs font-display font-bold text-white bg-text-primary hover:bg-black/85 transition-colors whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-display font-bold text-white dark:text-black bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-colors whitespace-nowrap"
               >
                 Start Next Mock
               </Link>

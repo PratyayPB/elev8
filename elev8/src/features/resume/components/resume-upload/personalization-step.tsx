@@ -79,7 +79,7 @@ export function PersonalizationStep() {
           <button
             type="button"
             onClick={handleContinue}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-white dark:text-brand-primary-900 bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
           >
             Continue
           </button>
@@ -108,7 +108,7 @@ export function PersonalizationStep() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+            <div className="p-3 bg-dashboard-card dark:bg-[#181818] rounded-xl border border-border-subtle">
               <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
                 Current Role
               </span>
@@ -116,7 +116,7 @@ export function PersonalizationStep() {
                 {ctx?.currentRole || "Not specified"}
               </span>
             </div>
-            <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+            <div className="p-3 bg-dashboard-card dark:bg-[#181818] rounded-xl border border-border-subtle">
               <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
                 Overall Experience
               </span>
@@ -126,7 +126,7 @@ export function PersonalizationStep() {
                   : "Not specified"}
               </span>
             </div>
-            <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+            <div className="p-3 bg-dashboard-card dark:bg-[#181818] rounded-xl border border-border-subtle">
               <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
                 Skills
               </span>
@@ -161,7 +161,7 @@ export function PersonalizationStep() {
           <button
             type="button"
             onClick={handleContinue}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-white dark:text-brand-primary-900 bg-text-primary hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-colors"
           >
             Continue
           </button>
@@ -203,7 +203,7 @@ export function PersonalizationStep() {
             <button
               type="button"
               onClick={handleSkip}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface-muted dark:bg-[#181818] border border-border-subtle hover:bg-border-subtle text-text-primary text-xs font-display font-semibold transition-all"
             >
               <FastForward className="w-4 h-4 text-text-muted" />
               Skip & Proceed
@@ -244,7 +244,7 @@ export function PersonalizationStep() {
         </div>
 
         {error && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs font-sans text-amber-800 max-w-md mx-auto">
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs font-sans text-amber-800 dark:text-amber-300 max-w-md mx-auto rounded-lg">
             {error}
           </div>
         )}
@@ -261,7 +261,7 @@ export function PersonalizationStep() {
           <button
             type="button"
             onClick={handleSkip}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface-muted dark:bg-[#181818] border border-border-subtle hover:bg-border-subtle text-text-primary text-xs font-display font-semibold transition-all"
           >
             <FastForward className="w-4 h-4 text-text-muted" />
             Skip for now

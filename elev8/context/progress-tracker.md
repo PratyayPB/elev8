@@ -508,12 +508,28 @@ Phase 7.2: Release & Production Verification
     - Dashboard preview section frame with mockup top bar and 3 analytical card skeletons.
   - Added `src/app/(public)/loading.tsx` to handle App Router segment suspense smoothly within `(public)/layout.tsx`.
   - Verified with 100% type safety (`tsc --noEmit`) and production build.
+- [x] **Profile Page Save Button Relocation, Dirty State Gating & Dashboard Scroll Fix**:
+  - Relocated the "Save Profile Changes" button from the bottom of the form to the top-right corner of the Profile page in the `PageHeader` action slot.
+  - Added deterministic dirty state tracking (`isDirty`) across all profile input fields (basic info, status, education, career goals, skills add/remove, desired skills add/remove, and preferences). The Save button is disabled when pristine/unmodified (`disabled={!isDirty || isSubmitting}`) and activates as soon as the user modifies any field.
+  - Created `ProfileWorkspace` in `src/features/profile/components/profile-workspace.tsx` to coordinate header actions, form submission, dirty state, and immediate local synchronization of `ProfileCompletenessCard`.
+  - Fixed double scrollbar and stuck sidebar bug on the dashboard:
+    - Updated `DashboardShell` to use `fixed inset-0 flex h-full w-full overflow-hidden`, locking the window viewport so `window.scrollY` remains 0 and only `<main>` scrolls with a single scrollbar, matching `/dashboard/roadmaps`.
+    - Changed `DashboardSidebar` height from `h-screen` to `h-full` so it fills the shell and its navigation list scrolls smoothly if needed.
+    - Updated `profile-completeness-card.tsx` to scroll inside the `<main>` container rather than invoking `el.scrollIntoView()` (which displaced the window).
 - [x] **Theme Isolation: Dashboard vs. Landing Page**:
   - Scoped `ThemeProvider` strictly to `src/app/(dashboard)/layout.tsx`, eliminating root-level next-themes scripts from executing or injecting dark mode classes onto the landing page.
   - Created `DashboardThemeGuard` inside dashboard layout to synchronize the active theme and ensure clean removal of `.dark` upon unmounting/navigating away.
   - Added `ForceLightTheme` guard to `src/app/(public)/layout.tsx` alongside an active `MutationObserver` to guarantee `document.documentElement` stays in light mode whenever browsing public routes.
   - Added `.light, [data-theme="light"]` token rules in `globals.css` ensuring light tokens (`--background: #FCFBFA`, `--text-primary: #171816`, etc.) are enforced on the public container.
   - Removed stray `dark:hover:` classes from landing buttons (`Hero`, `Header`, `ChatButton`, `Testimonial`, `LandingSkeleton`), preserving authentic Grovia light aesthetics.
+- [x] **Dashboard Resumes Workspace Theming & Hover State Fixes**:
+  - Refactored `QuickActions` cards (`quick-actions.tsx`) to eliminate harsh black/white color inversion on hover, using subtle tonal shifts (`hover:bg-[#f8f6f3]` in light mode, `dark:hover:bg-[#262626]` in dark mode) while keeping text, badge, and icon contrast harmonious.
+  - Replaced hardcoded `#ffffff` backgrounds across `PerformanceOverview` (`performance-overview.tsx`), `TrendChart` empty/filled states (`trend-chart.tsx`), and `AssessmentTimeline` (`assessment-timeline.tsx`) with dashboard tokens `bg-dashboard-card` and `border-dashboard-cardBorder`.
+  - Harmonized timeline node markers, chart bars, and typography with theme tokens (`text-text-primary`, `text-text-secondary`, `border-border-subtle`).
+  - Fixed dark mode theming across `/dashboard/resumes/new` wizard steps (`upload-dropzone.tsx`, `experience-selector.tsx`, `role-selector.tsx`, `role-description.tsx`, `navigation.tsx`, `file-preview.tsx`, `personalization-step.tsx`, `review-step.tsx`): resolved invisible icons/white-on-white text, darkened unselected experience level buttons to `bg-surface-muted dark:bg-[#181818]`, and ensured primary actions provide dark text `dark:text-brand-primary-900` on light buttons in dark mode.
+- [x] **Dashboard Interviews Workspace Button Contrast**:
+  - Updated "Generate First Interview" button (in `workspace-container.tsx`), "Generate New Interview" (in `quick-actions.tsx`), "Generate Global Interview", and "Start Next Mock" to render both text and plus icon in black (`dark:text-black`) in dark mode, ensuring clear contrast against the light button background.
+  - Verified 100% type-safety with `npx tsc --noEmit`.
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**
 

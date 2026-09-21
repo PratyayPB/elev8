@@ -82,7 +82,7 @@ export function ProfileSummary({ profile }: ProfileSummaryProps) {
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-sans font-medium bg-surface-muted text-text-primary"
               >
                 <span>{sk.name}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-dashboard-metricHighlight text-black font-display font-semibold">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-dashboard-metricHighlight text-white dark:text-black font-display font-semibold">
                   {sk.proficiency}
                 </span>
               </span>

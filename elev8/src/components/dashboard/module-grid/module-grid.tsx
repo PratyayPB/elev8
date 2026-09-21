@@ -55,7 +55,7 @@ const MODULE_ITEMS: ModuleCardItem[] = [
     id: "resume-builder",
     title: "Resume Builder",
     shortName: "Builder",
-    tag: "ATS-Optimized",
+    tag: "Multiple Templates",
     description:
       "Craft clean, professional resumes customized to highlight your strengths and pass recruiter screening systems.",
     href: ROUTES.RESUME_BUILDER,

@@ -2,7 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, Map, FileText, UserCheck, MessageSquare, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  Map,
+  FileText,
+  UserCheck,
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type RecommendationKey =
@@ -144,7 +151,7 @@ export function RecommendedActions({
                 </div>
 
                 {/* CTA Link */}
-                <div className="pt-2 flex items-center gap-1.5 text-sm font-semibold text-text-primary group-hover:text-accent-foreground dark:group-hover:text-accent transition-colors">
+                <div className="pt-2 flex items-center gap-1.5 text-sm font-semibold text-text-primary group-hover:text-accent-foreground dark:group-hover:text-accent-foreground transition-colors">
                   <span>{item.ctaText}</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </div>

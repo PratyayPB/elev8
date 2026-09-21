@@ -22,7 +22,7 @@ export function RoleDescription({ value, onChange }: RoleDescriptionProps) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Paste key job requirements, responsibilities, or target description here to optimize ATS keyword scoring..."
-          className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20 focus:border-text-primary transition-all shadow-sm font-sans resize-none"
+          className="w-full px-4 py-2.5 bg-surface-muted dark:bg-[#181818] border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-text-primary/20 focus:border-text-primary transition-all shadow-sm font-sans resize-none"
         />
       </div>
       <p className="text-xs font-sans text-text-secondary">

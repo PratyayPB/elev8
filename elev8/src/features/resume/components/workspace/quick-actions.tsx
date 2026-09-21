@@ -22,31 +22,25 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
       <Link
         href="/dashboard/resumes/builder"
         className="group relative flex flex-col justify-between p-7 sm:p-8 rounded-2xl border transition-all duration-300 ease-out cursor-pointer overflow-hidden
-          bg-white text-zinc-900 border-zinc-200/90 shadow-sm
-          hover:scale-[1.02] hover:bg-black hover:text-white hover:border-black hover:shadow-xl
-          dark:bg-black dark:text-white dark:border-zinc-800 dark:shadow-md
-          dark:hover:scale-[1.02] dark:hover:bg-white dark:hover:text-black dark:hover:border-white dark:hover:shadow-2xl
+          bg-dashboard-card text-text-primary border-dashboard-cardBorder shadow-sm
+          hover:scale-[1.01] hover:bg-[#f8f6f3] dark:hover:bg-[#262626] hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md
           active:scale-[0.99]"
       >
         <div className="space-y-5">
           {/* Top Row: Icon + Arrow */}
           <div className="flex items-center justify-between">
             <div
-              className="p-3.5 rounded-xl border transition-colors duration-300
-                bg-zinc-100 text-zinc-900 border-zinc-200
-                group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-800
-                dark:bg-zinc-900 dark:text-white dark:border-zinc-800
-                dark:group-hover:bg-zinc-100 dark:group-hover:text-black dark:group-hover:border-zinc-200"
+              className="p-3.5 rounded-xl border transition-all duration-300
+                bg-surface-muted dark:bg-[#181818] text-text-primary border-border-subtle
+                group-hover:scale-105 group-hover:border-text-primary/30"
             >
               <LayoutTemplate className="w-6 h-6" />
             </div>
 
             <div
               className="flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300
-                border-zinc-200 text-zinc-600
-                group-hover:border-zinc-700 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5
-                dark:border-zinc-800 dark:text-zinc-400
-                dark:group-hover:border-zinc-300 dark:group-hover:text-black"
+                border-border-subtle text-text-secondary
+                group-hover:border-text-primary/40 group-hover:text-text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
             >
               <ArrowUpRight className="w-5 h-5" />
             </div>
@@ -54,16 +48,10 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
 
           {/* Title & Description */}
           <div>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-text-primary">
               Build Resume
             </h2>
-            <p
-              className="text-sm font-sans mt-2 leading-relaxed transition-colors duration-300
-                text-zinc-500
-                group-hover:text-zinc-300
-                dark:text-zinc-400
-                dark:group-hover:text-zinc-600"
-            >
+            <p className="text-sm font-sans mt-2 leading-relaxed text-text-secondary">
               Create tailored, ATS-friendly resumes and professional profiles from scratch with AI assistance.
             </p>
           </div>
@@ -74,10 +62,8 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
               <span
                 key={tag}
                 className="px-2.5 py-1 rounded-lg text-xs font-display font-medium border transition-colors duration-300
-                  bg-zinc-50 text-zinc-600 border-zinc-200/80
-                  group-hover:bg-zinc-900 group-hover:text-zinc-200 group-hover:border-zinc-800
-                  dark:bg-zinc-900/80 dark:text-zinc-400 dark:border-zinc-800
-                  dark:group-hover:bg-zinc-100 dark:group-hover:text-zinc-800 dark:group-hover:border-zinc-300"
+                  bg-surface-muted text-text-secondary border-border-subtle
+                  group-hover:border-text-primary/25"
               >
                 {tag}
               </span>
@@ -87,11 +73,8 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
 
         {/* Bottom CTA Row */}
         <div
-          className="pt-6 mt-6 border-t flex items-center justify-between text-xs font-display font-bold transition-colors duration-300
-            border-zinc-100 text-zinc-900
-            group-hover:border-zinc-800 group-hover:text-yellow-400
-            dark:border-zinc-900 dark:text-white
-            dark:group-hover:border-zinc-200 dark:group-hover:text-zinc-900"
+          className="pt-6 mt-6 border-t border-border-subtle flex items-center justify-between text-xs font-display font-bold transition-colors duration-300
+            text-text-primary group-hover:text-primary dark:group-hover:text-brand-accent-400"
         >
           <span>Launch Resume Builder</span>
           <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -102,31 +85,25 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
       <Link
         href="/dashboard/resumes/new"
         className="group relative flex flex-col justify-between p-7 sm:p-8 rounded-2xl border transition-all duration-300 ease-out cursor-pointer overflow-hidden
-          bg-white text-zinc-900 border-zinc-200/90 shadow-sm
-          hover:scale-[1.02] hover:bg-black hover:text-white hover:border-black hover:shadow-xl
-          dark:bg-black dark:text-white dark:border-zinc-800 dark:shadow-md
-          dark:hover:scale-[1.02] dark:hover:bg-white dark:hover:text-black dark:hover:border-white dark:hover:shadow-2xl
+          bg-dashboard-card text-text-primary border-dashboard-cardBorder shadow-sm
+          hover:scale-[1.01] hover:bg-[#f8f6f3] dark:hover:bg-[#262626] hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md
           active:scale-[0.99]"
       >
         <div className="space-y-5">
           {/* Top Row: Icon + Arrow */}
           <div className="flex items-center justify-between">
             <div
-              className="p-3.5 rounded-xl border transition-colors duration-300
-                bg-zinc-100 text-zinc-900 border-zinc-200
-                group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-800
-                dark:bg-zinc-900 dark:text-white dark:border-zinc-800
-                dark:group-hover:bg-zinc-100 dark:group-hover:text-black dark:group-hover:border-zinc-200"
+              className="p-3.5 rounded-xl border transition-all duration-300
+                bg-surface-muted dark:bg-[#181818] text-text-primary border-border-subtle
+                group-hover:scale-105 group-hover:border-text-primary/30"
             >
               <Sparkles className="w-6 h-6" />
             </div>
 
             <div
               className="flex items-center justify-center w-10 h-10 rounded-full border transition-all duration-300
-                border-zinc-200 text-zinc-600
-                group-hover:border-zinc-700 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5
-                dark:border-zinc-800 dark:text-zinc-400
-                dark:group-hover:border-zinc-300 dark:group-hover:text-black"
+                border-border-subtle text-text-secondary
+                group-hover:border-text-primary/40 group-hover:text-text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
             >
               <ArrowUpRight className="w-5 h-5" />
             </div>
@@ -134,16 +111,10 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
 
           {/* Title & Description */}
           <div>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-text-primary">
               Score Resume
             </h2>
-            <p
-              className="text-sm font-sans mt-2 leading-relaxed transition-colors duration-300
-                text-zinc-500
-                group-hover:text-zinc-300
-                dark:text-zinc-400
-                dark:group-hover:text-zinc-600"
-            >
+            <p className="text-sm font-sans mt-2 leading-relaxed text-text-secondary">
               Upload your existing resume PDF for instant AI scoring, ATS keyword audits, and actionable feedback.
             </p>
           </div>
@@ -154,10 +125,8 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
               <span
                 key={tag}
                 className="px-2.5 py-1 rounded-lg text-xs font-display font-medium border transition-colors duration-300
-                  bg-zinc-50 text-zinc-600 border-zinc-200/80
-                  group-hover:bg-zinc-900 group-hover:text-zinc-200 group-hover:border-zinc-800
-                  dark:bg-zinc-900/80 dark:text-zinc-400 dark:border-zinc-800
-                  dark:group-hover:bg-zinc-100 dark:group-hover:text-zinc-800 dark:group-hover:border-zinc-300"
+                  bg-surface-muted text-text-secondary border-border-subtle
+                  group-hover:border-text-primary/25"
               >
                 {tag}
               </span>
@@ -167,11 +136,8 @@ export function QuickActions({ latestResumeId }: QuickActionsProps) {
 
         {/* Bottom CTA Row */}
         <div
-          className="pt-6 mt-6 border-t flex items-center justify-between text-xs font-display font-bold transition-colors duration-300
-            border-zinc-100 text-zinc-900
-            group-hover:border-zinc-800 group-hover:text-yellow-400
-            dark:border-zinc-900 dark:text-white
-            dark:group-hover:border-zinc-200 dark:group-hover:text-zinc-900"
+          className="pt-6 mt-6 border-t border-border-subtle flex items-center justify-between text-xs font-display font-bold transition-colors duration-300
+            text-text-primary group-hover:text-primary dark:group-hover:text-brand-accent-400"
         >
           <span>Upload & Score Resume</span>
           <span className="group-hover:translate-x-1 transition-transform">→</span>

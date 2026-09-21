@@ -53,8 +53,8 @@ export function UploadDropzone({ onFileSelect, error }: UploadDropzoneProps) {
           isDragging
             ? "border-text-primary bg-dashboard-metricHighlight/15 scale-[1.01]"
             : error
-            ? "border-rose-300 bg-rose-50/30"
-            : "border-border-subtle bg-surface-muted hover:border-text-primary/30 hover:bg-surface-muted/80"
+            ? "border-rose-300 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-950/20"
+            : "border-border-subtle bg-surface-muted dark:bg-[#181818] hover:border-text-primary/30 hover:bg-surface-muted/80 dark:hover:bg-[#202020]"
         }`}
       >
         <input
@@ -65,7 +65,7 @@ export function UploadDropzone({ onFileSelect, error }: UploadDropzoneProps) {
           className="hidden"
         />
 
-        <div className="w-14 h-14 rounded-2xl bg-white border border-border-subtle text-text-primary flex items-center justify-center mb-4 shadow-sm">
+        <div className="w-14 h-14 rounded-2xl bg-dashboard-card border border-border-subtle text-text-primary flex items-center justify-center mb-4 shadow-sm">
           <UploadCloud className="w-7 h-7" />
         </div>
 
@@ -76,7 +76,7 @@ export function UploadDropzone({ onFileSelect, error }: UploadDropzoneProps) {
           Support for PDF files up to 10 MB in size.
         </p>
 
-        <span className="px-4 py-2 bg-white border border-border-subtle rounded-xl text-xs font-display font-bold text-text-primary shadow-sm hover:bg-surface-muted transition-colors">
+        <span className="px-4 py-2 bg-dashboard-card border border-border-subtle rounded-xl text-xs font-display font-bold text-text-primary shadow-sm hover:bg-surface-muted dark:hover:bg-border-subtle transition-colors">
           Browse File
         </span>
       </div>

@@ -221,9 +221,9 @@ export function WorkspaceContainer({
               </p>
               <Link
                 href="/dashboard/interviews/new"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white dark:text-black font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98]"
               >
-                <PlusCircle className="w-4 h-4 text-dashboard-metricHighlight" />
+                <PlusCircle className="w-4 h-4 text-dashboard-metricHighlight dark:text-black" />
                 Generate First Interview
               </Link>
             </div>
@@ -334,7 +334,7 @@ export function WorkspaceContainer({
               </p>
               <Link
                 href="/dashboard/interviews/new"
-                className="px-6 py-2.5 bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
+                className="px-6 py-2.5 bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-black text-sm font-display font-semibold rounded-xl transition-all shadow-sm"
               >
                 Generate Global Interview
               </Link>

@@ -11,9 +11,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const isEditor = pathname?.match(/\/resumes\/builder\/([^\/]+)$/);
 
   return (
-    <div className="flex h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-hidden">
+    <div className="fixed inset-0 flex h-full w-full bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-hidden">
       <DashboardSidebar />
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 h-full overflow-hidden">
         <DashboardHeader />
         <MobileNavigation />
         <main

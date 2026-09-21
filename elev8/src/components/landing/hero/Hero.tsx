@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 export function Hero() {
   return (
-    <section 
+    <section
       className="relative min-h-screen pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden bg-cover bg-top bg-no-repeat flex items-center"
       style={{ backgroundImage: "url('/images/landing/hero-bg.png')" }}
     >
@@ -41,12 +41,6 @@ export function Hero() {
                 <div className="bg-white text-black rounded-full p-1.5 group-hover:translate-x-0.5 transition-transform flex items-center justify-center">
                   <ArrowRight className="w-4 h-4" strokeWidth={2} />
                 </div>
-              </Link>
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-full border border-black bg-transparent px-6 py-2.5 text-sm font-medium text-black hover:bg-black/5 transition-colors"
-              >
-                Contact us
               </Link>
             </div>
           </motion.div>

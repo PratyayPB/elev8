@@ -47,8 +47,8 @@ export function ProfileCompletenessCard({
                 state === "COMPLETED"
                   ? "bg-emerald-100 text-emerald-800"
                   : state === "IN_PROGRESS"
-                  ? "bg-dashboard-metricHighlight text-black"
-                  : "bg-surface-muted text-text-secondary"
+                    ? "bg-dashboard-metricHighlight text-white dark:text-black"
+                    : "bg-surface-muted text-text-secondary"
               }`}
             >
               {state.replace("_", " ")}
@@ -63,13 +63,6 @@ export function ProfileCompletenessCard({
           <span className="text-3xl font-display font-bold text-text-primary tracking-tight">
             {score}%
           </span>
-          <Link
-            href="/dashboard/profile"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 font-display font-semibold text-xs transition-all hover:bg-black/80 dark:hover:bg-brand-secondary-200 shrink-0"
-          >
-            {state === "COMPLETED" ? "View Profile" : "Edit Profile"}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
         </div>
       </div>
 
@@ -98,26 +91,52 @@ export function ProfileCompletenessCard({
                 item.field === "education"
                   ? "section-education"
                   : item.field === "skills"
-                  ? "section-skills"
-                  : item.field === "desiredSkills"
-                  ? "section-desiredSkills"
-                  : item.field === "currentStatus" || item.field === "currentRole"
-                  ? "section-currentStatus"
-                  : item.field === "primaryGoal" || item.field === "targetRole"
-                  ? "section-careerGoals"
-                  : item.field === "weeklyLearningHours" || item.field === "targetCompanyType"
-                  ? "section-preferences"
-                  : "section-basic-info";
+                    ? "section-skills"
+                    : item.field === "desiredSkills"
+                      ? "section-desiredSkills"
+                      : item.field === "currentStatus" ||
+                          item.field === "currentRole"
+                        ? "section-currentStatus"
+                        : item.field === "primaryGoal" ||
+                            item.field === "targetRole"
+                          ? "section-careerGoals"
+                          : item.field === "weeklyLearningHours" ||
+                              item.field === "targetCompanyType"
+                            ? "section-preferences"
+                            : "section-basic-info";
 
               const handleClick = (e: React.MouseEvent) => {
-                if (typeof window !== "undefined" && window.location.pathname.includes("/dashboard/profile")) {
+                if (
+                  typeof window !== "undefined" &&
+                  window.location.pathname.includes("/dashboard/profile")
+                ) {
                   const el = document.getElementById(targetSectionId);
                   if (el) {
                     e.preventDefault();
-                    el.scrollIntoView({ behavior: "smooth", block: "start" });
-                    el.classList.add("ring-2", "ring-dashboard-metricHighlight", "transition-all", "duration-500");
+                    const main = el.closest("main");
+                    if (main) {
+                      const elRect = el.getBoundingClientRect();
+                      const mainRect = main.getBoundingClientRect();
+                      const scrollOffset =
+                        elRect.top - mainRect.top + main.scrollTop - 24;
+                      main.scrollTo({
+                        top: scrollOffset,
+                        behavior: "smooth",
+                      });
+                    } else {
+                      el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                    el.classList.add(
+                      "ring-2",
+                      "ring-dashboard-metricHighlight",
+                      "transition-all",
+                      "duration-500"
+                    );
                     setTimeout(() => {
-                      el.classList.remove("ring-2", "ring-dashboard-metricHighlight");
+                      el.classList.remove(
+                        "ring-2",
+                        "ring-dashboard-metricHighlight"
+                      );
                     }, 2000);
                   }
                 }
@@ -155,7 +174,10 @@ export function ProfileCompletenessCard({
       {state === "COMPLETED" && (
         <div className="flex items-center gap-2 text-xs font-sans text-emerald-700 bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-          <span>All high-value career context fields are completed. You're ready for full AI guidance.</span>
+          <span>
+            All high-value career context fields are completed. You're ready for
+            full AI guidance.
+          </span>
         </div>
       )}
     </div>

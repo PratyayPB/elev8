@@ -70,7 +70,7 @@ export function ReviewStep() {
       </div>
 
       {/* Uploaded File Details */}
-      <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-text-primary">Uploaded File</h3>
           <button
@@ -83,7 +83,7 @@ export function ReviewStep() {
 
         {file ? (
           <div className="flex items-center gap-3 p-3 bg-surface-muted rounded-xl border border-border-subtle">
-            <FileText className="w-6 h-6 text-rose-600 shrink-0" />
+            <FileText className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0" />
             <div className="overflow-hidden">
               <p className="text-sm font-sans font-bold text-text-primary truncate">{file.name}</p>
               <p className="text-xs font-sans text-text-secondary">
@@ -92,12 +92,12 @@ export function ReviewStep() {
             </div>
           </div>
         ) : (
-          <p className="text-sm font-sans font-semibold text-rose-600">No file uploaded.</p>
+          <p className="text-sm font-sans font-semibold text-rose-600 dark:text-rose-400">No file uploaded.</p>
         )}
       </div>
 
       {/* Target Details */}
-      <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-text-primary">
             Target & Experience
@@ -135,7 +135,7 @@ export function ReviewStep() {
       </div>
 
       {/* Personalization Summary */}
-      <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-text-primary">Personalization</h3>
           <button
@@ -166,7 +166,7 @@ export function ReviewStep() {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-sm font-sans font-semibold border border-rose-100">
+        <div className="p-4 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm font-sans font-semibold border border-rose-100 dark:border-rose-900/40">
           {error}
         </div>
       )}
@@ -186,7 +186,7 @@ export function ReviewStep() {
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="flex items-center px-6 py-2.5 rounded-xl font-display font-semibold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
+          className="flex items-center px-6 py-2.5 rounded-xl font-display font-semibold text-white dark:text-brand-primary-900 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
         >
           {isSubmitting ? (
             <>

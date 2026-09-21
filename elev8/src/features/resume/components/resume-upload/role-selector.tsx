@@ -22,7 +22,7 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
           onChange={(e) => onChange(e.target.value)}
           placeholder="e.g. Frontend Developer, Senior Fullstack Engineer..."
           list="popular-roles-list"
-          className="w-full px-4 py-2.5 bg-white border border-border-subtle rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/20 focus:border-text-primary transition-all shadow-sm font-sans"
+          className="w-full px-4 py-2.5 bg-surface-muted dark:bg-[#181818] border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-text-primary/20 focus:border-text-primary transition-all shadow-sm font-sans"
         />
         <datalist id="popular-roles-list">
           {POPULAR_RESUME_ROLES.map((role) => (

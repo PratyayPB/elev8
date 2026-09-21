@@ -48,7 +48,7 @@ export function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        "bg-card dark:bg-[#111111] border-r border-border h-screen flex-col hidden md:flex sticky top-0 shrink-0 select-none transition-all duration-300 ease-in-out overflow-hidden relative",
+        "bg-card dark:bg-[#111111] border-r border-border h-full flex-col hidden md:flex shrink-0 select-none transition-all duration-300 ease-in-out overflow-hidden relative",
         isSidebarOpen ? "w-[var(--sidebar-width)]" : "w-0 border-r-0"
       )}
     >

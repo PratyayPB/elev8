@@ -6,7 +6,7 @@ export default function ProfileLoading() {
   return (
     <div aria-busy="true" className="max-w-5xl mx-auto space-y-8 pb-14">
       {/* Header skeleton */}
-      <PageHeaderSkeleton hasSection={true} hasAction={false} />
+      <PageHeaderSkeleton hasSection={true} hasAction={true} />
 
       {/* Completeness card skeleton */}
       <div className="rounded-[var(--card-radius-lg,16px)] border border-dashboard-cardBorder bg-dashboard-card p-6 space-y-6 shadow-sm">

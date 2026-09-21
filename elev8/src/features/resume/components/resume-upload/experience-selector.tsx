@@ -27,7 +27,7 @@ export function ExperienceSelector({ value, onChange }: ExperienceSelectorProps)
               className={`py-2.5 px-3 rounded-xl border text-xs font-display font-bold transition-all text-center ${
                 isSelected
                   ? "bg-text-primary text-white dark:text-brand-primary-900 border-text-primary shadow-sm"
-                  : "bg-white text-text-secondary border-border-subtle hover:bg-surface-muted hover:border-text-primary/30"
+                  : "bg-surface-muted dark:bg-[#181818] text-text-secondary hover:text-text-primary border-border-subtle hover:bg-border-subtle/50 hover:border-text-primary/30"
               }`}
             >
               {level}
