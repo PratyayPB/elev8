@@ -1,4 +1,4 @@
-import { getInterviewGenAI, INTERVIEW_GEMINI_MODEL } from "./gemini";
+import { llm } from "@/lib/llm";
 import { InterviewRequest, InterviewPlan, GeneratedQuestion } from "../types";
 import {
   INTERVIEW_GENERATOR_SYSTEM_PROMPT,
@@ -13,24 +13,27 @@ export class InterviewGenerationService {
     plan: InterviewPlan,
     targetQuestionCount: number = request.questionCount || DEFAULT_INTERVIEW_QUESTION_COUNT
   ): Promise<GeneratedQuestion[]> {
-    const ai = getInterviewGenAI();
     const userPrompt = buildGeneratorUserPrompt(request, JSON.stringify(plan, null, 2), targetQuestionCount);
 
-    const response = await ai.models.generateContent({
-      model: INTERVIEW_GEMINI_MODEL,
-      contents: [
-        { role: "user", parts: [{ text: `${INTERVIEW_GENERATOR_SYSTEM_PROMPT}\n\n${userPrompt}` }] },
-      ],
-      config: {
-        responseMimeType: "application/json",
-      },
+    const response = await llm.generate({
+      feature: "interview-questions",
+      systemInstruction: INTERVIEW_GENERATOR_SYSTEM_PROMPT,
+      prompt: userPrompt,
+      responseMimeType: "application/json",
+      temperature: 0.2,
     });
 
     const text = response.text?.trim() || "";
-    let rawJson: unknown;
-    try {
-      rawJson = JSON.parse(text);
-    } catch (e) {
+    let rawJson: unknown = response.parsed;
+    if (!rawJson && text) {
+      try {
+        rawJson = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Failed to parse AI Questions response as JSON: ${text}`);
+      }
+    }
+
+    if (!rawJson) {
       throw new Error(`Failed to parse AI Questions response as JSON: ${text}`);
     }
 

@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { ProfileData } from "@/features/profile/types";
 import { GapAnalysis } from "@/features/skill-gap/types";
 import {
@@ -8,7 +7,7 @@ import {
 import {
   ASSESSMENT_MODEL,
 } from "../constants";
-import { LLMSelectorService } from "@/lib/llm";
+import { LLMSelectorService, llm } from "@/lib/llm";
 import { AssessmentOutputSchema } from "../schemas";
 import { CareerAssessmentPromptBuilder } from "./assessment-prompt-builder";
 
@@ -24,12 +23,6 @@ export class CareerAssessmentLLMService {
     activity?: ModuleActivityContext,
     gapAnalysis?: GapAnalysis
   ): Promise<LLMAssessmentResult> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is missing.");
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
     const systemPrompt = CareerAssessmentPromptBuilder.buildSystemPrompt();
     const userPrompt = CareerAssessmentPromptBuilder.buildAssessmentPrompt(
       profile,
@@ -41,42 +34,35 @@ export class CareerAssessmentLLMService {
       ? await LLMSelectorService.getModelForUser(profile.userId)
       : ASSESSMENT_MODEL;
 
-    const startTime = performance.now();
-
-    const response = await ai.models.generateContent({
+    const response = await llm.generate({
+      feature: "career-assessment",
+      systemInstruction: systemPrompt,
+      prompt: userPrompt,
       model,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-      },
+      responseMimeType: "application/json",
+      temperature: 0.2,
     });
 
-    const endTime = performance.now();
-    const processingDurationMs = Math.round(endTime - startTime);
-
     const text = response.text?.trim() || "";
-    if (!text) {
-      throw new Error("Received empty response from Career Assessment AI model.");
+    let rawJson: unknown = response.parsed;
+    if (!rawJson && text) {
+      try {
+        rawJson = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Failed to parse AI Career Assessment output as JSON: ${text}`);
+      }
     }
 
-    let rawJson: unknown;
-    try {
-      rawJson = JSON.parse(text);
-    } catch (err) {
-      throw new Error(`Failed to parse AI Career Assessment output as JSON: ${text}`);
+    if (!rawJson) {
+      throw new Error("Received empty or invalid response from Career Assessment AI model.");
     }
 
     const parsedOutput = AssessmentOutputSchema.parse(rawJson);
 
     return {
       output: parsedOutput,
-      model,
-      processingDurationMs,
+      model: response.model,
+      processingDurationMs: response.durationMs,
     };
   }
 }

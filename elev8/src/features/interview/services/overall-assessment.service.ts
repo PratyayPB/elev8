@@ -1,4 +1,4 @@
-import { getInterviewGenAI, INTERVIEW_GEMINI_MODEL } from "./gemini";
+import { llm } from "@/lib/llm";
 import { InterviewArtifact, QuestionFeedback, OverallAssessment, Analytics } from "../types";
 import { OVERALL_ASSESSMENT_PROMPT } from "./assessment-prompts";
 import { OverallAssessmentSchema } from "../assessment-schema";
@@ -8,8 +8,6 @@ export class OverallAssessmentService {
     artifact: InterviewArtifact,
     questionAssessments: Record<string, QuestionFeedback>
   ): Promise<OverallAssessment> {
-    const ai = getInterviewGenAI();
-
     // Prepare payload
     const payload = {
       metadata: artifact.metadata,
@@ -29,24 +27,24 @@ export class OverallAssessmentService {
 
     const userPrompt = `Synthesize an overall assessment based on this data:\n\n${JSON.stringify(payload, null, 2)}`;
 
-    const response = await ai.models.generateContent({
-      model: INTERVIEW_GEMINI_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `${OVERALL_ASSESSMENT_PROMPT}\n\n${userPrompt}` }],
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-      },
+    const response = await llm.generate({
+      feature: "interview-overall-assessment",
+      systemInstruction: OVERALL_ASSESSMENT_PROMPT,
+      prompt: userPrompt,
+      responseMimeType: "application/json",
     });
 
     const text = response.text?.trim() || "";
-    let rawJson: unknown;
-    try {
-      rawJson = JSON.parse(text);
-    } catch (e) {
+    let rawJson: unknown = response.parsed;
+    if (!rawJson && text) {
+      try {
+        rawJson = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Failed to parse AI Overall Assessment response as JSON: ${text}`);
+      }
+    }
+
+    if (!rawJson) {
       throw new Error(`Failed to parse AI Overall Assessment response as JSON: ${text}`);
     }
 

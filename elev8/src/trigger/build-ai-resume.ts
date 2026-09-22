@@ -1,6 +1,6 @@
 import { schemaTask, metadata } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
-import { GoogleGenAI } from "@google/genai";
+import { llm } from "@/lib/llm";
 import { prisma } from "@/lib/prisma";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { JobService } from "@/services/jobs/job.service";
@@ -150,13 +150,6 @@ export const buildAiResumeTask = schemaTask({
         );
       }
 
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("GEMINI_API_KEY environment variable is not configured.");
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-
       const profilePhone = user.profile.phoneNumber
         ? `${user.profile.phoneCountryCode || ""} ${user.profile.phoneNumber}`.trim()
         : undefined;
@@ -216,13 +209,12 @@ ${JSON.stringify(jobRequirementsContext, null, 2)}
 Remember: Output ONLY valid JSON conforming exactly to the expected structure. No markdown formatting.
 `;
 
-      const response = await ai.models.generateContent({
+      const response = await llm.generate({
+        feature: "build-ai-resume",
+        prompt,
         model: AI_RESUME_BUILD_MODEL,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.2, // Low temperature for high factual consistency
-        },
+        responseMimeType: "application/json",
+        temperature: 0.2,
       });
 
       const responseText = response.text?.trim() || "";
@@ -377,7 +369,7 @@ Remember: Output ONLY valid JSON conforming exactly to the expected structure. N
           targetCompanyType: targetCompanyType || null,
           isAiGenerated: true,
           aiGeneratedAt: new Date(),
-          aiModel: AI_RESUME_BUILD_MODEL,
+          aiModel: response.model,
           aiPromptVersion: AI_RESUME_BUILD_PROMPT_VERSION,
         },
       });

@@ -529,7 +529,34 @@ Phase 7.2: Release & Production Verification
   - Fixed dark mode theming across `/dashboard/resumes/new` wizard steps (`upload-dropzone.tsx`, `experience-selector.tsx`, `role-selector.tsx`, `role-description.tsx`, `navigation.tsx`, `file-preview.tsx`, `personalization-step.tsx`, `review-step.tsx`): resolved invisible icons/white-on-white text, darkened unselected experience level buttons to `bg-surface-muted dark:bg-[#181818]`, and ensured primary actions provide dark text `dark:text-brand-primary-900` on light buttons in dark mode.
 - [x] **Dashboard Interviews Workspace Button Contrast**:
   - Updated "Generate First Interview" button (in `workspace-container.tsx`), "Generate New Interview" (in `quick-actions.tsx`), "Generate Global Interview", and "Start Next Mock" to render both text and plus icon in black (`dark:text-black`) in dark mode, ensuring clear contrast against the light button background.
-  - Verified 100% type-safety with `npx tsc --noEmit`.
+- [x] **Interview Module Gemini Model Update**:
+  - Updated `INTERVIEW_GEMINI_MODEL` in `src/features/interview/services/gemini.ts` to `gemini-3.5-flash-lite`.
+  - Propagates to all interview AI services: `InterviewPlannerService` (planning), `InterviewGenerationService` (question generation), `QuestionAssessmentService` (per-question evaluations), and `OverallAssessmentService` (overall synthesis, scoring, topic mastery).
+- [x] **LLM Multi-Provider Fallback Architecture (Phase 8 Spec 44)**:
+  - Created centralized LLM routing layer in `src/lib/llm/` (`types.ts`, `errors.ts`, `logger.ts`, `router.ts`, `index.ts`).
+  - Implemented adapter implementations for all 3 supported providers: `GeminiProvider` (`@google/genai`), `GroqProvider` (OpenAI SDK via `https://api.groq.com/openai/v1`), and `OpenRouterProvider` (OpenAI SDK via `https://openrouter.ai/api/v1`).
+  - Configurable fallback ordering (`LLM_FALLBACK_ORDER=gemini,groq,openrouter`, `LLM_PRIMARY_PROVIDER=gemini`) and customizable models via environment variables.
+  - Implemented intelligent error classification (`classifyLLMError`): catches 429 quota/rate-limits, 5xx outages, network timeouts, and provider authentication failures to gracefully cascade to secondary and tertiary providers while immediately terminating on client bad requests (400) or user aborts (`AbortError`).
+  - Added structured sanitization preventing leakage of bearer tokens or API keys into logs and error traces.
+  - Refactored all 10 LLM generation call sites across the application:
+    - `InterviewPlannerService` (`src/features/interview/services/interview-planner.service.ts`)
+    - `InterviewGenerationService` (`src/features/interview/services/interview-generation.service.ts`)
+    - `QuestionAssessmentService` (`src/features/interview/services/question-assessment.service.ts`)
+    - `OverallAssessmentService` (`src/features/interview/services/overall-assessment.service.ts`)
+    - `RoadmapGenerationService` (`src/services/roadmaps/roadmap-generation.service.ts`)
+    - `CareerAssessmentLLMService` (`src/features/career-assessment/services/career-assessment-llm.service.ts`)
+    - `ResumeNormalizerService` (`src/features/resume/services/resume-normalizer.service.ts`)
+    - `SectionAssessmentService` (`src/features/resume/services/section-assessment.service.ts`)
+    - `OverallAssessmentService` in Resume (`src/features/resume/services/overall-assessment.service.ts`)
+    - `buildAiResumeTask` Trigger.dev background task (`src/trigger/build-ai-resume.ts`)
+  - Updated `.env.example` with fallback configurations and model slugs.
+  - Enhanced LLM Multi-Provider Fallback Architecture:
+    - Implemented OpenRouter native model fallbacks supporting up to 5 models in request configuration (`models: [...]` and `extra_body: { models: [...] }`).
+    - Implemented Gemini provider internal cascading across 3 model iterations (`gemini-3.8-flash` -> `gemini-3.7-flash` -> `gemini-3.6-flash`) with error catching and auto-advance.
+    - Integrated Trigger.dev console logger (`@trigger.dev/sdk/v3` `logger.info`, `logger.warn`, `logger.error`) in `LLMLogger` to output iteration index, model used, and fallback reasons directly to the Trigger.dev dashboard.
+    - Added comprehensive unit tests in `src/lib/llm/__tests__/model-fallbacks.test.ts`.
+  - Added comprehensive unit and integration test suite (`src/lib/llm/__tests__/llm-router.test.ts`, `llm-integration.test.ts`, `model-fallbacks.test.ts`) with 100% pass rate.
+  - Verified zero TypeScript compilation errors with `npx tsc --noEmit`.
 ## In Progress
 - [ ] **Phase 7.2: Final Integration & QA Review**
 

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { llm } from "@/lib/llm";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { GeneratedRoadmap, RoadmapRequest } from "@/features/roadmaps/types";
 import { RoadmapPromptService } from "./roadmap-prompt.service";
@@ -12,10 +12,8 @@ const jsonSchema = zodToJsonSchema(GeneratedRoadmapSchema, {
 }) as any;
 
 export class RoadmapGenerationService {
-  private static ai = new GoogleGenAI({});
-
   /**
-   * Generates a validated logical roadmap using Google Gemini LLM with automatic retry capability.
+   * Generates a validated logical roadmap using multi-provider LLM fallback with automatic retry capability.
    */
   public static async generate(
     request: RoadmapRequest
@@ -32,16 +30,14 @@ export class RoadmapGenerationService {
           `[RoadmapGenerationService] Generation attempt ${attempt}/${maxAttempts}`
         );
 
-        // Call Gemini model with strict structured output schema
-        const response = await this.ai.models.generateContent({
-          model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
-          contents: userPrompt,
-          config: {
-            systemInstruction,
-            responseMimeType: "application/json",
-            responseSchema: jsonSchema.definitions?.GeneratedRoadmap || jsonSchema,
-            temperature: 0.2, // Low temperature for deterministic structure
-          },
+        // Call LLM router with strict structured output schema and multi-provider fallback
+        const response = await llm.generate({
+          feature: "roadmap-generation",
+          systemInstruction,
+          prompt: userPrompt,
+          responseMimeType: "application/json",
+          responseSchema: jsonSchema.definitions?.GeneratedRoadmap || jsonSchema,
+          temperature: 0.2, // Low temperature for deterministic structure
         });
 
         const rawText = response.text;
@@ -63,7 +59,7 @@ export class RoadmapGenerationService {
           );
 
           console.log(
-            `[RoadmapGenerationService] Successfully generated & validated roadmap on attempt ${attempt}`
+            `[RoadmapGenerationService] Successfully generated & validated roadmap on attempt ${attempt} using ${response.provider}`
           );
           return generatedRoadmap;
         } else {

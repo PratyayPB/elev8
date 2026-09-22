@@ -1,12 +1,10 @@
-import { getInterviewGenAI, INTERVIEW_GEMINI_MODEL } from "./gemini";
+import { llm } from "@/lib/llm";
 import { InterviewArtifact, QuestionFeedback } from "../types";
 import { BULK_QUESTION_ASSESSMENT_PROMPT } from "./assessment-prompts";
 import { BulkQuestionAssessmentSchema } from "../assessment-schema";
 
 export class QuestionAssessmentService {
   public static async assessQuestions(artifact: InterviewArtifact): Promise<Record<string, QuestionFeedback>> {
-    const ai = getInterviewGenAI();
-
     // Prepare the payload for the AI
     const payload = artifact.questions.map((q) => {
       const answer = artifact.answers.find((a) => a.questionId === q.id);
@@ -24,25 +22,21 @@ export class QuestionAssessmentService {
 
     const userPrompt = `Assess the following questions and answers:\n\n${JSON.stringify(payload, null, 2)}`;
 
-    const response = await ai.models.generateContent({
-      model: INTERVIEW_GEMINI_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `${BULK_QUESTION_ASSESSMENT_PROMPT}\n\n${userPrompt}` }],
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-      },
+    const response = await llm.generate({
+      feature: "interview-question-assessment",
+      systemInstruction: BULK_QUESTION_ASSESSMENT_PROMPT,
+      prompt: userPrompt,
+      responseMimeType: "application/json",
     });
 
     const text = response.text?.trim() || "";
-    let rawJson: unknown;
-    try {
-      rawJson = JSON.parse(text);
-    } catch (e) {
-      throw new Error(`Failed to parse AI Question Assessment response as JSON: ${text}`);
+    let rawJson: unknown = response.parsed;
+    if (!rawJson && text) {
+      try {
+        rawJson = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Failed to parse AI Question Assessment response as JSON: ${text}`);
+      }
     }
 
     // If AI returned top-level dictionary of question IDs directly without "assessments" wrapper, normalize it
@@ -55,4 +49,3 @@ export class QuestionAssessmentService {
     return parsed.assessments;
   }
 }
-
