@@ -1,0 +1,73 @@
+// @ts-nocheck
+import React from "react";
+import { BuilderResumeArtifact } from "../types";
+import { builderToJsonResume } from "../adapters/builder-to-json-resume";
+
+if (typeof globalThis !== "undefined" && !(globalThis as any).React) {
+  (globalThis as any).React = React;
+}
+
+export type ThemeRenderer = (resume: any) => string | Promise<string>;
+
+export const RESUME_TEMPLATE_REGISTRY: Record<string, ThemeRenderer> = {
+  // Themes that work correctly with Next.js/Node
+  // @ts-ignore
+  "academic-cv-lite": async (resume) =>
+    (await import("jsonresume-theme-academic-cv-lite")).render(resume),
+  // @ts-ignore
+  "developer-mono": async (resume) =>
+    (await import("jsonresume-theme-developer-mono")).render(resume),
+  // @ts-ignore
+  "government-standard": async (resume) =>
+    (await import("jsonresume-theme-government-standard")).render(resume),
+  // @ts-ignore
+  "architects-portfolio": async (resume) =>
+    (await import("jsonresume-theme-architects-portfolio")).render(resume),
+  // @ts-ignore
+  "minimalist-grid": async (resume) =>
+    (await import("jsonresume-theme-minimalist-grid")).render(resume),
+  // @ts-ignore
+  "nordic-minimal": async (resume) =>
+    (await import("jsonresume-theme-nordic-minimal")).render(resume),
+  // @ts-ignore
+  "desert-modern": async (resume) =>
+    (await import("jsonresume-theme-desert-modern")).render(resume),
+  // @ts-ignore
+  elegant: async (resume) => {
+    const mod: any = await import("jsonresume-theme-elegant");
+    const renderFn = mod.render || mod.default?.render;
+    return renderFn(resume);
+  },
+  // @ts-ignore
+  macchiato: async (resume) => {
+    const mod: any = await import("jsonresume-theme-macchiato");
+    const renderFn = mod.render || mod.default?.render;
+    return renderFn(resume);
+  },
+  // @ts-ignore
+  sidebar: async (resume) =>
+    (await import("jsonresume-theme-sidebar")).render(resume),
+
+  // @ts-ignore
+  "art-deco": async (resume) =>
+    (await import("jsonresume-theme-art-deco")).render(resume),
+  // @ts-ignore
+  "art-school-modern": async (resume) =>
+    (await import("jsonresume-theme-art-school-modern")).render(resume),
+  // @ts-ignore
+  brutalist: async (resume) =>
+    (await import("jsonresume-theme-brutalist")).render(resume),
+
+  // @ts-ignore
+  "consultant-polished": async (resume) => {
+    const mod: any = await import("@jsonresume/jsonresume-theme-consultant-polished");
+    const renderFn = mod.render || mod.default?.render || mod.default;
+    return renderFn(resume);
+  },
+  // @ts-ignore
+  "creative-studio": async (resume) => {
+    const mod: any = await import("@jsonresume/jsonresume-theme-creative-studio");
+    const renderFn = mod.render || mod.default?.render || mod.default;
+    return renderFn(resume);
+  },
+};

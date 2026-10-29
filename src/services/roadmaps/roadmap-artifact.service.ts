@@ -1,0 +1,67 @@
+import { GeneratedRoadmap, RoadmapMetadata, Project, LearningResource, CareerTip, RoadmapNode, RoadmapEdge } from "@/features/roadmaps/types";
+import { ReactFlowGraph, RoadmapRenderService } from "./roadmap-render.service";
+import { BlobStorageService } from "@/services/storage/blob-storage.service";
+
+
+export interface RoadmapArtifact {
+  metadata: RoadmapMetadata;
+  summary: string;
+  projects: Project[];
+  resources: LearningResource[];
+  careerTips: CareerTip[];
+  logicalGraph: {
+    nodes: RoadmapNode[];
+    edges: RoadmapEdge[];
+  };
+  reactFlow: ReactFlowGraph;
+}
+
+export class RoadmapArtifactService {
+  /**
+   * Builds a versioned roadmap artifact complete with pre-calculated React Flow positions.
+   */
+  public static buildArtifact(generated: GeneratedRoadmap): RoadmapArtifact {
+    const reactFlow = RoadmapRenderService.convertToReactFlow(
+      generated.logicalGraph.nodes,
+      generated.logicalGraph.edges
+    );
+
+    return {
+      metadata: generated.metadata,
+      summary: generated.summary,
+      projects: generated.projects,
+      resources: generated.resources,
+      careerTips: generated.careerTips,
+      logicalGraph: generated.logicalGraph,
+      reactFlow,
+    };
+  }
+
+  /**
+   * Uploads versioned roadmap artifact to Blob Storage.
+   */
+  public static async uploadArtifact(
+    roadmapId: string,
+    artifact: RoadmapArtifact
+  ): Promise<string> {
+    const path = `roadmaps/${roadmapId}.json`;
+    return BlobStorageService.upsertJson(path, artifact);
+  }
+
+  /**
+   * Validates version and schema integrity of a retrieved artifact.
+   */
+  public static validateArtifact(artifact: unknown): artifact is RoadmapArtifact {
+    if (!artifact || typeof artifact !== "object") return false;
+    const a = artifact as Partial<RoadmapArtifact>;
+
+    return Boolean(
+      a.metadata &&
+      typeof a.metadata.title === "string" &&
+      a.logicalGraph &&
+      Array.isArray(a.logicalGraph.nodes) &&
+      a.reactFlow &&
+      Array.isArray(a.reactFlow.nodes)
+    );
+  }
+}

@@ -1,0 +1,2 @@
+// Dialogs components module
+export {};

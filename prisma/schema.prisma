@@ -1,0 +1,728 @@
+// Prisma schema file for Elev8
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum CareerStatus {
+  STUDENT
+  EMPLOYED
+  SELF_EMPLOYED
+  BUSINESS_OWNER
+  FREELANCER
+  JOB_SEEKER
+  RECENT_GRADUATE
+  OTHER
+}
+
+enum PrimaryGoal {
+  LAND_A_JOB
+  GET_AN_INTERNSHIP
+  SWITCH_CAREER
+  GET_PROMOTED
+  LEARN_NEW_SKILLS
+  PREPARE_FOR_INTERVIEW
+  BUILD_RESUME
+  IMPROVE_RESUME
+  BECOME_JOB_READY
+  EXPLORE_CAREERS
+  OTHER
+}
+
+enum SkillProficiency {
+  BEGINNER
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum CareerExperienceLevel {
+  ENTRY
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+}
+
+enum TargetCompanyType {
+  STARTUP
+  MID_SIZE
+  ENTERPRISE
+  FAANG
+  GOVERNMENT
+  NON_PROFIT
+  NO_PREFERENCE
+}
+
+enum CareerLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum RoadmapStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ResumeScoreStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+  ARCHIVED
+}
+
+enum ResumeBuildStatus {
+  DRAFT
+  READY
+  ARCHIVED
+}
+
+enum InterviewStatus {
+  GENERATING
+  READY
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ASSESSMENT_FAILED
+  ABANDONED
+}
+
+enum InterviewType {
+  BEHAVIORAL
+  TECHNICAL
+  SYSTEM_DESIGN
+  ROLE_SPECIFIC
+  GENERAL
+}
+
+enum InterviewDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum InterviewTemplateSource {
+  USER_CREATED
+  GLOBAL
+}
+
+enum InterviewTemplateStatus {
+  ACTIVE
+  ARCHIVED
+  FAILED
+}
+
+enum CareerAssessmentStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SkillImportance {
+  CORE
+  IMPORTANT
+  SUPPORTING
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ResumeCompanyType {
+  STARTUP
+  PRODUCT_COMPANY
+  CONSULTING
+  FAANG_ENTERPRISE
+  GOVERNMENT
+  NON_PROFIT
+  AGENCY
+  OTHER
+}
+
+enum JobType {
+  ROADMAP
+  CAREER_GUIDANCE
+  INTERVIEW
+  RESUME_ANALYSIS
+  RESUME_BUILD
+  EXPORT
+}
+
+enum ModuleType {
+  ROADMAP
+  RESUME_SCORE
+  RESUME_BUILD
+  INTERVIEW_PRACTICE
+  CAREER_ASSESSMENT
+}
+
+enum ModuleCompletionStatus {
+  STARTED
+  COMPLETED
+  ABANDONED
+}
+
+enum ModuleProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PROCESSING
+  READY
+  COMPLETED
+  FAILED
+  ABANDONED
+}
+
+enum ModuleActivityEventType {
+  // Career Assessment
+  ASSESSMENT_STARTED
+  ASSESSMENT_INPUT_UPDATED
+  ASSESSMENT_READY
+  ASSESSMENT_SUBMITTED
+  ASSESSMENT_GENERATION_STARTED
+  ASSESSMENT_GENERATION_STAGE_CHANGED
+  ASSESSMENT_COMPLETED
+  ASSESSMENT_GENERATION_FAILED
+  ASSESSMENT_VIEWED
+
+  // Roadmap
+  ROADMAP_STARTED
+  ROADMAP_GENERATION_STARTED
+  ROADMAP_GENERATION_STAGE_CHANGED
+  ROADMAP_GENERATED
+  ROADMAP_GENERATION_FAILED
+  ROADMAP_COMPLETED
+  ROADMAP_VIEWED
+
+  // Interview
+  INTERVIEW_STARTED
+  INTERVIEW_QUESTION_ANSWERED
+  INTERVIEW_ALL_QUESTIONS_ANSWERED
+  INTERVIEW_SUBMITTED
+  INTERVIEW_EVALUATION_STARTED
+  INTERVIEW_COMPLETED
+  INTERVIEW_FAILED
+  INTERVIEW_ABANDONED
+  INTERVIEW_VIEWED
+
+  // Resume Build
+  RESUME_BUILD_STARTED
+  RESUME_UPDATED
+  RESUME_SECTION_UPDATED
+  RESUME_BUILD_READY
+  RESUME_BUILD_COMPLETED
+  RESUME_TEMPLATE_CHANGED
+  AI_RESUME_BUILD_REQUESTED
+  AI_RESUME_BUILD_STARTED
+  AI_RESUME_BUILD_COMPLETED
+  AI_RESUME_BUILD_FAILED
+  RESUME_PDF_GENERATED
+  RESUME_VIEWED
+
+  // Resume Score
+  RESUME_SCORE_STARTED
+  RESUME_SCORE_COMPLETED
+  RESUME_SCORE_FAILED
+  RESUME_SCORE_VIEWED
+}
+
+enum LLMPreference {
+  FAST
+  BALANCED
+  THINK
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id      String  @id @default(cuid())
+  clerkId String  @unique
+  email   String?
+  llmPreference LLMPreference @default(BALANCED)
+
+  profile                  Profile?
+  careerAssessments        CareerAssessment[]
+  roadmaps                 Roadmap[]
+  resumeScores             ResumeScore[]
+  resumeBuilds             ResumeBuild[]
+  interviewTemplates       InterviewTemplate[]
+  interviewSessions        InterviewSession[]
+  jobs                     Job[]
+  moduleActivities         ModuleActivity[]
+  progress                 Progress?
+  globalRoadmaps           GlobalRoadmap[]
+  globalInterviewTemplates GlobalInterviewTemplate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clerkId])
+  @@map("users")
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Basic Information
+  name             String?
+  age              Int?
+  country          String?
+  phoneCountryCode String?
+  phoneNumber      String?
+
+  // Current Situation
+  currentStatus     CareerStatus?
+  currentRole       String?
+  yearsOfExperience Int?
+
+  // Education
+  highestQualification String?
+  fieldOfStudy         String?
+
+  // Career Goals
+  primaryGoal       String?
+  targetRole        String?
+  targetCompanyType String?
+
+  // Learning Preferences
+  weeklyLearningHours Int?
+
+  // Status Flags
+  isMandatoryCompleted Boolean @default(false)
+  isCompleted          Boolean @default(false)
+
+  // Skills
+  skills        ProfileSkill[]
+  desiredSkills ProfileDesiredSkill[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([currentStatus])
+  @@index([targetRole])
+  @@index([country])
+  @@map("profiles")
+}
+
+model ProfileSkill {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name           String
+  normalizedName String
+  proficiency    SkillProficiency
+
+  @@unique([profileId, normalizedName])
+  @@index([profileId])
+  @@map("profile_skills")
+}
+
+model ProfileDesiredSkill {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name           String
+  normalizedName String
+
+  @@unique([profileId, normalizedName])
+  @@index([profileId])
+  @@map("profile_desired_skills")
+}
+
+model CareerAssessment {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  profileVersion Int
+
+  readinessScore     Int?
+  strengths          Json?
+  gaps               Json?
+  suggestedFocusArea Json?
+  narrative          String?
+
+  inputSnapshot Json?
+
+  model  String?
+  status CareerAssessmentStatus @default(PROCESSING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, profileVersion])
+  @@index([status])
+  @@index([createdAt])
+  @@map("career_assessments")
+}
+
+model Roadmap {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title             String
+  description       String?
+  targetRole        String?
+  experienceLevel   CareerLevel?
+  estimatedDuration String?
+  status            RoadmapStatus @default(NOT_STARTED)
+  blobUrl           String?
+
+  personalized    Boolean?
+  profileSnapshot Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("roadmaps")
+}
+
+model GlobalRoadmap {
+  id String @id @default(cuid())
+
+  createdByUserId String?
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  title             String
+  description       String?
+  targetRole        String
+  normalizedRole    String
+  experienceLevel   CareerLevel
+  estimatedDuration String?
+
+  blobUrl String?
+
+  status RoadmapStatus @default(COMPLETED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([normalizedRole, experienceLevel])
+  @@index([createdByUserId])
+  @@index([normalizedRole])
+  @@index([experienceLevel])
+  @@index([status])
+  @@index([createdAt])
+  @@map("global_roadmaps")
+}
+
+model ResumeScore {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role     String
+  roleDesc String?
+  expLevel CareerExperienceLevel
+
+  ovrScore Int?
+  atsScore Int?
+
+  artifactBlobUrl String?
+
+  status ResumeScoreStatus @default(PROCESSING)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("resume_scores")
+}
+
+model ResumeBuild {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title           String
+  template        String            @default("academic-cv-lite")
+  artifactBlobUrl String?
+  status          ResumeBuildStatus @default(DRAFT)
+
+  targetJobTitle    String?
+  jobDescription    String?
+  targetCompany     String?
+  targetCompanyType ResumeCompanyType?
+
+  isAiGenerated   Boolean   @default(false)
+  aiGeneratedAt   DateTime?
+  aiModel         String?
+  aiPromptVersion String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, title])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("resume_builds")
+}
+
+enum ResumeTemplateCategory {
+  ATS_FRIENDLY
+  MINIMAL_MODERN
+  TWO_COLUMN
+  CREATIVE
+}
+
+model ResumeTemplate {
+  id                String                 @id
+  name              String
+  slug              String                 @unique
+  category          ResumeTemplateCategory
+  supportedSections String[]
+  previewImage      String                 @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("resume_templates")
+}
+
+model InterviewTemplate {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role              String
+  experienceLevel   CareerExperienceLevel
+  difficulty        InterviewDifficulty   @default(MEDIUM)
+  interviewType     InterviewType
+  questionCount     Int
+  estimatedDuration String?
+
+  personalized    Boolean?
+  profileSnapshot Json?
+
+  templateBlobUrl String
+
+  status InterviewTemplateStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interviews InterviewSession[]
+
+  @@index([userId])
+  @@index([difficulty])
+  @@index([status])
+  @@map("interview_templates")
+}
+
+model GlobalInterviewTemplate {
+  id String @id @default(cuid())
+
+  createdByUserId String?
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  role              String
+  normalizedRole    String
+  experienceLevel   CareerExperienceLevel
+  difficulty        InterviewDifficulty   @default(MEDIUM)
+  interviewType     InterviewType
+  questionCount     Int
+  estimatedDuration String?
+
+  templateBlobUrl String
+
+  status InterviewTemplateStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interviews InterviewSession[]
+
+  @@unique([normalizedRole, experienceLevel, interviewType, difficulty])
+  @@index([createdByUserId])
+  @@index([normalizedRole])
+  @@index([experienceLevel])
+  @@index([difficulty])
+  @@index([interviewType])
+  @@index([status])
+  @@map("global_interview_templates")
+}
+
+model InterviewSession {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  interviewTemplateId String?
+  interviewTemplate   InterviewTemplate? @relation(fields: [interviewTemplateId], references: [id], onDelete: SetNull)
+
+  globalInterviewTemplateId String?
+  globalInterviewTemplate   GlobalInterviewTemplate? @relation(fields: [globalInterviewTemplateId], references: [id], onDelete: SetNull)
+
+  templateSource InterviewTemplateSource @default(GLOBAL)
+
+  // Historical snapshot
+  role              String
+  experienceLevel   CareerExperienceLevel
+  difficulty        InterviewDifficulty   @default(MEDIUM)
+  interviewType     InterviewType
+  questionCount     Int
+  estimatedDuration String?
+
+  blobUrl String?
+
+  overallScore    Int?
+  durationSeconds Int?
+
+  personalized    Boolean @default(false)
+  profileSnapshot Json?
+
+  profileId String?
+  resumeId  String?
+  roadmapId String?
+
+  status InterviewStatus @default(READY)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([interviewTemplateId])
+  @@index([globalInterviewTemplateId])
+  @@index([templateSource])
+  @@index([difficulty])
+  @@index([status])
+  @@index([createdAt])
+  @@map("interviews")
+}
+
+model Job {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         JobType
+  status       JobStatus @default(QUEUED)
+  progress     Int       @default(0)
+  step         String?
+  triggerRunId String?
+  artifactId   String?
+  artifactType String?
+  error        String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("jobs")
+}
+
+model RoleSkillProfile {
+  id             String @id @default(cuid())
+  role           String
+  normalizedRole String
+
+  skills RoleSkillRequirement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([normalizedRole])
+  @@index([normalizedRole])
+  @@map("role_skill_profiles")
+}
+
+model RoleSkillRequirement {
+  id                 String           @id @default(cuid())
+  roleSkillProfileId String
+  roleSkillProfile   RoleSkillProfile @relation(fields: [roleSkillProfileId], references: [id], onDelete: Cascade)
+
+  name               String
+  normalizedName     String
+  minimumProficiency SkillProficiency
+  importance         SkillImportance
+  estimatedHours     Int?
+
+  @@unique([roleSkillProfileId, normalizedName])
+  @@index([roleSkillProfileId])
+  @@map("role_skill_requirements")
+}
+
+model ModuleActivity {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  module           ModuleType
+  eventType        ModuleActivityEventType @default(ASSESSMENT_COMPLETED)
+  completionStatus ModuleCompletionStatus?
+
+  entityId String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, module, createdAt])
+  @@index([userId, entityId, createdAt])
+  @@index([userId, eventType, createdAt])
+  @@map("module_activities")
+}
+
+model Progress {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  careerAssessmentStatus ModuleProgressStatus @default(NOT_STARTED)
+  roadmapStatus          ModuleProgressStatus @default(NOT_STARTED)
+  interviewStatus        ModuleProgressStatus @default(NOT_STARTED)
+  resumeBuildStatus      ModuleProgressStatus @default(NOT_STARTED)
+  resumeScoreStatus      ModuleProgressStatus @default(NOT_STARTED)
+
+  careerAssessmentProgress Int @default(0)
+  roadmapProgress          Int @default(0)
+  interviewProgress        Int @default(0)
+  resumeBuildProgress      Int @default(0)
+  resumeScoreProgress      Int @default(0)
+
+  careerAssessmentMetadata Json?
+  roadmapMetadata          Json?
+  interviewMetadata        Json?
+  resumeBuildMetadata      Json?
+  resumeScoreMetadata      Json?
+
+  lastActivityAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([lastActivityAt])
+  @@map("progress")
+}

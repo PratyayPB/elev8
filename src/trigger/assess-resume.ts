@@ -1,0 +1,180 @@
+import { schemaTask, metadata } from "@trigger.dev/sdk/v3";
+import { z } from "zod";
+import { PdfParserService } from "@/features/resume/services/pdf-parser.service";
+import { ResumeNormalizerService } from "@/features/resume/services/resume-normalizer.service";
+import { SectionAssessmentService } from "@/features/resume/services/section-assessment.service";
+import { OverallAssessmentService } from "@/features/resume/services/overall-assessment.service";
+import { ResumeArtifactService } from "@/features/resume/services/resume-artifact.service";
+import { JobService } from "@/services/jobs/job.service";
+import { prisma } from "@/lib/prisma";
+import { ModuleActivityService } from "@/features/progress/services";
+import {
+  ModuleType,
+  ModuleCompletionStatus,
+  ModuleActivityEventType,
+} from "@/features/progress/types";
+import { ResumeScoreStatus } from "@prisma/client";
+import { normalizeError } from "@/lib/error-handler";
+
+export const AssessResumeTaskSchema = z.object({
+  resumeId: z.string(),
+  jobId: z.string(),
+  userId: z.string(),
+  role: z.string(),
+  roleDescription: z.string().optional(),
+  experienceLevel: z.string(),
+  originalPdfBlobUrl: z.string(),
+  profile: z
+    .object({
+      currentRole: z.string().nullable().optional(),
+      currentStatus: z.string().nullable().optional(),
+      yearsOfExperience: z.number().nullable().optional(),
+      highestQualification: z.string().nullable().optional(),
+      fieldOfStudy: z.string().nullable().optional(),
+      primaryGoal: z.string().nullable().optional(),
+      targetCompanyType: z.string().nullable().optional(),
+      skills: z.array(z.string()).nullable().optional(),
+      desiredSkills: z.array(z.string()).nullable().optional(),
+    })
+    .optional(),
+});
+
+export const assessResumeTask = schemaTask({
+  id: "assess-resume",
+  schema: AssessResumeTaskSchema,
+  retry: {
+    maxAttempts: 3,
+    factor: 2,
+    minTimeoutInMs: 1000,
+    maxTimeoutInMs: 10000,
+  },
+  run: async (payload, { ctx }) => {
+    const { resumeId, jobId, userId, role, roleDescription, experienceLevel, originalPdfBlobUrl, profile } =
+      payload;
+
+    try {
+      // Step 1: 10% - Downloading Resume
+      metadata.set("status", "Downloading Resume");
+      metadata.set("progress", 10);
+      await JobService.updateProgress(jobId, 10, "Downloading Resume", ctx.run.id);
+
+      // Step 2: 20% - Parsing PDF
+      metadata.set("status", "Parsing PDF");
+      metadata.set("progress", 20);
+      await JobService.updateProgress(jobId, 20, "Parsing PDF");
+
+      const rawText = await PdfParserService.parsePdfFromUrl(originalPdfBlobUrl);
+
+      // Step 3: 35% - Normalizing Resume
+      metadata.set("status", "Normalizing Resume");
+      metadata.set("progress", 35);
+      await JobService.updateProgress(jobId, 35, "Normalizing Resume");
+
+      const parsedResume = await ResumeNormalizerService.normalize(rawText);
+
+      // Step 4: 55% - Assessing Resume Sections
+      metadata.set("status", "Assessing Resume Sections");
+      metadata.set("progress", 55);
+      await JobService.updateProgress(jobId, 55, "Assessing Resume Sections");
+
+      const sectionAssessment = await SectionAssessmentService.assessSections(
+        parsedResume,
+        role,
+        experienceLevel,
+        roleDescription,
+        profile
+      );
+
+      // Step 5: 75% - Generating Overall Assessment
+      metadata.set("status", "Generating Overall Assessment");
+      metadata.set("progress", 75);
+      await JobService.updateProgress(jobId, 75, "Generating Overall Assessment");
+
+      const overallAssessment = await OverallAssessmentService.assessOverall(
+        sectionAssessment,
+        role,
+        experienceLevel,
+        roleDescription,
+        profile
+      );
+
+      // Step 6: 90% - Uploading Artifact
+      metadata.set("status", "Uploading Artifact");
+      metadata.set("progress", 90);
+      await JobService.updateProgress(jobId, 90, "Uploading Artifact");
+
+      const artifact = await ResumeArtifactService.buildAndPersistArtifact(
+        resumeId,
+        userId,
+        role,
+        experienceLevel,
+        originalPdfBlobUrl,
+        parsedResume,
+        sectionAssessment,
+        overallAssessment
+      );
+
+      // Step 7: 100% - Assessment Complete
+      metadata.set("status", "Assessment Complete");
+      metadata.set("progress", 100);
+      await JobService.completeJob(jobId, resumeId, "RESUME");
+
+      try {
+        await ModuleActivityService.recordActivity({
+          userId,
+          module: ModuleType.RESUME_SCORE,
+          eventType: ModuleActivityEventType.RESUME_SCORE_COMPLETED,
+          completionStatus: ModuleCompletionStatus.COMPLETED,
+          entityId: resumeId,
+          metadata: {
+            scoreId: resumeId,
+            role,
+            experienceLevel,
+            overallScore: overallAssessment.overallScore,
+            atsScore: overallAssessment.atsScore,
+          },
+        });
+      } catch (err) {
+        console.error("[AssessResumeTask] Failed to record activity:", err);
+      }
+
+      return {
+        success: true,
+        resumeId,
+        artifactVersion: artifact.version,
+        overallScore: overallAssessment.overallScore,
+        atsScore: overallAssessment.atsScore,
+      };
+    } catch (error: any) {
+      const appError = normalizeError(error);
+      console.error(`Assess Resume task failed for resume ${resumeId}:`, appError.message, error);
+
+      await JobService.failJob(jobId, appError.message);
+
+      // Update ResumeScore record status to FAILED
+      await prisma.resumeScore.update({
+        where: { id: resumeId },
+        data: { status: ResumeScoreStatus.FAILED },
+      });
+
+      await ModuleActivityService.recordActivity({
+        userId,
+        module: ModuleType.RESUME_SCORE,
+        eventType: ModuleActivityEventType.RESUME_SCORE_FAILED,
+        entityId: resumeId,
+        metadata: {
+          source: "ASSESS_RESUME_TASK",
+          scoreId: resumeId,
+          jobId,
+          role,
+          experienceLevel,
+          error: appError.message,
+        },
+      }).catch((activityError) =>
+        console.warn("[AssessResumeTask] Failed to record failure activity:", activityError)
+      );
+
+      throw error;
+    }
+  },
+});

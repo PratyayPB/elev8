@@ -1,0 +1,2 @@
+// Charts components module
+export {};

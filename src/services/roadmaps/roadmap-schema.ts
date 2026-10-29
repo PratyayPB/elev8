@@ -1,0 +1,62 @@
+import { z } from "zod";
+
+export const RoadmapNodeSchema = z.object({
+  id: z.string().min(1, "Node ID is required"),
+  title: z.string().min(1, "Node title is required"),
+  description: z.string(),
+  type: z.string().default("skill"),
+  category: z.string().optional(),
+  estimatedHours: z.number().optional(),
+});
+
+export const RoadmapEdgeSchema = z.object({
+  id: z.string().min(1, "Edge ID is required"),
+  source: z.string().min(1, "Edge source is required"),
+  target: z.string().min(1, "Edge target is required"),
+});
+
+export const LearningResourceSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string(),
+  type: z.string(),
+  isFree: z.boolean(),
+  description: z.string().optional(),
+});
+
+export const ProjectSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  difficulty: z.enum(["Beginner", "Intermediate", "Advanced"]),
+  skillsRequired: z.array(z.string()),
+  keyFeatures: z.array(z.string()).optional(),
+});
+
+export const CareerTipSchema = z.object({
+  id: z.string(),
+  category: z.string(),
+  tip: z.string(),
+});
+
+export const RoadmapMetadataSchema = z.object({
+  title: z.string(),
+  role: z.string(),
+  experienceLevel: z.enum(["Beginner", "Basic", "Intermediate", "Advanced"]),
+  estimatedDuration: z.string().optional(),
+  generatedAt: z.string().optional(),
+});
+
+export const LogicalGraphSchema = z.object({
+  nodes: z.array(RoadmapNodeSchema).min(1, "Graph must contain at least one node"),
+  edges: z.array(RoadmapEdgeSchema),
+});
+
+export const GeneratedRoadmapSchema = z.object({
+  metadata: RoadmapMetadataSchema,
+  summary: z.string(),
+  projects: z.array(ProjectSchema),
+  resources: z.array(LearningResourceSchema),
+  careerTips: z.array(CareerTipSchema),
+  logicalGraph: LogicalGraphSchema,
+});

@@ -1,0 +1,209 @@
+"use client";
+
+import { useResumeRequestStore } from "../../hooks/use-resume-request";
+import { ResumeRequestService } from "../../services/resume-request.service";
+import { createResumeAssessmentJob } from "../../actions/resume-actions";
+import { useState } from "react";
+import { Loader2, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { normalizeError } from "@/lib/error-handler";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+
+export function ReviewStep() {
+  const { requestData, prevStep, setStep, reset } = useResumeRequestStore();
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { runWorkflow, isInitiating } = useBackgroundWorkflow();
+
+  const handleSubmit = async () => {
+    setError(null);
+
+    try {
+      // 1. Validate request data
+      const finalRequest = ResumeRequestService.buildRequest(requestData);
+
+      if (!finalRequest.uploadedFile) {
+        setError("No resume file selected. Please go back and upload your PDF.");
+        return;
+      }
+
+      // 2. Prepare FormData payload for Server Action
+      const formData = new FormData();
+      formData.append("file", finalRequest.uploadedFile);
+      formData.append("role", finalRequest.role);
+      if (finalRequest.roleDescription) {
+        formData.append("roleDescription", finalRequest.roleDescription);
+      }
+      formData.append("experienceLevel", finalRequest.experienceLevel);
+      const includeProfile = !finalRequest.personalization.skipped && Boolean(finalRequest.personalization.profile);
+      formData.append("includeProfile", includeProfile ? "true" : "false");
+
+      // 3. Trigger Server Action through unified background workflow hook
+      await runWorkflow({
+        serviceName: "Resume Analysis",
+        serviceType: "RESUME_SCORE",
+        initiationMessage: "Initiating the workflow...",
+        execute: async () => await createResumeAssessmentJob(formData),
+        extractJobId: (res) => (res.success ? res.data.jobId || res.data.resumeId : undefined),
+        defaultViewUrl: "/dashboard/resumes",
+        onInitiated: () => {
+          reset();
+          router.push("/dashboard/resumes");
+        },
+        onError: (err) => {
+          setError(err.message);
+        },
+      });
+    } catch (err: any) {
+      console.error(err);
+      const appError = normalizeError(err);
+      setError(appError.message);
+    }
+  };
+
+  const hasProfile = Boolean(requestData.personalization?.profile) && !requestData.personalization?.skipped;
+  const file = requestData.uploadedFile;
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-2xl font-display font-bold text-text-primary">
+          Review Resume Request
+        </h2>
+        <p className="text-text-secondary mt-1 text-sm font-sans">
+          Please confirm your uploaded file and target details before starting the AI assessment.
+        </p>
+      </div>
+
+      {/* Uploaded File Details */}
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-6 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-display font-bold text-text-primary">Uploaded File</h3>
+          <button
+            onClick={() => setStep(1)}
+            className="text-xs font-display font-bold text-text-primary hover:underline"
+          >
+            Edit
+          </button>
+        </div>
+
+        {file ? (
+          <div className="flex items-center gap-3 p-3 bg-surface-muted rounded-xl border border-border-subtle">
+            <FileText className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0" />
+            <div className="overflow-hidden">
+              <p className="text-sm font-sans font-bold text-text-primary truncate">{file.name}</p>
+              <p className="text-xs font-sans text-text-secondary">
+                {(file.size / (1024 * 1024)).toFixed(2)} MB • PDF
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm font-sans font-semibold text-rose-600 dark:text-rose-400">No file uploaded.</p>
+        )}
+      </div>
+
+      {/* Target Details */}
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-6 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-display font-bold text-text-primary">
+            Target & Experience
+          </h3>
+          <button
+            onClick={() => setStep(1)}
+            className="text-xs font-display font-bold text-text-primary hover:underline"
+          >
+            Edit
+          </button>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-y-4 text-sm font-sans">
+          <div>
+            <dt className="text-text-secondary text-xs font-medium">Target Role</dt>
+            <dd className="font-semibold text-text-primary mt-1">
+              {requestData.role}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-secondary text-xs font-medium">Experience Level</dt>
+            <dd className="font-semibold text-text-primary mt-1">
+              {requestData.experienceLevel}
+            </dd>
+          </div>
+          {requestData.roleDescription && (
+            <div className="col-span-2 pt-3 border-t border-border-subtle">
+              <dt className="text-text-secondary text-xs font-medium">Job Description</dt>
+              <dd className="font-normal text-text-primary mt-1 text-xs whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
+                {requestData.roleDescription}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
+
+      {/* Personalization Summary */}
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-6 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-display font-bold text-text-primary">Personalization</h3>
+          <button
+            onClick={() => setStep(2)}
+            className="text-xs font-display font-bold text-text-primary hover:underline"
+          >
+            Edit
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {hasProfile ? (
+            <>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <p className="text-sm font-sans font-semibold text-text-primary">
+                Profile Personalization Enabled
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-zinc-400" />
+              <p className="text-sm font-sans font-medium text-text-secondary">
+                Skipped — No Profile Data
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm font-sans font-semibold border border-rose-100 dark:border-rose-900/40">
+          {error}
+        </div>
+      )}
+
+      {/* Footer Actions */}
+      <div className="mt-8 pt-6 border-t border-border-subtle flex justify-between items-center">
+        <button
+          type="button"
+          onClick={prevStep}
+          disabled={isInitiating}
+          className="px-5 py-2.5 rounded-xl font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle disabled:opacity-50"
+        >
+          Back
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isInitiating}
+          className="flex items-center px-6 py-2.5 rounded-xl font-display font-semibold text-white dark:text-brand-primary-900 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
+        >
+          {isInitiating ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              Initiating...
+            </>
+          ) : (
+            "Start AI Assessment"
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
