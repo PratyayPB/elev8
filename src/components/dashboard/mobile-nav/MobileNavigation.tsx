@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "../theme-toggle/ThemeToggle";
+import { NotificationBell } from "@/components/notifications";
 
 const ICONS: Record<string, React.ElementType> = {
   [ROUTES.DASHBOARD]: LayoutDashboard,
@@ -73,6 +74,7 @@ export function MobileNavigation() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle variant="compact" />
+          <NotificationBell />
           <UserButton
             appearance={{
               elements: {

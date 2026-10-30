@@ -37,6 +37,7 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const isGlobalCard = Boolean(isGlobalSection || roadmap.isGlobal);
+  const canRegenerate = !isGlobalCard || Boolean(roadmap.isOwner);
 
   const getStatusBadge = (status: LibraryRoadmap["status"]) => {
     switch (status) {
@@ -123,31 +124,29 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
                 >
                   <Copy className="w-3.5 h-3.5 text-text-secondary" /> Duplicate
                 </button>
-                {!isGlobalCard && (
+                {canRegenerate && (
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onRegenerate(roadmap);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-muted text-text-primary font-medium text-left cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-text-secondary" /> Regenerate
+                  </button>
+                )}
+                {!isGlobalCard && roadmap.isOwner && (
                   <>
+                    <div className="my-1 border-t border-border-subtle" />
                     <button
                       onClick={() => {
                         setMenuOpen(false);
-                        onRegenerate(roadmap);
+                        onDeleteClick(roadmap);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-muted text-text-primary font-medium text-left cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 font-medium text-left cursor-pointer"
                     >
-                      <RefreshCw className="w-3.5 h-3.5 text-text-secondary" /> Regenerate
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
-                    {roadmap.isOwner && (
-                      <>
-                        <div className="my-1 border-t border-border-subtle" />
-                        <button
-                          onClick={() => {
-                            setMenuOpen(false);
-                            onDeleteClick(roadmap);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 font-medium text-left cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </button>
-                      </>
-                    )}
                   </>
                 )}
               </div>

@@ -5,7 +5,12 @@ import {
   ProfileService,
   calculateProfileCompleteness,
 } from "@/features/profile/services";
-import { CareerAssessmentService } from "@/features/career-assessment/services";
+import {
+  CareerAssessmentService,
+  AssessmentQuotaService,
+} from "@/features/career-assessment/services";
+import { ASSESSMENT_WEEKLY_QUOTA } from "@/features/career-assessment/constants";
+import { WeeklyQuotaInfo } from "@/features/career-assessment/types";
 import { AssessmentClientView } from "@/features/career-assessment/components";
 import { PageHeader, RecommendedActions } from "@/components/dashboard";
 
@@ -22,6 +27,14 @@ export default async function CareerAssessmentPage() {
   let isStale = false;
   let profileComplete = false;
   let currentProfileVersion = 1;
+  let initialQuota: WeeklyQuotaInfo = {
+    totalAllowed: ASSESSMENT_WEEKLY_QUOTA,
+    usedThisWeek: 0,
+    remaining: ASSESSMENT_WEEKLY_QUOTA,
+    canGenerate: true,
+    earliestExpiringAt: null,
+    resetFormatted: null,
+  };
 
   if (clerkId) {
     const user = await prisma.user.findUnique({
@@ -29,6 +42,7 @@ export default async function CareerAssessmentPage() {
     });
 
     if (user) {
+      initialQuota = await AssessmentQuotaService.getWeeklyQuota(user.id);
       const profile = await ProfileService.getProfile(user.id);
       if (profile) {
         currentProfileVersion = profile.profileVersion;
@@ -52,6 +66,7 @@ export default async function CareerAssessmentPage() {
         initialIsStale={isStale}
         profileComplete={profileComplete}
         currentProfileVersion={currentProfileVersion}
+        initialQuota={initialQuota}
       />
 
       <RecommendedActions currentModule="career-assessment" />

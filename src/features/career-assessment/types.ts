@@ -84,3 +84,12 @@ export type AssessmentState =
   | "PROCESSING"
   | "STALE"
   | "CURRENT";
+
+export interface WeeklyQuotaInfo {
+  totalAllowed: number;
+  usedThisWeek: number;
+  remaining: number;
+  canGenerate: boolean;
+  earliestExpiringAt: string | null;
+  resetFormatted: string | null;
+}

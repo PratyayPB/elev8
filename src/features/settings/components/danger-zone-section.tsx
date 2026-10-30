@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -15,20 +16,36 @@ import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { deleteAccountAction } from "../actions/settings.actions";
+import { useNotificationsStore } from "@/store/notifications.store";
+import { useWorkflowStore } from "@/store/workflow.store";
 import { toast } from "sonner";
 
 export function DangerZoneSection() {
   const [isOpen, setIsOpen] = useState(false);
+  const [confirmationText, setConfirmationText] = useState("");
   const [isDeleting, startDeleteTransition] = useTransition();
   const { signOut } = useClerk();
   const router = useRouter();
 
+  const handleOpenModal = () => {
+    setConfirmationText("");
+    setIsOpen(true);
+  };
+
   const handleDeleteAccount = () => {
+    if (confirmationText !== "DELETE") {
+      toast.error("Please type DELETE to confirm.");
+      return;
+    }
+
     startDeleteTransition(async () => {
       try {
         const result = await deleteAccountAction();
         if (result.success) {
           toast.success("Account successfully deleted.");
+          // Reset client global stores
+          useNotificationsStore.setState({ notifications: [], unreadCount: 0 });
+          useWorkflowStore.setState({ activeJobs: {} });
           await signOut();
           router.push("/sign-in");
         } else {
@@ -66,7 +83,7 @@ export function DangerZoneSection() {
 
             <Button
               variant="destructive"
-              onClick={() => setIsOpen(true)}
+              onClick={handleOpenModal}
               className="w-full sm:w-auto font-medium flex items-center gap-2 shrink-0"
             >
               <Trash2 className="w-4 h-4" />
@@ -94,9 +111,24 @@ export function DangerZoneSection() {
 
           <div className="p-3 rounded-lg bg-surface-muted/50 dark:bg-card/50 text-xs text-text-secondary space-y-1.5 border border-border/40">
             <p>• All saved career assessments and skill gap reports</p>
-            <p>• All generated roadmaps, progress checkpoints, and milestones</p>
-            <p>• All mock interview records, audio assessments, and scores</p>
-            <p>• Your authentication identity and personal login credentials</p>
+            <p>• All personal roadmaps, progress checkpoints, and milestones</p>
+            <p>• All uploaded resume files, ATS scans, and scores</p>
+            <p>• All mock interview records and AI evaluations</p>
+            <p>• Your authentication identity and login credentials</p>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <label className="text-xs text-text-secondary block">
+              To confirm, type <strong className="text-destructive font-mono font-semibold">DELETE</strong> below:
+            </label>
+            <Input
+              value={confirmationText}
+              onChange={(e) => setConfirmationText(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              className="h-9 text-sm"
+              disabled={isDeleting}
+              autoFocus
+            />
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
@@ -110,7 +142,7 @@ export function DangerZoneSection() {
             <Button
               variant="destructive"
               onClick={handleDeleteAccount}
-              disabled={isDeleting}
+              disabled={isDeleting || confirmationText !== "DELETE"}
               className="flex items-center gap-2"
             >
               {isDeleting ? (

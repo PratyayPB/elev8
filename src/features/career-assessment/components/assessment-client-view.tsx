@@ -6,8 +6,13 @@ import { toast } from "sonner";
 import {
   CareerAssessmentResult,
   AssessmentState,
+  WeeklyQuotaInfo,
 } from "../types";
-import { createAssessmentAction, getAssessmentStatusAction } from "../services/actions";
+import {
+  createAssessmentAction,
+  getAssessmentStatusAction,
+  getWeeklyQuotaAction,
+} from "../services/actions";
 import { AssessmentReadinessScore } from "./assessment-readiness-score";
 import { CareerCompetencyRadar } from "./career-competency-radar";
 import { AssessmentMetricsChart } from "./assessment-metrics-chart";
@@ -17,7 +22,7 @@ import { AssessmentFocusAreas } from "./assessment-focus-areas";
 import { AssessmentNarrative } from "./assessment-narrative";
 import { AssessmentStaleBanner } from "./assessment-stale-banner";
 import { AssessmentCtaCard } from "./assessment-cta-card";
-import { RefreshCw, Calendar, Cpu, Sparkles, Loader2, Brain } from "lucide-react";
+import { RefreshCw, Calendar, Cpu, Sparkles, Loader2, Brain, Clock } from "lucide-react";
 import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
 
 interface AssessmentClientViewProps {
@@ -25,6 +30,7 @@ interface AssessmentClientViewProps {
   initialIsStale: boolean;
   profileComplete: boolean;
   currentProfileVersion: number;
+  initialQuota?: WeeklyQuotaInfo;
 }
 
 export function AssessmentClientView({
@@ -32,6 +38,7 @@ export function AssessmentClientView({
   initialIsStale,
   profileComplete,
   currentProfileVersion,
+  initialQuota,
 }: AssessmentClientViewProps) {
   const router = useRouter();
   const [assessment, setAssessment] = useState<CareerAssessmentResult | null>(
@@ -40,6 +47,18 @@ export function AssessmentClientView({
   const [isStale, setIsStale] = useState<boolean>(initialIsStale);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [quota, setQuota] = useState<WeeklyQuotaInfo | undefined>(initialQuota);
+
+  const refreshQuota = async () => {
+    try {
+      const res = await getWeeklyQuotaAction();
+      if (res.success && res.data) {
+        setQuota(res.data);
+      }
+    } catch (err) {
+      console.warn("[AssessmentClientView] Failed to refresh quota:", err);
+    }
+  };
 
   const getAssessmentState = (): AssessmentState => {
     if (!profileComplete) return "PROFILE_INCOMPLETE";
@@ -67,11 +86,13 @@ export function AssessmentClientView({
             setAssessment(updated);
             setIsStale(false);
             setIsLoading(false);
+            refreshQuota();
             toast.success("Career Assessment generated successfully!");
             router.refresh();
           } else if (updated.status === "FAILED") {
             setAssessment(updated);
             setIsLoading(false);
+            refreshQuota();
             setError("Assessment generation failed. Please try again.");
           }
         }
@@ -100,6 +121,7 @@ export function AssessmentClientView({
       extractJobId: (res) => (res.success && res.data?.assessment ? res.data.assessment.id : undefined),
       defaultViewUrl: "/dashboard/career-assessment",
       onInitiated: (res) => {
+        refreshQuota();
         if (res.success && res.data?.assessment) {
           setAssessment(res.data.assessment);
           setIsStale(false);
@@ -110,6 +132,7 @@ export function AssessmentClientView({
         }
       },
       onError: (err) => {
+        refreshQuota();
         setIsLoading(false);
         setError(err?.message || "Failed to initiate Career Assessment.");
       },
@@ -130,6 +153,7 @@ export function AssessmentClientView({
           state={state}
           onStart={handleGenerate}
           isLoading={isLoading}
+          quota={quota}
         />
       ) : state === "PROCESSING" ? (
         <div className="rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card p-10 md:p-14 text-center space-y-6 shadow-sm relative overflow-hidden">
@@ -168,7 +192,7 @@ export function AssessmentClientView({
 
           {/* Action Bar when Current */}
           {state === "CURRENT" && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-xs font-sans text-text-secondary">
                 <Calendar className="h-3.5 w-3.5" />
                 <span>
@@ -178,15 +202,43 @@ export function AssessmentClientView({
                 <span>Profile Version {assessment!.profileVersion}</span>
               </div>
 
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={isLoading}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border-subtle hover:border-text-primary/30 text-text-secondary hover:text-text-primary text-xs font-display font-medium transition-all"
-              >
-                <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
-                {isLoading ? "Refreshing..." : "Re-evaluate"}
-              </button>
+              <div className="flex items-center gap-2.5">
+                {quota && (
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                      !quota.canGenerate
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                        : "bg-surface-muted dark:bg-card text-text-secondary border-border/80"
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>
+                      {!quota.canGenerate
+                        ? `Limit reached (3/3). Next ${quota.resetFormatted || "soon"}`
+                        : `${quota.remaining}/${quota.totalAllowed} left this week`}
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={isLoading || Boolean(quota && !quota.canGenerate)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-display font-medium transition-all ${
+                    quota && !quota.canGenerate
+                      ? "border-border-subtle bg-muted text-muted-foreground cursor-not-allowed opacity-60"
+                      : "border-border-subtle hover:border-text-primary/30 text-text-secondary hover:text-text-primary"
+                  }`}
+                  title={
+                    quota && !quota.canGenerate
+                      ? `Weekly limit reached (3/3 used). Next assessment available ${quota.resetFormatted}.`
+                      : "Re-evaluate career assessment"
+                  }
+                >
+                  <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
+                  {isLoading ? "Refreshing..." : "Re-evaluate"}
+                </button>
+              </div>
             </div>
           )}
 

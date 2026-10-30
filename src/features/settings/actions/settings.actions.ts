@@ -3,6 +3,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { LLMPreference, LLMSelectorService } from "@/lib/llm";
+import { UserAccountDeletionService } from "@/services/user";
 import { revalidatePath } from "next/cache";
 
 export interface ActionResult<T = unknown> {
@@ -71,10 +72,8 @@ export async function deleteAccountAction(): Promise<ActionResult> {
       };
     }
 
-    // 1. Delete user from local database (cascades all related profile and feature records)
-    await prisma.user.deleteMany({
-      where: { clerkId: userId },
-    });
+    // 1. Purge user from local database (cascades all related profile and feature records, cleans up blobs, cancels active jobs)
+    await UserAccountDeletionService.purgeUserDataByClerkId(userId);
 
     // 2. Delete user from Clerk
     try {

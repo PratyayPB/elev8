@@ -12,7 +12,12 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "npx tsx prisma/seed.ts",
-    "test": "npx tsx --test \"src/**/*.test.ts\""
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
@@ -87,12 +92,18 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.2.3",
+    "jsdom": "^27.0.1",
     "postcss": "^8.4.0",
     "prisma": "^6.0.0",
     "tailwindcss": "^3.4.0",

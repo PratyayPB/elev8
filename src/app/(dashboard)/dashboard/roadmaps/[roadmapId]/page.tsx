@@ -59,6 +59,7 @@ export default async function RoadmapViewerPage({ params }: RoadmapViewerPagePro
         jobProgress={res.job?.progress || 0}
         jobState={res.job?.status ?? null}
         error={displayError}
+        canRegenerate={Boolean(res.roadmap.canRegenerate)}
       />
     </div>
   );

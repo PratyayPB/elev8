@@ -7,6 +7,7 @@ import { tasks } from "@trigger.dev/sdk/v3";
 import { ProfileService, calculateProfileCompleteness } from "@/features/profile/services";
 import { SkillGapService } from "@/features/skill-gap/services";
 import { CareerAssessmentService } from "./career-assessment.service";
+import { AssessmentQuotaService } from "./assessment-quota.service";
 import { ModuleActivityContextService } from "./module-activity-context.service";
 import { CareerAssessmentLLMService } from "./career-assessment-llm.service";
 import { ModuleActivityService } from "@/features/progress/services";
@@ -46,6 +47,9 @@ export async function createAssessmentAction() {
     if (recentDuplicate) {
       throw new Error("An assessment was just initiated. Please wait a moment before trying again.");
     }
+
+    // Weekly quota guard (Rolling 7-day window: max 3 per week)
+    await AssessmentQuotaService.assertQuotaAvailable(user.id);
 
     await ModuleActivityService.recordActivity({
       userId: user.id,
@@ -195,5 +199,25 @@ export async function getLatestAssessmentAction() {
     );
 
     return { assessment };
+  });
+}
+
+export async function getWeeklyQuotaAction() {
+  return safeAction(async () => {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new Error("User record not found.");
+    }
+
+    return await AssessmentQuotaService.getWeeklyQuota(user.id);
   });
 }

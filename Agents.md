@@ -50,6 +50,10 @@ Before implementing features related to Authentication, Prisma Database, Gemini 
 - [trigger-realtime](file:///.agents/skills/trigger-realtime/SKILL.md) — Real-time task run subscriptions, streaming AI responses, and React hooks.
 - [trigger-cost-savings](file:///.agents/skills/trigger-cost-savings/SKILL.md) — Machine right-sizing and execution cost audit.
 
+### 🧪 Testing: Vitest & Playwright
+- [vitest](file:///.agents/skills/vitest/SKILL.md) — Vitest fast unit and integration testing framework powered by Vite.
+- [playwright-skill](file:///.agents/skills/playwright-skill/SKILL.md) — Playwright E2E browser automation and testing scripts.
+
 <!-- TRIGGER.DEV SKILLS START -->
 ## Trigger.dev agent skills
 

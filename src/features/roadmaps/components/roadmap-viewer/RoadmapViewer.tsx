@@ -24,6 +24,7 @@ export interface RoadmapViewerProps {
   jobState?: JobStatus | string | null;
   error?: string;
   onRegenerate?: () => void;
+  canRegenerate?: boolean;
 }
 
 export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
@@ -34,6 +35,7 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
   jobState,
   error,
   onRegenerate,
+  canRegenerate = true,
 }) => {
   const router = useRouter();
   const [selectedNodeData, setSelectedNodeData] = useState<any | null>(null);
@@ -114,14 +116,20 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
           </p>
         </div>
         <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={handleRetry}
-            disabled={isRetrying}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-text-primary text-white dark:text-brand-primary-900 rounded-xl hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-          >
-            <RefreshCw className={`w-4 h-4 ${isRetrying ? "animate-spin" : ""}`} />
-            {isRetrying ? "Restarting..." : "Try Again"}
-          </button>
+          {canRegenerate ? (
+            <button
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-text-primary text-white dark:text-brand-primary-900 rounded-xl hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRetrying ? "animate-spin" : ""}`} />
+              {isRetrying ? "Restarting..." : "Try Again"}
+            </button>
+          ) : (
+            <p className="w-full text-xs text-text-muted mt-2">
+              Regeneration for this global roadmap is reserved for its creator.
+            </p>
+          )}
           <Link
             href="/dashboard/roadmaps"
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-surface-muted text-text-primary border border-border-subtle rounded-xl hover:bg-surface-subtle transition-colors"
@@ -174,7 +182,7 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
         title={artifact.metadata.title}
         role={artifact.metadata.role}
         onDownloadPdf={handleDownloadPdf}
-        onRegenerate={onRegenerate}
+        onRegenerate={canRegenerate ? onRegenerate : undefined}
       />
 
       <div className="relative" ref={canvasRef}>

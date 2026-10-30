@@ -19,6 +19,7 @@ export interface RoadmapViewerSummary {
   estimatedDuration?: string | null;
   personalized?: boolean | null;
   isGlobal?: boolean;
+  canRegenerate?: boolean;
 }
 
 export interface RoadmapViewerResult {
@@ -68,6 +69,7 @@ export class RoadmapViewerService {
         estimatedDuration: personalizedRoadmap.estimatedDuration,
         personalized: personalizedRoadmap.personalized ?? true,
         isGlobal: false,
+        canRegenerate: true,
       };
     } else {
       // 2. Try shared GlobalRoadmap
@@ -83,6 +85,7 @@ export class RoadmapViewerService {
           targetRole: true,
           experienceLevel: true,
           estimatedDuration: true,
+          createdByUserId: true,
         },
       });
 
@@ -102,6 +105,7 @@ export class RoadmapViewerService {
         estimatedDuration: globalRoadmap.estimatedDuration,
         personalized: false,
         isGlobal: true,
+        canRegenerate: globalRoadmap.createdByUserId === userId,
       };
     }
 

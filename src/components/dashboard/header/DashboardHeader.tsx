@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { PanelLeft } from "lucide-react";
 import { useDashboardStore } from "@/store/dashboard.store";
+import { NotificationBell } from "@/components/notifications";
 
 export function DashboardHeader() {
   const pathname = usePathname();
@@ -34,6 +35,7 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-3 justify-end">
+        <NotificationBell />
         <UserButton
           afterSignOutUrl="/"
           appearance={{

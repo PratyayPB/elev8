@@ -248,6 +248,19 @@ enum LLMPreference {
   THINK
 }
 
+enum NotificationType {
+  CAREER_ASSESSMENT
+  ROADMAP
+  RESUME
+  INTERVIEW
+  SYSTEM
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -270,6 +283,7 @@ model User {
   progress                 Progress?
   globalRoadmaps           GlobalRoadmap[]
   globalInterviewTemplates GlobalInterviewTemplate[]
+  notifications            Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -374,6 +388,7 @@ model CareerAssessment {
 
   @@index([userId])
   @@index([userId, profileVersion])
+  @@index([userId, createdAt(sort: Desc), status])
   @@index([status])
   @@index([createdAt])
   @@map("career_assessments")
@@ -725,4 +740,25 @@ model Progress {
   @@index([userId])
   @@index([lastActivityAt])
   @@map("progress")
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  message   String             @db.Text
+  type      NotificationType   @default(SYSTEM)
+  status    NotificationStatus @default(UNREAD)
+
+  actionUrl String?            @map("action_url")
+
+  createdAt DateTime           @default(now()) @map("created_at")
+  readAt    DateTime?          @map("read_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
 }

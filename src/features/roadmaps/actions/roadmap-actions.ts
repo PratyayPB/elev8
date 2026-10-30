@@ -451,14 +451,134 @@ export async function retryRoadmapGenerationAction(roadmapId: string) {
     const sanitizedId = roadmapId.trim();
     const user = await getOrCreateDbUser();
 
-    // 1. Block GlobalRoadmap retries
+    // 1. Check GlobalRoadmap retries & enforce creator-only permission
     const globalRoadmap = await prisma.globalRoadmap.findUnique({
       where: { id: sanitizedId },
-      select: { id: true },
+      select: {
+        id: true,
+        createdByUserId: true,
+        targetRole: true,
+        experienceLevel: true,
+        title: true,
+        status: true,
+      },
     });
 
     if (globalRoadmap) {
-      throw new Error("Regeneration and Try Again are not available for global roadmaps.");
+      if (globalRoadmap.createdByUserId !== user.id) {
+        throw new Error(
+          "Regeneration and Try Again are not available for global roadmaps unless you are the creator."
+        );
+      }
+
+      // Creator exception: Allow global roadmap regeneration
+      const role = globalRoadmap.targetRole || globalRoadmap.title || "Software Engineer";
+      const experienceLevel = formatCareerLevelToExperience(globalRoadmap.experienceLevel);
+      const requestPayload: RoadmapRequest = {
+        role,
+        experienceLevel,
+        personalization: {
+          skipped: true,
+        },
+      };
+
+      await prisma.globalRoadmap.update({
+        where: { id: globalRoadmap.id },
+        data: { status: RoadmapStatus.IN_PROGRESS },
+      });
+
+      const job = await prisma.job.create({
+        data: {
+          userId: user.id,
+          type: JobType.ROADMAP,
+          status: JobStatus.RUNNING,
+          progress: 5,
+          step: "Queued for Global AI Generation",
+          artifactId: globalRoadmap.id,
+          artifactType: "ROADMAP",
+        },
+      });
+
+      await recordRoadmapActivity({
+        userId: user.id,
+        eventType: ModuleActivityEventType.ROADMAP_GENERATION_STARTED,
+        entityId: globalRoadmap.id,
+        metadata: { source: "GLOBAL_ROADMAP_CREATOR_RETRY", roadmapId: globalRoadmap.id },
+      });
+
+      try {
+        const handle = await tasks.trigger<typeof generateRoadmapTask>(
+          "generate-roadmap",
+          {
+            ...requestPayload,
+            jobId: job.id,
+            userId: user.id,
+            roadmapId: globalRoadmap.id,
+            isGlobal: true,
+          }
+        );
+
+        if (handle?.id) {
+          await prisma.job.update({
+            where: { id: job.id },
+            data: { triggerRunId: handle.id },
+          });
+        }
+      } catch (triggerError) {
+        console.warn(
+          "[Trigger.dev] Direct cloud trigger skipped for global roadmap, running local background task...",
+          triggerError
+        );
+
+        (async () => {
+          try {
+            await JobService.updateProgress(job.id, 25, "Generating Global Roadmap");
+            const generatedRoadmap = await RoadmapGenerationService.generate(requestPayload);
+
+            await JobService.updateProgress(job.id, 65, "Computing Layout");
+            const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
+
+            await JobService.updateProgress(job.id, 80, "Uploading Artifact");
+            const blobUrl = await RoadmapArtifactService.uploadArtifact(
+              globalRoadmap.id,
+              artifact
+            );
+
+            await JobService.updateProgress(job.id, 95, "Saving Metadata");
+            await prisma.globalRoadmap.update({
+              where: { id: globalRoadmap.id },
+              data: {
+                title: generatedRoadmap.metadata.title,
+                description: generatedRoadmap.summary,
+                estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
+                status: RoadmapStatus.COMPLETED,
+                blobUrl,
+              },
+            });
+            await JobService.completeJob(job.id, globalRoadmap.id, "ROADMAP");
+            await recordRoadmapActivity({
+              userId: user.id,
+              eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+              entityId: globalRoadmap.id,
+              completionStatus: ModuleCompletionStatus.COMPLETED,
+              metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", roadmapId: globalRoadmap.id },
+            });
+          } catch (err: any) {
+            console.error("[Local Global Background Job Error]:", err);
+            const appError = normalizeError(err);
+            await JobService.failJob(job.id, appError.message);
+            await prisma.globalRoadmap.update({
+              where: { id: globalRoadmap.id },
+              data: { status: RoadmapStatus.FAILED },
+            });
+          }
+        })();
+      }
+
+      return {
+        roadmapId: globalRoadmap.id,
+        jobId: job.id,
+      };
     }
 
     // 2. Check personal Roadmap

@@ -52,9 +52,9 @@ export class BlobStorageService {
   }
 
   /**
-   * Deletes a blob from Vercel Blob Storage by URL.
+   * Deletes a blob or multiple blobs from Vercel Blob Storage by URL.
    */
-  public static async delete(url: string): Promise<void> {
+  public static async delete(url: string | string[]): Promise<void> {
     await del(url);
   }
 

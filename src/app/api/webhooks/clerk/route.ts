@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { prisma } from "@/lib/prisma";
+import { UserAccountDeletionService } from "@/services/user";
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,9 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (eventType === "user.deleted") {
-      await prisma.user.deleteMany({
-        where: { clerkId },
-      });
+      await UserAccountDeletionService.purgeUserDataByClerkId(clerkId);
       return NextResponse.json({ message: "Handled user.deleted" }, { status: 200 });
     }
 
