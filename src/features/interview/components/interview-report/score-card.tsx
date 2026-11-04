@@ -19,9 +19,9 @@ export function ScoreCard({ label, score, type }: ScoreCardProps) {
   };
 
   const getScoreColor = () => {
-    if (score >= 80) return "text-emerald-600";
-    if (score >= 60) return "text-text-primary";
-    return "text-rose-600";
+    if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
+    if (score >= 60) return "text-amber-600 dark:text-amber-400";
+    return "text-rose-600 dark:text-rose-400";
   };
 
   return (
@@ -42,7 +42,7 @@ export function ScoreCard({ label, score, type }: ScoreCardProps) {
       <div className="w-full h-1.5 bg-surface-muted rounded-full mt-3 overflow-hidden">
         <div 
           className={`h-full rounded-full transition-all duration-500 ${
-            score >= 80 ? "bg-emerald-600" : score >= 60 ? "bg-text-primary" : "bg-rose-500"
+            score >= 80 ? "bg-emerald-600" : score >= 60 ? "bg-amber-500" : "bg-rose-500"
           }`}
           style={{ width: `${score}%` }}
         />

@@ -42,6 +42,12 @@ export const AssessResumeTaskSchema = z.object({
 export const assessResumeTask = schemaTask({
   id: "assess-resume",
   schema: AssessResumeTaskSchema,
+  machine: {
+    preset: "small-1x",
+  },
+  queue: {
+    concurrencyLimit: 8,
+  },
   retry: {
     maxAttempts: 3,
     factor: 2,

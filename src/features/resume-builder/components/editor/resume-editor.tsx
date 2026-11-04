@@ -35,6 +35,8 @@ import { ReferencesEditor } from "./references-editor";
 import { AiBuildDialog } from "../ai-build/ai-build-dialog";
 import { ResumeTemplateRenderer } from "../templates/resume-template-renderer";
 import { toast } from "sonner";
+import { requestResumePdfExportAction } from "../../actions/export-actions";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
 
 interface ResumeEditorProps {
   resume: BuilderResumeRecord;
@@ -176,8 +178,9 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
   const [downloadStep, setDownloadStep] = useState<
     "idle" | "saving" | "generating"
   >("idle");
+  const { runWorkflow } = useBackgroundWorkflow();
 
-  // PDF download trigger with automatic pre-save
+  // Background PDF export trigger via Trigger.dev headless Chrome worker
   const handleDownloadPdf = async () => {
     setIsPdfGenerating(true);
     setDownloadStep("saving");
@@ -192,31 +195,33 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
         return;
       }
 
-      // 2. Once saved in backend, proceed with PDF generation
+      // 2. Dispatch background PDF export to Trigger.dev worker
       setDownloadStep("generating");
-      const response = await fetch(BUILDER_API.PDF(resume.id));
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to generate PDF");
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let fileName = `${resume.title || "Resume"}.pdf`;
-      if (contentDisposition && contentDisposition.includes("filename=")) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) fileName = match[1];
-      }
-
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success("PDF downloaded successfully!");
+      await runWorkflow({
+        serviceName: "Resume PDF Export",
+        serviceType: "RESUME_BUILD",
+        initiationMessage: "Initiating PDF export worker...",
+        execute: async () => await requestResumePdfExportAction(resume.id),
+        extractJobId: (res) => (res.success && res.data?.jobId ? res.data.jobId : undefined),
+        extractRealtimeInfo: (res) =>
+          res.success
+            ? {
+                triggerRunId: res.data?.triggerRunId,
+                publicAccessToken: res.data?.publicAccessToken,
+              }
+            : undefined,
+        defaultViewUrl: `/dashboard/resumes/builder/${resume.id}`,
+        onInitiated: () => {
+          toast.info("PDF generation started in background", {
+            description: "Chromium is rendering your PDF with high fidelity.",
+          });
+        },
+        onError: (err) => {
+          toast.error("PDF generation failed", {
+            description: err?.message || "Could not generate PDF.",
+          });
+        },
+      });
     } catch (err: unknown) {
       toast.error("Unable to generate PDF", {
         description:

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { BUILDER_API } from "../constants/builder-routes";
 import { getPopulatedBuilderSections } from "../adapters/section-mapping";
 import { getTemplateSupport, TemplateSupport } from "../constants/template-support";
+import { switchResumeTemplateAction } from "../actions/export-actions";
 
 export type SaveStatus = "clean" | "dirty" | "saving" | "saved" | "error";
 
@@ -267,16 +268,18 @@ export function useResumeEditor({
           console.error("Error fetching template metadata", e);
         }
 
-        const response = await fetch(BUILDER_API.RESUME(resumeId), {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ template: newTemplate }),
-        });
-
-        if (!response.ok) throw new Error("Failed to update template");
-
+        // Optimistically set template
         setCurrentTemplate(newTemplate);
-        toast.success("Template updated successfully");
+
+        // Dispatch background template compilation to Trigger.dev task
+        const actionResult = await switchResumeTemplateAction(resumeId, newTemplate);
+        if (!actionResult.success) {
+          throw new Error(actionResult.error?.message || "Failed to switch template");
+        }
+
+        toast.success("Template switch queued in background", {
+          description: "Populating and re-rendering template layout...",
+        });
       } catch (err: unknown) {
         toast.error("Unable to update template", {
           description: "An error occurred while switching templates.",

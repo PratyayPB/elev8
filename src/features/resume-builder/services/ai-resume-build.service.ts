@@ -10,6 +10,7 @@ import {
   ModuleActivityEventType,
   ModuleType,
 } from "@/features/progress/types";
+import { RealtimeTokenService } from "@/services/jobs/realtime-token.service";
 
 export class AiResumeBuildService {
   /**
@@ -42,7 +43,7 @@ export class AiResumeBuildService {
     userId: string,
     resumeId: string,
     input: AiBuildResumeInput
-  ): Promise<{ jobId: string; triggerRunId?: string }> {
+  ): Promise<{ jobId: string; triggerRunId?: string; publicAccessToken?: string }> {
     // 1. Verify user profile completion
     const profileStatus = await this.checkProfileCompletion(userId);
     if (!profileStatus.isCompleted) {
@@ -89,6 +90,7 @@ export class AiResumeBuildService {
 
     // 4. Dispatch Trigger.dev task
     let triggerRunId: string | undefined;
+    let publicAccessToken: string | undefined;
     try {
       const handle = await tasks.trigger<typeof buildAiResumeTask>(
         "build-ai-resume",
@@ -108,6 +110,14 @@ export class AiResumeBuildService {
         where: { id: job.id },
         data: { triggerRunId },
       });
+
+      try {
+        publicAccessToken = await RealtimeTokenService.mintRunToken({
+          triggerRunId: handle.id,
+        });
+      } catch (tokenErr) {
+        console.warn("[AiResumeBuildService] Failed to mint public token:", tokenErr);
+      }
     } catch (triggerError) {
       console.error(
         "[AiResumeBuildService] Trigger.dev dispatch failed:",
@@ -138,6 +148,7 @@ export class AiResumeBuildService {
     return {
       jobId: job.id,
       triggerRunId,
+      publicAccessToken,
     };
   }
 

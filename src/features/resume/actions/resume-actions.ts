@@ -82,39 +82,60 @@ export async function createResumeAssessmentJob(formData: FormData) {
       }
     }
 
-    // 1. Upload original PDF to Vercel Blob
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const pdfBlobPath = `resumes/originals/${dbUser.id}_${Date.now()}.pdf`;
-    const originalPdfBlobUrl = await BlobStorageService.uploadBuffer(
-      pdfBlobPath,
-      buffer,
-      "application/pdf"
-    );
+    // 1. Atomically create ResumeScore and Job records in a single database transaction
+    const [resume, job] = await prisma.$transaction(async (tx) => {
+      const createdResume = await tx.resumeScore.create({
+        data: {
+          userId: dbUser.id,
+          role,
+          roleDesc: roleDescription,
+          expLevel: mapExperienceLevel(experienceLevel),
+          status: ResumeScoreStatus.PROCESSING,
+        },
+      });
 
-    // 2. Create Resume Metadata in Prisma
-    const resume = await prisma.resumeScore.create({
-      data: {
-        userId: dbUser.id,
-        role,
-        roleDesc: roleDescription,
-        expLevel: mapExperienceLevel(experienceLevel),
-        status: ResumeScoreStatus.PROCESSING,
-      },
+      const createdJob = await tx.job.create({
+        data: {
+          userId: dbUser.id,
+          type: JobType.RESUME_ANALYSIS,
+          status: JobStatus.QUEUED,
+          progress: 0,
+          step: "Uploading file",
+          artifactId: createdResume.id,
+          artifactType: "RESUME",
+        },
+      });
+
+      return [createdResume, createdJob];
     });
 
-    // 3. Create Job record in Prisma
-    const job = await prisma.job.create({
-      data: {
-        userId: dbUser.id,
-        type: JobType.RESUME_ANALYSIS,
-        status: JobStatus.QUEUED,
-        progress: 0,
-        step: "Queued",
-        artifactId: resume.id,
-        artifactType: "RESUME",
-      },
-    });
+    // 2. Upload original PDF to Vercel Blob with automatic cleanup if failed
+    let originalPdfBlobUrl: string;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const pdfBlobPath = `resumes/originals/${dbUser.id}_${resume.id}_${Date.now()}.pdf`;
+      originalPdfBlobUrl = await BlobStorageService.uploadBuffer(
+        pdfBlobPath,
+        buffer,
+        "application/pdf"
+      );
+    } catch (uploadError) {
+      await prisma.$transaction([
+        prisma.resumeScore.update({
+          where: { id: resume.id },
+          data: { status: ResumeScoreStatus.FAILED },
+        }),
+        prisma.job.update({
+          where: { id: job.id },
+          data: {
+            status: JobStatus.FAILED,
+            error: "Failed to upload resume file to storage",
+          },
+        }),
+      ]);
+      throw uploadError;
+    }
 
     await ModuleActivityService.recordActivity({
       userId: dbUser.id,

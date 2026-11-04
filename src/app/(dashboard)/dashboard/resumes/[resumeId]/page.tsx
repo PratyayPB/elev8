@@ -24,19 +24,20 @@ export async function generateMetadata({ params }: ResumePageProps) {
 export default async function ResumeDetailPage({ params }: ResumePageProps) {
   const { resumeId } = await params;
 
-  const report = await ResumeReportService.getResumeReport(resumeId);
-
-  if (report) {
-    return <ResumeHubContainer report={report} />;
-  }
-
-  // Check if resume exists and what status it is in
+  // Single database query for resume record
   const resume = await prisma.resumeScore.findUnique({
     where: { id: resumeId },
   });
 
   if (!resume) {
     notFound();
+  }
+
+  // Pass already-fetched record to avoid second query in getResumeReport
+  const report = await ResumeReportService.getResumeReport(resumeId, resume);
+
+  if (report) {
+    return <ResumeHubContainer report={report} />;
   }
 
   const job = await prisma.job.findFirst({

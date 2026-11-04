@@ -36,6 +36,12 @@ export const GenerateInterviewTaskSchema = z.object({
 export const generateInterviewTask = schemaTask({
   id: "generate-interview",
   schema: GenerateInterviewTaskSchema,
+  machine: {
+    preset: "micro",
+  },
+  queue: {
+    concurrencyLimit: 10,
+  },
   retry: {
     maxAttempts: 3,
     factor: 2,

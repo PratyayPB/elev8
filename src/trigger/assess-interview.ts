@@ -1,7 +1,8 @@
-import { schemaTask } from "@trigger.dev/sdk/v3";
+import { schemaTask, metadata } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { JobStatus, InterviewStatus } from "@prisma/client";
+import { JobService } from "@/services/jobs/job.service";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { InterviewArtifact, AssessmentReport } from "@/features/interview/types";
 import { QuestionAssessmentService } from "@/features/interview/services/question-assessment.service";
@@ -22,6 +23,12 @@ export const AssessInterviewPayloadSchema = z.object({
 export const assessInterviewJob = schemaTask({
   id: "assess-interview",
   schema: AssessInterviewPayloadSchema,
+  machine: {
+    preset: "micro",
+  },
+  queue: {
+    concurrencyLimit: 10,
+  },
   retry: {
     maxAttempts: 3,
   },
@@ -29,6 +36,8 @@ export const assessInterviewJob = schemaTask({
     const { jobId, interviewId } = payload;
 
     const updateJob = async (progress: number, step: string) => {
+      metadata.set("progress", progress);
+      metadata.set("status", step);
       await prisma.job.update({
         where: { id: jobId },
         data: { progress, step },
@@ -88,15 +97,9 @@ export const assessInterviewJob = schemaTask({
         assessmentReport
       );
 
-      await prisma.job.update({
-        where: { id: jobId },
-        data: { 
-          status: JobStatus.COMPLETED, 
-          progress: 100, 
-          step: "Assessment Complete", 
-          completedAt: new Date() 
-        },
-      });
+      metadata.set("progress", 100);
+      metadata.set("status", "Assessment Complete");
+      await JobService.completeJob(jobId, interviewId, "INTERVIEW_ASSESSMENT");
 
       return { success: true, interviewId };
     } catch (error: unknown) {
@@ -104,14 +107,7 @@ export const assessInterviewJob = schemaTask({
       console.error("Assessment Job Failed:", appError.message, error);
 
       try {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: JobStatus.FAILED,
-            error: appError.message,
-            completedAt: new Date(),
-          },
-        });
+        await JobService.failJob(jobId, appError.message);
       } catch (jobErr) {
         console.error("Failed to update job status on error:", jobErr);
       }

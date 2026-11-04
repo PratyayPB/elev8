@@ -1,22 +1,40 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ResumeSummary } from "../types/workspace";
 import { useResumeFilters } from "./use-resume-filters";
 import { WorkspaceService } from "../services/workspace.service";
 import { deleteResume as deleteResumeAction } from "../actions/resume-actions";
 import { toast } from "sonner";
+import { useWorkflowStore } from "@/store/workflow.store";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function useResumeWorkspace(initialResumes: ResumeSummary[]) {
   const router = useRouter();
   const [resumes, setResumes] = useState<ResumeSummary[]>(initialResumes);
   const filterControls = useResumeFilters();
+  const activeJobs = useWorkflowStore((state) => state.activeJobs);
+  const prevJobCountRef = useRef(Object.keys(activeJobs).length);
 
   // Keep state in sync with server component updates / re-fetches
   useEffect(() => {
     setResumes(initialResumes);
   }, [initialResumes]);
 
-  // Auto-refresh when any resume is in PROCESSING state or has incomplete score data
+  // Auto-refresh when an active resume background job completes in useWorkflowStore
+  useEffect(() => {
+    const activeResumeJobs = Object.values(activeJobs).filter(
+      (j) => j.serviceType === "RESUME_SCORE" || j.serviceType === "RESUME_BUILD"
+    );
+    const currentCount = activeResumeJobs.length;
+
+    // A job has finished and been unregistered -> refresh view once
+    if (prevJobCountRef.current > currentCount) {
+      router.refresh();
+    }
+    prevJobCountRef.current = currentCount;
+  }, [activeJobs, router]);
+
+  // Fallback slow refresh ONLY if there are active items on server without client-side job tracking
   useEffect(() => {
     const hasActiveJob = initialResumes.some(
       (r) =>
@@ -26,16 +44,27 @@ export function useResumeWorkspace(initialResumes: ResumeSummary[]) {
 
     if (!hasActiveJob) return;
 
+    // 10s fallback guard for orphaned or background tasks triggered from other devices
     const interval = setInterval(() => {
       router.refresh();
-    }, 3000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [initialResumes, router]);
 
+  const debouncedSearchQuery = useDebounce(filterControls.filters.searchQuery, 250);
+
+  const effectiveFilters = useMemo(
+    () => ({
+      ...filterControls.filters,
+      searchQuery: debouncedSearchQuery,
+    }),
+    [filterControls.filters, debouncedSearchQuery]
+  );
+
   const filteredResumes = useMemo(() => {
-    return WorkspaceService.filterAndSortResumes(resumes, filterControls.filters);
-  }, [resumes, filterControls.filters]);
+    return WorkspaceService.filterAndSortResumes(resumes, effectiveFilters);
+  }, [resumes, effectiveFilters]);
 
   const groupedResumes = useMemo(() => {
     return WorkspaceService.groupResumesByStatus(filteredResumes);

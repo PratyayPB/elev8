@@ -4,11 +4,12 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useWorkflowStore, BackgroundServiceType } from "@/store/workflow.store";
-import { checkBackgroundJobStatusAction } from "@/services/jobs/actions";
+import { checkBackgroundJobStatusAction, getJobRealtimeTokenAction } from "@/services/jobs/actions";
 import { sendNotification } from "@/features/notifications/notification-sender";
 import { NotificationType } from "@/features/notifications/types";
+import { RealtimeJobSubscriber } from "./realtime-job-subscriber";
 
-function mapServiceTypeToNotificationType(
+export function mapServiceTypeToNotificationType(
   serviceType: BackgroundServiceType
 ): NotificationType {
   switch (serviceType) {
@@ -30,14 +31,49 @@ export function GlobalJobWatcher() {
   const router = useRouter();
   const activeJobs = useWorkflowStore((state) => state.activeJobs);
   const unregisterJob = useWorkflowStore((state) => state.unregisterJob);
+  const updateJobRealtime = useWorkflowStore((state) => state.updateJobRealtime);
   const checkingRef = useRef<Record<string, boolean>>({});
+  const tokenFetchRef = useRef<Record<string, boolean>>({});
 
+  const allJobs = Object.values(activeJobs);
+
+  // Auto-discover and hydrate public tokens for active jobs that lack them
   useEffect(() => {
-    const jobList = Object.values(activeJobs);
-    if (jobList.length === 0) return;
+    for (const job of allJobs) {
+      if (!job.triggerRunId || !job.publicAccessToken) {
+        if (tokenFetchRef.current[job.id]) continue;
+        tokenFetchRef.current[job.id] = true;
+
+        getJobRealtimeTokenAction(job.id)
+          .then((res) => {
+            if (res.success && res.data?.triggerRunId && res.data?.publicAccessToken) {
+              updateJobRealtime(job.id, {
+                triggerRunId: res.data.triggerRunId,
+                publicAccessToken: res.data.publicAccessToken,
+              });
+            }
+          })
+          .catch((err) => {
+            console.warn(`[GlobalJobWatcher] Failed to fetch realtime token for ${job.id}:`, err);
+          })
+          .finally(() => {
+            delete tokenFetchRef.current[job.id];
+          });
+      }
+    }
+  }, [allJobs, updateJobRealtime]);
+
+  // Realtime jobs (handled via RealtimeJobSubscriber over SSE)
+  const realtimeJobs = allJobs.filter((j) => Boolean(j.triggerRunId && j.publicAccessToken));
+  // Fallback jobs (only jobs lacking cloud run ID / token run on local interval check)
+  const fallbackJobs = allJobs.filter((j) => !Boolean(j.triggerRunId && j.publicAccessToken));
+
+  // Interval check ONLY for local fallback jobs that lack cloud Trigger.dev handles
+  useEffect(() => {
+    if (fallbackJobs.length === 0) return;
 
     const intervalId = setInterval(async () => {
-      for (const job of jobList) {
+      for (const job of fallbackJobs) {
         // Prevent concurrent overlapping checks for the same job
         if (checkingRef.current[job.id]) continue;
         checkingRef.current[job.id] = true;
@@ -51,25 +87,26 @@ export function GlobalJobWatcher() {
             if (status === "COMPLETED") {
               const targetUrl = viewUrl || job.viewUrl;
               
-              // Persist notification to DB and trigger UI badge
-              sendNotification({
+              await sendNotification({
                 title: `${job.serviceName} Ready`,
                 message: `Your ${job.serviceName.toLowerCase()} has finished processing and is ready to review.`,
                 type: mapServiceTypeToNotificationType(job.serviceType),
                 actionUrl: targetUrl,
-                showToast: false, // We fire the customized toast with action below
+                idempotencyKey: `job-completed-${job.id}`,
+                showToast: false,
               });
 
               toast.success(`${job.serviceName} Completed`, {
                 description: `Your ${job.serviceName.toLowerCase()} has finished processing and is ready.`,
                 duration: 7000,
+                skipDb: true,
                 action: targetUrl
                   ? {
                       label: "View",
                       onClick: () => router.push(targetUrl),
                     }
                   : undefined,
-              });
+              } as any);
 
               unregisterJob(job.id);
               router.refresh();
@@ -78,24 +115,25 @@ export function GlobalJobWatcher() {
                 error ||
                 `The background task for ${job.serviceName.toLowerCase()} encountered an error. Please try again.`;
 
-              // Persist notification to DB and trigger UI badge
-              sendNotification({
+              await sendNotification({
                 title: `${job.serviceName} Failed`,
                 message: failureMessage,
                 type: mapServiceTypeToNotificationType(job.serviceType),
+                idempotencyKey: `job-failed-${job.id}`,
                 showToast: false,
               });
 
               toast.error(`${job.serviceName} Failed`, {
                 description: failureMessage,
                 duration: 8000,
-              });
+                skipDb: true,
+              } as any);
 
               unregisterJob(job.id);
             }
           }
         } catch (pollErr) {
-          console.warn(`[GlobalJobWatcher] Failed to poll status for ${job.id}:`, pollErr);
+          console.warn(`[GlobalJobWatcher] Failed to poll status for fallback job ${job.id}:`, pollErr);
         } finally {
           delete checkingRef.current[job.id];
         }
@@ -103,7 +141,13 @@ export function GlobalJobWatcher() {
     }, 3000);
 
     return () => clearInterval(intervalId);
-  }, [activeJobs, unregisterJob, router]);
+  }, [fallbackJobs, unregisterJob, router]);
 
-  return null;
+  return (
+    <>
+      {realtimeJobs.map((job) => (
+        <RealtimeJobSubscriber key={job.id} job={job} />
+      ))}
+    </>
+  );
 }

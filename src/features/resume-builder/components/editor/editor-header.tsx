@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Save, CheckCircle2, AlertCircle, Download, LayoutTe
 import { SaveStatus } from "../../hooks/use-resume-editor";
 import { BUILDER_ROUTES } from "../../constants/builder-routes";
 import { ResumeBuilderTemplate } from "../../types";
+import { useThrottledCallback } from "@/hooks/use-throttle";
 import {
   Select,
   SelectContent,
@@ -86,22 +87,19 @@ export function EditorHeader({
 
   // Standard throttle (1.5s) to prevent spamming recompile
   const [isRecompileThrottled, setIsRecompileThrottled] = React.useState(false);
-  const lastRecompileTimeRef = React.useRef<number>(0);
   const RECOMPILE_THROTTLE_MS = 1500;
 
-  const handleRecompileClick = () => {
-    const now = Date.now();
-    if (
-      now - lastRecompileTimeRef.current < RECOMPILE_THROTTLE_MS ||
-      isRecompiling ||
-      isRecompileThrottled
-    ) {
-      return;
-    }
-    lastRecompileTimeRef.current = now;
+  const throttledRecompile = useThrottledCallback(() => {
     setIsRecompileThrottled(true);
     setTimeout(() => setIsRecompileThrottled(false), RECOMPILE_THROTTLE_MS);
     onRecompile?.();
+  }, RECOMPILE_THROTTLE_MS);
+
+  const handleRecompileClick = () => {
+    if (isRecompiling || isRecompileThrottled) {
+      return;
+    }
+    throttledRecompile();
   };
 
   const getStatusBadge = () => {

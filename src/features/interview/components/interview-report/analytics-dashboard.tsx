@@ -17,15 +17,15 @@ export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
   const getPacingBadge = (rating?: Analytics["pacingEfficiencyRating"]) => {
     switch (rating) {
       case "OPTIMAL":
-        return { label: "Optimal Pacing", color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20" };
+        return { label: "Optimal Pacing", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
       case "FAST":
-        return { label: "Fast Pacing", color: "text-dashboard-metricHighlight bg-dashboard-metricHighlight/10 border-dashboard-metricHighlight/30" };
+        return { label: "Fast Pacing", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" };
       case "DELIBERATE":
-        return { label: "Deliberate Pacing", color: "text-blue-500 bg-blue-500/10 border-blue-500/20" };
+        return { label: "Deliberate Pacing", color: "text-blue-500 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" };
       case "VARIABLE":
-        return { label: "Variable Pacing", color: "text-amber-600 bg-amber-500/10 border-amber-500/20" };
+        return { label: "Variable Pacing", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" };
       default:
-        return { label: "Optimal", color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20" };
+        return { label: "Optimal", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
     }
   };
 

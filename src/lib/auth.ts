@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
@@ -17,7 +18,11 @@ export async function requireAuth() {
   return userId;
 }
 
-export async function getOrCreateDbUser() {
+/**
+ * Returns or creates the database user record for the authenticated Clerk session.
+ * Wrapped in React cache() to deduplicate queries within a single server request lifecycle.
+ */
+export const getOrCreateDbUser = cache(async () => {
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     throw new Error("Unauthorized: Please sign in.");
@@ -44,4 +49,4 @@ export async function getOrCreateDbUser() {
       email: primaryEmail,
     },
   });
-}
+});

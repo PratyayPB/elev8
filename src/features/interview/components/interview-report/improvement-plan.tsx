@@ -15,7 +15,7 @@ export function ImprovementPlan({ overallScores }: ImprovementPlanProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recommended Learning */}
-        <div className="p-5 bg-dashboard-metricHighlight/10 rounded-2xl border border-dashboard-metricHighlight/30">
+        <div className="p-5 bg-surface-muted rounded-2xl border border-border-subtle">
           <h4 className="font-display font-bold text-text-primary text-base mb-3 flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-text-primary" />
             Recommended Learning & Focus Areas
@@ -30,9 +30,9 @@ export function ImprovementPlan({ overallScores }: ImprovementPlanProps) {
               const getPriorityBadge = (p: "HIGH" | "MEDIUM" | "LOW") => {
                 switch (p) {
                   case "HIGH":
-                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-rose-500/15 text-rose-600 border border-rose-500/20">High Priority</span>;
+                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20">High Priority</span>;
                   case "MEDIUM":
-                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-dashboard-metricHighlight/20 text-text-primary border border-dashboard-metricHighlight/30">Medium</span>;
+                    return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Medium</span>;
                   case "LOW":
                     return <span className="px-2 py-0.5 rounded-full text-[10px] font-display font-bold bg-surface-muted text-text-secondary border border-border-subtle">Low</span>;
                 }

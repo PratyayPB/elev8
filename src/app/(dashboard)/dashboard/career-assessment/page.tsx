@@ -42,8 +42,13 @@ export default async function CareerAssessmentPage() {
     });
 
     if (user) {
-      initialQuota = await AssessmentQuotaService.getWeeklyQuota(user.id);
-      const profile = await ProfileService.getProfile(user.id);
+      // Parallelize quota calculation and profile retrieval to eliminate sequential waterfall
+      const [quotaResult, profile] = await Promise.all([
+        AssessmentQuotaService.getWeeklyQuota(user.id),
+        ProfileService.getProfile(user.id),
+      ]);
+      initialQuota = quotaResult;
+
       if (profile) {
         currentProfileVersion = profile.profileVersion;
         const completeness = calculateProfileCompleteness(profile);

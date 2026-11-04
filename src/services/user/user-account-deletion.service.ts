@@ -18,6 +18,7 @@ export class UserAccountDeletionService {
       where: { clerkId },
       select: {
         id: true,
+        email: true,
         roadmaps: {
           select: { blobUrl: true },
         },
@@ -33,6 +34,25 @@ export class UserAccountDeletionService {
     if (!user) {
       // User already removed or does not exist
       return false;
+    }
+
+    // 0. Record immutable audit log entry prior to user purge
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: "USER_ACCOUNT_PURGE",
+          target: "User",
+          targetId: user.id,
+          metadata: {
+            clerkId,
+            email: user.email,
+            purgedAt: new Date().toISOString(),
+          },
+        },
+      });
+    } catch (auditErr) {
+      console.warn("[UserAccountDeletionService] Failed to record deletion audit log:", auditErr);
     }
 
     // 1. Collect personal blob URLs

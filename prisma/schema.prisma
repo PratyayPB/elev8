@@ -5,8 +5,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ==========================================
@@ -268,7 +269,7 @@ enum NotificationStatus {
 model User {
   id      String  @id @default(cuid())
   clerkId String  @unique
-  email   String?
+  email   String? @unique
   llmPreference LLMPreference @default(BALANCED)
 
   profile                  Profile?
@@ -284,6 +285,7 @@ model User {
   globalRoadmaps           GlobalRoadmap[]
   globalInterviewTemplates GlobalInterviewTemplate[]
   notifications            Notification[]
+  auditLogs                AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -328,6 +330,7 @@ model Profile {
   // Skills
   skills        ProfileSkill[]
   desiredSkills ProfileDesiredSkill[]
+  interviews    InterviewSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -410,6 +413,8 @@ model Roadmap {
   personalized    Boolean?
   profileSnapshot Json?
 
+  interviews InterviewSession[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -464,7 +469,9 @@ model ResumeScore {
 
   status ResumeScoreStatus @default(PROCESSING)
 
-  createdAt DateTime @default(now())
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  interviews InterviewSession[]
 
   @@index([userId])
   @@index([status])
@@ -616,8 +623,13 @@ model InterviewSession {
   profileSnapshot Json?
 
   profileId String?
+  profile   Profile?     @relation(fields: [profileId], references: [id], onDelete: SetNull)
+
   resumeId  String?
+  resume    ResumeScore? @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+
   roadmapId String?
+  roadmap   Roadmap?     @relation(fields: [roadmapId], references: [id], onDelete: SetNull)
 
   status InterviewStatus @default(READY)
 
@@ -625,6 +637,9 @@ model InterviewSession {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([profileId])
+  @@index([resumeId])
+  @@index([roadmapId])
   @@index([interviewTemplateId])
   @@index([globalInterviewTemplateId])
   @@index([templateSource])
@@ -752,7 +767,8 @@ model Notification {
   type      NotificationType   @default(SYSTEM)
   status    NotificationStatus @default(UNREAD)
 
-  actionUrl String?            @map("action_url")
+  actionUrl      String?            @map("action_url")
+  idempotencyKey String?            @unique @map("idempotency_key")
 
   createdAt DateTime           @default(now()) @map("created_at")
   readAt    DateTime?          @map("read_at")
@@ -761,4 +777,21 @@ model Notification {
   @@index([userId, status])
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  target    String?
+  targetId  String?  @map("target_id")
+  metadata  Json?
+  ipAddress String?  @map("ip_address")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
 }

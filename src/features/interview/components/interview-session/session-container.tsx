@@ -12,6 +12,8 @@ import { QuestionView } from "./question-view";
 import { AnswerEditor } from "./answer-editor";
 import { PauseDialog, SubmitDialog } from "./dialogs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 
 interface SessionContainerProps {
   interviewId: string;
@@ -70,8 +72,14 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
   const isLast = currentQuestionIndex === artifact.questions.length - 1;
   const unansweredCount = artifact.questions.length - artifact.answers.filter(a => a.answerText.trim().length > 0).length;
 
+  // Debounced autosave (1.5s) while typing
+  const debouncedAutosave = useDebouncedCallback(() => {
+    save();
+  }, 1500);
+
   const handleAnswerChange = (text: string) => {
     updateAnswer(currentQuestion.id, text);
+    debouncedAutosave();
   };
 
   const handlePrev = () => {
@@ -90,6 +98,8 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     jumpToQuestion(index);
   };
 
+  const { runWorkflow } = useBackgroundWorkflow();
+
   const handlePauseConfirm = async () => {
     setIsProcessingAction(true);
     await save();
@@ -105,19 +115,23 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
       await save();
       
       if (blobUrl && artifact) {
-        // Trigger final submit action
-        const res = await submitInterview(interviewId, blobUrl, artifact, durationSeconds);
-        if (!res.success) {
-          toast.error("Submission failed", {
-            description: res.error?.message || "Failed to submit interview. Please try again.",
-          });
-          return;
-        }
         setIsSubmitOpen(false);
-        toast.success("Interview submitted successfully!", {
-          description: "Generating your assessment report...",
+        await runWorkflow({
+          serviceName: "Interview Assessment",
+          serviceType: "INTERVIEW",
+          initiationMessage: "Submitting & Initiating Assessment...",
+          execute: async () =>
+            await submitInterview(interviewId, blobUrl, artifact, durationSeconds),
+          extractJobId: (res) =>
+            res.success && res.data ? res.data.jobId || interviewId : interviewId,
+          defaultViewUrl: `/dashboard/interviews/${interviewId}/report`,
+          onInitiated: () => {
+            router.push("/dashboard/interviews");
+          },
+          onError: (err) => {
+            console.error("Submission failed:", err);
+          },
         });
-        router.push("/dashboard/interviews");
       }
     } catch (error) {
       console.error("Submission failed:", error);

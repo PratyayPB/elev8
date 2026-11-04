@@ -15,6 +15,7 @@ export interface NotificationItemData {
   type: NotificationType;
   status: NotificationStatus;
   actionUrl: string | null;
+  idempotencyKey?: string | null;
   createdAt: Date | string;
   readAt: Date | string | null;
 }
@@ -25,4 +26,5 @@ export interface CreateNotificationInput {
   message: string;
   type?: NotificationType;
   actionUrl?: string | null;
+  idempotencyKey?: string | null;
 }

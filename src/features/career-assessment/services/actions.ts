@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { tasks } from "@trigger.dev/sdk/v3";
+import { RealtimeTokenService } from "@/services/jobs/realtime-token.service";
 import { ProfileService, calculateProfileCompleteness } from "@/features/profile/services";
 import { SkillGapService } from "@/features/skill-gap/services";
 import { CareerAssessmentService } from "./career-assessment.service";
@@ -18,6 +19,7 @@ import {
 } from "@/features/progress/types";
 import { CareerAssessmentStatus } from "@prisma/client";
 import { safeAction } from "@/lib/error-handler";
+import { createDbNotification } from "@/features/notifications/actions";
 import type { generateAssessmentTask } from "@/trigger/generate-assessment";
 
 export async function createAssessmentAction() {
@@ -91,12 +93,25 @@ export async function createAssessmentAction() {
     );
 
     // Trigger background execution on Trigger.dev
+    let triggerRunId: string | undefined;
+    let publicAccessToken: string | undefined;
     try {
-      await tasks.trigger<typeof generateAssessmentTask>("generate-assessment", {
+      const handle = await tasks.trigger<typeof generateAssessmentTask>("generate-assessment", {
         assessmentId: assessment.id,
         userId: user.id,
         profileVersion: profile.profileVersion,
       });
+      triggerRunId = handle?.id;
+
+      if (handle?.id) {
+        try {
+          publicAccessToken = await RealtimeTokenService.mintRunToken({
+            triggerRunId: handle.id,
+          });
+        } catch (tokenErr) {
+          console.warn("[CareerAssessmentActions] Failed to mint public token:", tokenErr);
+        }
+      }
     } catch (triggerError) {
       console.warn(
         "[Trigger.dev] Direct trigger offline or skipped, running local background task:",
@@ -136,12 +151,39 @@ export async function createAssessmentAction() {
               durationMs: processingDurationMs,
             },
           });
+
+          // Direct DB notification for resilience
+          try {
+            await createDbNotification({
+              userId: user.id,
+              title: "Career Assessment Ready",
+              message: "Your career assessment report has finished processing and is ready to review.",
+              type: "CAREER_ASSESSMENT",
+              actionUrl: "/dashboard/career-assessment",
+              idempotencyKey: `assessment-completed-${assessment.id}`,
+            });
+          } catch (notifErr) {
+            console.warn("[CareerAssessmentActions] Failed to record completion notification:", notifErr);
+          }
         } catch (localBgErr) {
           console.error("[CareerAssessmentActions] Local async background generation failed:", localBgErr);
           await prisma.careerAssessment.update({
             where: { id: assessment.id },
             data: { status: CareerAssessmentStatus.FAILED },
           });
+
+          try {
+            await createDbNotification({
+              userId: user.id,
+              title: "Career Assessment Failed",
+              message: "The career assessment generation encountered an error. Please try again.",
+              type: "CAREER_ASSESSMENT",
+              actionUrl: "/dashboard/career-assessment",
+              idempotencyKey: `assessment-failed-${assessment.id}`,
+            });
+          } catch (notifErr) {
+            console.warn("[CareerAssessmentActions] Failed to record failure notification:", notifErr);
+          }
         }
       })();
     }
@@ -149,7 +191,11 @@ export async function createAssessmentAction() {
     revalidatePath("/dashboard/career-assessment");
     revalidatePath("/dashboard");
 
-    return { assessment };
+    return {
+      assessment,
+      triggerRunId,
+      publicAccessToken,
+    };
   });
 }
 

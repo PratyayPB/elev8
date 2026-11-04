@@ -27,13 +27,13 @@ export function SkillBreakdown({ overallScores }: SkillBreakdownProps) {
       {/* Areas for Improvement */}
       <div className="bg-dashboard-card p-6 rounded-[var(--card-radius)] border border-dashboard-cardBorder shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-5 h-5 text-text-primary" />
+          <AlertTriangle className="w-5 h-5 text-rose-500" />
           <h3 className="text-lg font-display font-bold text-text-primary">Areas for Improvement</h3>
         </div>
         <ul className="space-y-3">
           {overallScores.weaknesses.map((weakness, idx) => (
             <li key={idx} className="flex items-start gap-2.5 text-sm font-sans text-text-secondary leading-relaxed">
-              <span className="w-1.5 h-1.5 rounded-full bg-text-primary mt-2 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 shrink-0" />
               <span>{weakness}</span>
             </li>
           ))}

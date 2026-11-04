@@ -46,10 +46,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       if (res.ok) {
         const data = await res.json();
         
-        const profileRes = await fetch("/api/profile");
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          setProfile(profileData.id ? profileData : null);
+        if (data.profile) {
+          setProfile(data.profile);
         }
 
         setMissingFields(data.missingMandatoryFields || data.missingFields || []);

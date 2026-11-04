@@ -29,7 +29,7 @@ export function NextSteps({ metadata }: NextStepsProps) {
             </p>
           </div>
           <div className="flex items-center text-xs font-display font-bold text-text-primary mt-4">
-            Start Learning <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight" />
+            Start Learning <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-text-primary" />
           </div>
         </Link>
 
@@ -50,7 +50,7 @@ export function NextSteps({ metadata }: NextStepsProps) {
             </p>
           </div>
           <div className="flex items-center text-xs font-display font-bold text-text-primary mt-4">
-            Explore Advice <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight" />
+            Explore Advice <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-text-primary" />
           </div>
         </Link>
 
@@ -71,7 +71,7 @@ export function NextSteps({ metadata }: NextStepsProps) {
             </p>
           </div>
           <div className="flex items-center text-xs font-display font-bold text-text-primary mt-4">
-            Review Resume <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight" />
+            Review Resume <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-text-primary" />
           </div>
         </Link>
 
@@ -92,7 +92,7 @@ export function NextSteps({ metadata }: NextStepsProps) {
             </p>
           </div>
           <div className="flex items-center text-xs font-display font-bold text-text-primary mt-4">
-            New Interview <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-dashboard-metricHighlight" />
+            New Interview <ArrowRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform text-text-primary" />
           </div>
         </Link>
       </div>

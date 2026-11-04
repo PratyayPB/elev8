@@ -34,6 +34,12 @@ export const BuildAiResumeTaskSchema = z.object({
 export const buildAiResumeTask = schemaTask({
   id: "build-ai-resume",
   schema: BuildAiResumeTaskSchema,
+  machine: {
+    preset: "micro",
+  },
+  queue: {
+    concurrencyLimit: 10,
+  },
   retry: {
     maxAttempts: 3,
     factor: 2,

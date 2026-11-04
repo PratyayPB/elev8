@@ -15,8 +15,8 @@ export function KeywordAnalysisComponent({ report }: KeywordAnalysisProps) {
     <div className="bg-dashboard-card rounded-3xl p-6 sm:p-8 border border-dashboard-cardBorder shadow-sm space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-dashboard-metricHighlight/20 border border-dashboard-metricHighlight/30 text-text-primary flex items-center justify-center">
-            <Search className="w-5 h-5 text-text-primary" />
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
+            <Search className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">ATS & Keyword Audit</h3>
@@ -43,7 +43,7 @@ export function KeywordAnalysisComponent({ report }: KeywordAnalysisProps) {
         {/* Present Keywords */}
         <div className="bg-surface-muted p-5 rounded-2xl border border-border-subtle space-y-3">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-text-primary flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-text-primary" /> Present Keywords ({keywords.presentKeywords.length})
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Present Keywords ({keywords.presentKeywords.length})
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {keywords.presentKeywords.map((kw, i) => (
@@ -58,9 +58,9 @@ export function KeywordAnalysisComponent({ report }: KeywordAnalysisProps) {
         </div>
 
         {/* Missing Keywords */}
-        <div className="bg-accent-coral/10 p-5 rounded-2xl border border-accent-coral/20 space-y-3">
+        <div className="bg-rose-500/10 p-5 rounded-2xl border border-rose-500/20 space-y-3">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-text-primary flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4 text-text-primary" /> Missing ATS Keywords ({keywords.missingKeywords.length})
+            <AlertCircle className="w-4 h-4 text-rose-500" /> Missing ATS Keywords ({keywords.missingKeywords.length})
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {keywords.missingKeywords.length === 0 ? (
@@ -79,9 +79,9 @@ export function KeywordAnalysisComponent({ report }: KeywordAnalysisProps) {
         </div>
 
         {/* Recommended Skills */}
-        <div className="bg-dashboard-metricHighlight/10 p-5 rounded-2xl border border-dashboard-metricHighlight/20 space-y-3">
+        <div className="bg-amber-500/10 p-5 rounded-2xl border border-amber-500/20 space-y-3">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-text-primary flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-text-primary" /> High-Impact Additions
+            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" /> High-Impact Additions
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {keywords.recommendedKeywords.map((kw, i) => (

@@ -27,8 +27,8 @@ export function ResumeHealthComponent({ report }: ResumeHealthProps) {
     <div className="bg-dashboard-card rounded-3xl p-6 sm:p-8 border border-dashboard-cardBorder shadow-sm space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-dashboard-metricHighlight/20 text-text-primary border border-dashboard-metricHighlight/30 flex items-center justify-center">
-            <HeartPulse className="w-5 h-5 text-text-primary" />
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+            <HeartPulse className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
             <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">Resume Health Summary</h3>
@@ -93,12 +93,12 @@ export function ResumeHealthComponent({ report }: ResumeHealthProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-5 border-t border-border-subtle">
         <div className="space-y-3">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-text-primary flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-text-primary" /> Core Strengths
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Core Strengths
           </h4>
           <ul className="space-y-2">
             {health.topStrengths.map((str, idx) => (
               <li key={idx} className="text-xs font-semibold text-text-secondary flex items-start gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-dashboard-metricHighlight border border-border-strong mt-1 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
                 {str}
               </li>
             ))}
@@ -107,12 +107,12 @@ export function ResumeHealthComponent({ report }: ResumeHealthProps) {
 
         <div className="space-y-3">
           <h4 className="text-[10px] font-black uppercase tracking-wider text-text-primary flex items-center gap-2">
-            <XCircle className="w-4 h-4 text-text-primary" /> Key Weaknesses
+            <XCircle className="w-4 h-4 text-rose-500" /> Key Weaknesses
           </h4>
           <ul className="space-y-2">
             {health.topWeaknesses.map((wk, idx) => (
               <li key={idx} className="text-xs font-semibold text-text-secondary flex items-start gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-accent-coral border border-border-strong mt-1 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0" />
                 {wk}
               </li>
             ))}

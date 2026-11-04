@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { BackgroundServiceType } from "@/store/workflow.store";
 import { safeAction } from "@/lib/error-handler";
+import { RealtimeTokenService } from "./realtime-token.service";
 
 export type UnifiedJobStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
 
@@ -51,7 +52,11 @@ export async function checkBackgroundJobStatusAction(
         if (serviceType === "ROADMAP" && job.artifactId) {
           viewUrl = `/dashboard/roadmaps/${job.artifactId}`;
         } else if (serviceType === "INTERVIEW" && job.artifactId) {
-          viewUrl = `/dashboard/interview/${job.artifactId}`;
+          if (job.artifactType === "INTERVIEW_ASSESSMENT") {
+            viewUrl = `/dashboard/interviews/${job.artifactId}/report`;
+          } else {
+            viewUrl = `/dashboard/interviews/${job.artifactId}`;
+          }
         } else if (serviceType === "RESUME_BUILD" && job.artifactId) {
           viewUrl = `/dashboard/resumes/builder/${job.artifactId}`;
         } else if (serviceType === "RESUME_SCORE" && job.artifactId) {
@@ -142,11 +147,14 @@ export async function checkBackgroundJobStatusAction(
         select: { status: true },
       });
       if (session) {
-        if (session.status === "READY" || session.status === "COMPLETED") {
-          return { status: "COMPLETED", viewUrl: `/dashboard/interview/${id}` };
+        if (session.status === "COMPLETED") {
+          return { status: "COMPLETED", viewUrl: `/dashboard/interviews/${id}/report` };
         }
-        if (session.status === "FAILED") {
-          return { status: "FAILED", error: "Interview generation failed" };
+        if (session.status === "READY") {
+          return { status: "COMPLETED", viewUrl: `/dashboard/interviews/${id}` };
+        }
+        if (session.status === "FAILED" || session.status === "ASSESSMENT_FAILED") {
+          return { status: "FAILED", error: "Interview processing failed" };
         }
         return { status: "RUNNING" };
       }
@@ -155,3 +163,64 @@ export async function checkBackgroundJobStatusAction(
     return { status: "RUNNING" };
   });
 }
+
+export interface JobRealtimeTokenResult {
+  triggerRunId?: string;
+  publicAccessToken?: string;
+  status?: string;
+}
+
+/**
+ * Returns a scoped Trigger.dev public access token for the given job.
+ * Enables client components to subscribe to run SSE streams via useRealtimeRun.
+ */
+export async function getJobRealtimeTokenAction(jobId: string) {
+  return safeAction(async (): Promise<JobRealtimeTokenResult> => {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new Error("User record not found");
+    }
+
+    const job = await prisma.job.findFirst({
+      where: { id: jobId, userId: user.id },
+      select: { id: true, status: true, triggerRunId: true },
+    });
+
+    if (!job || !job.triggerRunId) {
+      return {
+        triggerRunId: undefined,
+        publicAccessToken: undefined,
+        status: job?.status,
+      };
+    }
+
+    try {
+      const publicAccessToken = await RealtimeTokenService.mintRunToken({
+        triggerRunId: job.triggerRunId,
+      });
+
+      return {
+        triggerRunId: job.triggerRunId,
+        publicAccessToken,
+        status: job.status,
+      };
+    } catch (err) {
+      console.warn(`[getJobRealtimeTokenAction] Token generation failed for job ${jobId}:`, err);
+      return {
+        triggerRunId: job.triggerRunId,
+        publicAccessToken: undefined,
+        status: job.status,
+      };
+    }
+  });
+}
+

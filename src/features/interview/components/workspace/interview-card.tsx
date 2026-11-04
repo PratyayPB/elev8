@@ -9,6 +9,7 @@ import { deleteInterview } from "../../actions/workspace-actions";
 import { retryAssessmentAction } from "../../actions/session-actions";
 import { retryInterviewGenerationAction } from "../../actions/interview-actions";
 import { toast } from "sonner";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
 
 interface InterviewCardProps {
   interview: InterviewSession;
@@ -19,47 +20,43 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const { runWorkflow } = useBackgroundWorkflow();
 
   const handleRetryAssessment = async () => {
     setIsRetrying(true);
-    try {
-      const res = await retryAssessmentAction(interview.id);
-      if (res.success) {
-        toast.success("Assessment generation restarted");
+    await runWorkflow({
+      serviceName: "Interview Assessment",
+      serviceType: "INTERVIEW",
+      initiationMessage: "Restarting Assessment Evaluation...",
+      execute: async () => await retryAssessmentAction(interview.id),
+      extractJobId: (res) =>
+        res.success && res.data ? res.data.jobId || interview.id : interview.id,
+      defaultViewUrl: `/dashboard/interviews/${interview.id}/report`,
+      onInitiated: () => {
         router.refresh();
-      } else {
-        toast.error(res.error?.message || "Failed to restart assessment");
-      }
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        toast.error(e.message || "Failed to restart assessment");
-      } else {
-        toast.error("Failed to restart assessment");
-      }
-    } finally {
-      setIsRetrying(false);
-    }
+      },
+      onError: () => {
+        setIsRetrying(false);
+      },
+    });
   };
 
   const handleRetryGeneration = async () => {
     setIsRetrying(true);
-    try {
-      const res = await retryInterviewGenerationAction(interview.id);
-      if (res.success) {
-        toast.success("Interview generation restarted");
+    await runWorkflow({
+      serviceName: "Interview Simulation",
+      serviceType: "INTERVIEW",
+      initiationMessage: "Restarting Interview Generation...",
+      execute: async () => await retryInterviewGenerationAction(interview.id),
+      extractJobId: () => interview.id,
+      defaultViewUrl: `/dashboard/interviews/${interview.id}`,
+      onInitiated: () => {
         router.refresh();
-      } else {
-        toast.error(res.error?.message || "Failed to restart generation");
-      }
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        toast.error(e.message || "Failed to restart generation");
-      } else {
-        toast.error("Failed to restart generation");
-      }
-    } finally {
-      setIsRetrying(false);
-    }
+      },
+      onError: () => {
+        setIsRetrying(false);
+      },
+    });
   };
 
   const handleDelete = async () => {
@@ -101,7 +98,15 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         <div className="flex items-center justify-between gap-2 mb-3">
           {getStatusBadge()}
           {interview.overallScore !== null && interview.overallScore !== undefined && (
-            <span className="text-sm font-display font-bold text-text-primary bg-dashboard-metricHighlight px-2.5 py-0.5 rounded-full border border-dashboard-metricHighlight/50">
+            <span
+              className={`text-xs font-display font-bold px-2.5 py-0.5 rounded-full ${
+                interview.overallScore >= 80
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                  : interview.overallScore >= 60
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+              }`}
+            >
               {interview.overallScore} / 100
             </span>
           )}
@@ -136,9 +141,9 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         {interview.status === InterviewStatus.READY && (
           <Link
             href={`/dashboard/interviews/${interview.id}/session`}
-            className="w-full py-2 bg-text-primary text-white dark:text-brand-primary-900 text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
+            className="w-full py-2 bg-text-primary text-white dark:bg-white dark:text-black text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 dark:hover:bg-neutral-100 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4 shadow-xs"
           >
-            <PlayCircle className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+            <PlayCircle className="w-3.5 h-3.5" />
             Start Interview
           </Link>
         )}
@@ -152,9 +157,9 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
           ) : (
             <Link
               href={`/dashboard/interviews/${interview.id}`}
-              className="w-full py-2 bg-text-primary text-white dark:text-brand-primary-900 text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
+              className="w-full py-2 bg-text-primary text-white dark:bg-white dark:text-black text-center font-display font-bold text-xs rounded-xl hover:bg-black/85 dark:hover:bg-neutral-100 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4 shadow-xs"
             >
-              <Eye className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+              <Eye className="w-3.5 h-3.5" />
               View Assessment
             </Link>
           )
@@ -163,9 +168,9 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         {interview.status === InterviewStatus.IN_PROGRESS && (
           <Link
             href={`/dashboard/interviews/${interview.id}/session`}
-            className="w-full py-2 bg-dashboard-metricHighlight text-black border border-dashboard-metricHighlight/40 text-center font-display font-bold text-xs rounded-xl hover:bg-dashboard-metricHighlight/80 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
+            className="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-center font-display font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] mb-4"
           >
-            <PlayCircle className="w-3.5 h-3.5 text-black" />
+            <PlayCircle className="w-3.5 h-3.5 text-primary" />
             Continue Session
           </Link>
         )}

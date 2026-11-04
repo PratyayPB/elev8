@@ -41,13 +41,12 @@ export default async function DashboardPage() {
   const dbUser = await prisma.user.findUnique({ where: { clerkId } });
   if (!dbUser) return null;
 
-  const [profile, recentActivities] = await Promise.all([
+  // Run all independent queries in parallel to eliminate sequential database waterfalls
+  const [profile, recentActivities, latestAssessment] = await Promise.all([
     getProfileAction(),
     ModuleActivityService.getRecentActivity(dbUser.id, 30),
+    CareerAssessmentService.getLatestAssessment(dbUser.id),
   ]);
-  const latestAssessment = profile
-    ? await CareerAssessmentService.getLatestAssessment(dbUser.id)
-    : null;
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto pb-10">

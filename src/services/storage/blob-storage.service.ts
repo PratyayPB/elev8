@@ -59,23 +59,43 @@ export class BlobStorageService {
   }
 
   /**
-   * Replaces an existing JSON blob by deleting the old one and uploading a new one.
-   * Returns the new blob URL.
+   * Replaces an existing JSON blob safely by uploading the new version first,
+   * then cleaning up the previous version if the URL changed.
+   * Prevents unrecoverable data loss if the upload fails.
    */
   public static async replaceJson<T>(
     currentBlobUrl: string,
     pathname: string,
     data: T
   ): Promise<string> {
-    try {
-      if (currentBlobUrl) {
+    const newBlobUrl = await this.upsertJson(pathname, data);
+
+    if (currentBlobUrl && currentBlobUrl !== newBlobUrl) {
+      try {
         await this.delete(currentBlobUrl);
+      } catch (error) {
+        console.warn(`[BlobStorageService] Failed to clean up previous blob during replacement: ${currentBlobUrl}`, error);
       }
-    } catch (error) {
-      console.warn(`Failed to delete old blob during replacement: ${currentBlobUrl}`, error);
     }
-    
-    return this.upsertJson(pathname, data);
+
+    return newBlobUrl;
+  }
+
+  /**
+   * Uploads or overwrites a text/html artifact at a deterministic pathname.
+   */
+  public static async upsertString(
+    pathname: string,
+    content: string,
+    contentType: string = "text/html"
+  ): Promise<string> {
+    const blob = await put(pathname, content, {
+      access: "private",
+      contentType,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
+    return blob.url;
   }
 
   /**

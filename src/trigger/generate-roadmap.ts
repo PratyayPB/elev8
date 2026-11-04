@@ -23,6 +23,12 @@ export const GenerateRoadmapTaskSchema = RoadmapRequestSchema.extend({
 export const generateRoadmapTask = schemaTask({
   id: "generate-roadmap",
   schema: GenerateRoadmapTaskSchema,
+  machine: {
+    preset: "micro",
+  },
+  queue: {
+    concurrencyLimit: 10,
+  },
   retry: {
     maxAttempts: 3,
     factor: 2,

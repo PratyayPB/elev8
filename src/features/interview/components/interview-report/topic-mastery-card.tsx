@@ -31,14 +31,14 @@ export function TopicMasteryCard({ topicMastery }: TopicMasteryCardProps) {
         );
       case "SATISFACTORY":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-display font-bold bg-dashboard-metricHighlight/10 text-text-primary border border-dashboard-metricHighlight/30">
-            <HelpCircle className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-display font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <HelpCircle className="w-3.5 h-3.5" />
             Competent ({score}%)
           </span>
         );
       case "NEEDS_IMPROVEMENT":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-display font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-display font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             <AlertCircle className="w-3.5 h-3.5" />
             Needs Focus ({score}%)
           </span>
@@ -48,7 +48,7 @@ export function TopicMasteryCard({ topicMastery }: TopicMasteryCardProps) {
 
   const getProgressColor = (score: number) => {
     if (score >= 80) return "bg-emerald-600";
-    if (score >= 60) return "bg-dashboard-metricHighlight";
+    if (score >= 60) return "bg-amber-500";
     return "bg-rose-500";
   };
 

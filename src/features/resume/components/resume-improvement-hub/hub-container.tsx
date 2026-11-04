@@ -44,7 +44,7 @@ export function ResumeHubContainer({ report: initialReport }: ResumeHubContainer
                 onClick={() => setActiveTab(t.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap ${
                   isActive
-                    ? "bg-dashboard-metricHighlight text-black shadow-sm"
+                    ? "bg-text-primary text-white dark:bg-white dark:text-black shadow-sm"
                     : "text-text-secondary hover:text-text-primary hover:bg-surface-muted"
                 }`}
               >

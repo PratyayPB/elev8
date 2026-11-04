@@ -24,6 +24,8 @@ import { AssessmentStaleBanner } from "./assessment-stale-banner";
 import { AssessmentCtaCard } from "./assessment-cta-card";
 import { RefreshCw, Calendar, Cpu, Sparkles, Loader2, Brain, Clock } from "lucide-react";
 import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+import { useRealtimeRun } from "@trigger.dev/react-hooks";
+import { useThrottledCallback } from "@/hooks/use-throttle";
 
 interface AssessmentClientViewProps {
   initialAssessment: CareerAssessmentResult | null;
@@ -48,6 +50,10 @@ export function AssessmentClientView({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quota, setQuota] = useState<WeeklyQuotaInfo | undefined>(initialQuota);
+  const [realtimeCredentials, setRealtimeCredentials] = useState<{
+    triggerRunId?: string;
+    publicAccessToken?: string;
+  } | null>(null);
 
   const refreshQuota = async () => {
     try {
@@ -70,9 +76,42 @@ export function AssessmentClientView({
 
   const state = getAssessmentState();
 
-  // Automatic status polling for background tasks
+  // 1. Trigger.dev Realtime SSE subscription
+  const { run } = useRealtimeRun(realtimeCredentials?.triggerRunId, {
+    accessToken: realtimeCredentials?.publicAccessToken!,
+    enabled: Boolean(
+      assessment?.status === "PROCESSING" &&
+        realtimeCredentials?.triggerRunId &&
+        realtimeCredentials?.publicAccessToken
+    ),
+    skipColumns: ["payload", "output"],
+    stopOnCompletion: true,
+    onComplete: async (completedRun) => {
+      if (completedRun.isSuccess) {
+        if (assessment?.id) {
+          const res = await getAssessmentStatusAction(assessment.id);
+          if (res.success && res.data.assessment) {
+            setAssessment(res.data.assessment);
+          }
+        }
+        setIsStale(false);
+        setIsLoading(false);
+        refreshQuota();
+        toast.success("Career Assessment generated successfully!");
+        router.refresh();
+      } else if (completedRun.isFailed) {
+        setIsLoading(false);
+        refreshQuota();
+        setError("Assessment generation failed. Please try again.");
+      }
+    },
+  });
+
+  // 2. Automatic status polling fallback ONLY when cloud realtime token is missing
   useEffect(() => {
     if (!assessment || assessment.status !== "PROCESSING") return;
+    // Skip polling if realtime connection is active
+    if (realtimeCredentials?.triggerRunId && realtimeCredentials?.publicAccessToken) return;
 
     let isMounted = true;
     const interval = setInterval(async () => {
@@ -105,11 +144,11 @@ export function AssessmentClientView({
       isMounted = false;
       clearInterval(interval);
     };
-  }, [assessment?.id, assessment?.status, router]);
+  }, [assessment?.id, assessment?.status, realtimeCredentials, router]);
 
   const { runWorkflow } = useBackgroundWorkflow();
 
-  const handleGenerate = async () => {
+  const handleGenerate = useThrottledCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -119,10 +158,23 @@ export function AssessmentClientView({
       initiationMessage: "Initiating the workflow...",
       execute: async () => await createAssessmentAction(),
       extractJobId: (res) => (res.success && res.data?.assessment ? res.data.assessment.id : undefined),
+      extractRealtimeInfo: (res) =>
+        res.success
+          ? {
+              triggerRunId: res.data?.triggerRunId,
+              publicAccessToken: res.data?.publicAccessToken,
+            }
+          : undefined,
       defaultViewUrl: "/dashboard/career-assessment",
       onInitiated: (res) => {
         refreshQuota();
         if (res.success && res.data?.assessment) {
+          if (res.data.triggerRunId && res.data.publicAccessToken) {
+            setRealtimeCredentials({
+              triggerRunId: res.data.triggerRunId,
+              publicAccessToken: res.data.publicAccessToken,
+            });
+          }
           setAssessment(res.data.assessment);
           setIsStale(false);
           if (res.data.assessment.status === "COMPLETED") {
@@ -137,7 +189,7 @@ export function AssessmentClientView({
         setError(err?.message || "Failed to initiate Career Assessment.");
       },
     });
-  };
+  }, 1000);
 
   return (
     <div className="space-y-8">

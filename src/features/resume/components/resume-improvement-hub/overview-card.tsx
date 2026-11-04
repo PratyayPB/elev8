@@ -28,7 +28,7 @@ export function OverviewCard({ report }: OverviewCardProps) {
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <span className="px-3 py-1 bg-dashboard-metricHighlight border border-border-strong rounded-full text-[10px] font-black text-text-primary uppercase tracking-wider">
+              <span className="px-3 py-1 bg-text-primary text-white dark:bg-white dark:text-black rounded-full text-[10px] font-black uppercase tracking-wider shadow-xs">
                 {metadata.role}
               </span>
               <span className="px-3 py-1 bg-surface-muted border border-border-subtle rounded-full text-[10px] font-black text-text-secondary uppercase tracking-wider">
@@ -60,7 +60,7 @@ export function OverviewCard({ report }: OverviewCardProps) {
       {/* Highlights summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-          <div className="w-10 h-10 rounded-xl bg-dashboard-metricHighlight text-text-primary border border-border-strong flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
             <CheckCircle className="w-5 h-5" />
           </div>
           <div>
@@ -72,8 +72,8 @@ export function OverviewCard({ report }: OverviewCardProps) {
         </div>
 
         <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-          <div className="w-10 h-10 rounded-xl bg-accent-coral/20 text-text-primary border border-accent-coral flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5 text-text-primary" />
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
             <h4 className="text-sm font-display font-black text-text-primary uppercase tracking-wide">Highest Priority Gap</h4>

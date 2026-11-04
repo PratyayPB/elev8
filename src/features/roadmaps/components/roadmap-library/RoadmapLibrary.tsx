@@ -19,8 +19,23 @@ import { LibraryRoadmap } from "@/features/roadmaps/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { RocketLoader } from "@/components/loading";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+import { useDebounce } from "@/hooks/use-debounce";
 
-export const RoadmapLibrary: React.FC = () => {
+export interface RoadmapLibraryProps {
+  initialRoadmaps?: LibraryRoadmap[];
+  initialPagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
+  initialRoadmaps,
+  initialPagination,
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,19 +44,23 @@ export const RoadmapLibrary: React.FC = () => {
 
   const [section, setSection] = useState<"mine" | "global">(initialSection);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 350);
   const [sort, setSort] = useState<
     "newest" | "oldest" | "updated" | "alphabetical"
   >("newest");
   const [page, setPage] = useState(1);
 
-  const [roadmaps, setRoadmaps] = useState<LibraryRoadmap[]>([]);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    limit: 9,
-    totalPages: 1,
-  });
-  const [loading, setLoading] = useState(true);
+  const [roadmaps, setRoadmaps] = useState<LibraryRoadmap[]>(initialRoadmaps || []);
+  const [pagination, setPagination] = useState(
+    initialPagination || {
+      total: 0,
+      page: 1,
+      limit: 9,
+      totalPages: 1,
+    }
+  );
+  const [loading, setLoading] = useState(!initialRoadmaps);
+  const isInitialMount = React.useRef(Boolean(initialRoadmaps));
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<LibraryRoadmap | null>(null);
@@ -63,7 +82,7 @@ export const RoadmapLibrary: React.FC = () => {
     try {
       const res = await fetchUserRoadmaps({
         section,
-        search,
+        search: debouncedSearch,
         sort,
         page,
         limit: 9,
@@ -82,8 +101,13 @@ export const RoadmapLibrary: React.FC = () => {
   };
 
   useEffect(() => {
+    // If pre-seeded by server component on initial render, skip redundant immediate fetch
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     loadData();
-  }, [section, search, sort, page]);
+  }, [section, debouncedSearch, sort, page]);
 
   const handleTabChange = (newTab: string) => {
     const nextSection = newTab as "mine" | "global";
@@ -141,28 +165,31 @@ export const RoadmapLibrary: React.FC = () => {
     }
   };
 
+  const { runWorkflow } = useBackgroundWorkflow();
+
   const handleRegenerate = async (roadmap: LibraryRoadmap) => {
-    try {
-      const res = await retryRoadmapGenerationAction(roadmap.id);
-      if (!res.success) {
-        toast.error(res.error?.message || "Failed to retry roadmap generation.");
-        const role = encodeURIComponent(roadmap.targetRole || "");
-        const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
-        router.push(
-          `/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`
-        );
-        return;
-      }
-      router.push(`/dashboard/roadmaps/${roadmap.id}`);
-    } catch (err: any) {
-      console.error("Failed to retry roadmap generation:", err);
-      toast.error(err?.message || "Failed to retry roadmap generation.");
-      const role = encodeURIComponent(roadmap.targetRole || "");
-      const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
-      router.push(
-        `/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`
-      );
-    }
+    await runWorkflow({
+      serviceName: "Roadmap Regeneration",
+      serviceType: "ROADMAP",
+      initiationMessage: "Initiating Roadmap Regeneration...",
+      execute: async () => await retryRoadmapGenerationAction(roadmap.id),
+      extractJobId: () => roadmap.id,
+      defaultViewUrl: `/dashboard/roadmaps/${roadmap.id}`,
+      onInitiated: (res) => {
+        if (res.success) {
+          router.push(`/dashboard/roadmaps/${roadmap.id}`);
+        } else {
+          const role = encodeURIComponent(roadmap.targetRole || "");
+          const level = encodeURIComponent(roadmap.experienceLevel || "BEGINNER");
+          router.push(
+            `/dashboard/roadmaps/new?role=${role}&experienceLevel=${level}`
+          );
+        }
+      },
+      onError: (err: any) => {
+        console.error("Failed to retry roadmap generation:", err);
+      },
+    });
   };
 
   return (

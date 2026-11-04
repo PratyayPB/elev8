@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+import { useRealtimeRun } from "@trigger.dev/react-hooks";
+import { useThrottledCallback } from "@/hooks/use-throttle";
 import { ResumeCompanyType } from "@prisma/client";
 import { BuilderResumeArtifact } from "../../types";
 
@@ -75,6 +77,10 @@ export function AiBuildDialog({
   const [step, setStep] = useState<"form" | "confirm" | "generating" | "error">("form");
   const { runWorkflow } = useBackgroundWorkflow();
   const [jobId, setJobId] = useState<string | null>(null);
+  const [realtimeRunInfo, setRealtimeRunInfo] = useState<{
+    triggerRunId?: string;
+    publicAccessToken?: string;
+  } | null>(null);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [currentStepText, setCurrentStepText] = useState("Initializing AI Build...");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -100,9 +106,52 @@ export function AiBuildDialog({
     }
   }, [isOpen, resumeId]);
 
-  // Polling Trigger.dev Job Status when generating
+  // Realtime Trigger.dev Subscription when generating
+  const { run } = useRealtimeRun(realtimeRunInfo?.triggerRunId, {
+    accessToken: realtimeRunInfo?.publicAccessToken!,
+    enabled: Boolean(
+      step === "generating" &&
+        realtimeRunInfo?.triggerRunId &&
+        realtimeRunInfo?.publicAccessToken
+    ),
+    skipColumns: ["payload", "output"],
+    stopOnCompletion: true,
+    onComplete: (completedRun) => {
+      if (completedRun.isSuccess) {
+        toast.success("AI Resume Generated Successfully!", {
+          description: "Your tailored resume content has been loaded into the editor.",
+        });
+        onSuccess();
+        onOpenChange(false);
+      } else if (completedRun.isFailed) {
+        setErrorMessage(
+          completedRun.error?.message || "AI generation failed. Please try again."
+        );
+        setStep("error");
+        toast.error("AI Resume Build failed", {
+          description: "Your existing resume has not been changed.",
+        });
+      }
+    },
+  });
+
+  // Sync real-time progress & status metadata from Trigger.dev run
+  useEffect(() => {
+    if (run?.metadata) {
+      if (typeof run.metadata.progress === "number") {
+        setCurrentProgress(run.metadata.progress);
+      }
+      if (typeof run.metadata.status === "string") {
+        setCurrentStepText(run.metadata.status);
+      }
+    }
+  }, [run]);
+
+  // Fallback Polling Trigger.dev Job Status ONLY if realtime cloud token is unavailable
   useEffect(() => {
     if (step !== "generating" || !jobId) return;
+    // If realtime connection is active with publicAccessToken, skip polling
+    if (realtimeRunInfo?.triggerRunId && realtimeRunInfo?.publicAccessToken) return;
 
     let attempts = 0;
     const maxAttempts = 80; // 80 * 1500ms = 120 seconds (2 minutes max)
@@ -154,9 +203,9 @@ export function AiBuildDialog({
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [step, jobId, resumeId, onSuccess, onOpenChange]);
+  }, [step, jobId, resumeId, realtimeRunInfo, onSuccess, onOpenChange]);
 
-  const handleStartGeneration = async () => {
+  const handleStartGeneration = useThrottledCallback(async () => {
     if (!targetJobTitle.trim()) {
       toast.error("Target Job Title is required");
       return;
@@ -197,9 +246,19 @@ export function AiBuildDialog({
         return data;
       },
       extractJobId: (data) => data?.jobId,
+      extractRealtimeInfo: (data) => ({
+        triggerRunId: data?.triggerRunId,
+        publicAccessToken: data?.publicAccessToken,
+      }),
       defaultViewUrl: `/dashboard/resumes/builder/${resumeId}`,
       onInitiated: (data) => {
         setJobId(data.jobId);
+        if (data.triggerRunId && data.publicAccessToken) {
+          setRealtimeRunInfo({
+            triggerRunId: data.triggerRunId,
+            publicAccessToken: data.publicAccessToken,
+          });
+        }
         setStep("generating");
         setCurrentProgress(10);
         setCurrentStepText("Dispatching background task...");
@@ -210,7 +269,7 @@ export function AiBuildDialog({
         setStep("error");
       },
     });
-  };
+  }, 1000);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

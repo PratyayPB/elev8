@@ -30,6 +30,7 @@ export async function GET() {
       isMandatoryCompleted: mandatory.isMandatoryCompleted,
       missingFields: completeness.missingFields,
       missingMandatoryFields: mandatory.missingFields,
+      profile: profile || null,
     }, { status: 200 });
   } catch (error) {
     console.error("GET /api/profile/completion error:", error);

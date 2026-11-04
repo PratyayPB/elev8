@@ -2,12 +2,10 @@
 
 import React, { useState, useRef, useMemo } from "react";
 import { RoadmapArtifact } from "@/services/roadmaps/roadmap-artifact.service";
-import { RoadmapRenderService } from "@/services/roadmaps/roadmap-render.service";
 import { ReactFlowCanvas } from "./ReactFlowCanvas";
 import { ReadOnlyToolbar } from "./ReadOnlyToolbar";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { EmptyState } from "./EmptyState";
-import { RoadmapExportUtility } from "@/services/roadmaps/roadmap-export.utility";
 import { useRoadmapPolling } from "../../hooks/use-roadmap-polling";
 import { retryRoadmapGenerationAction } from "@/features/roadmaps/actions/roadmap-actions";
 import { useRouter } from "next/navigation";
@@ -15,6 +13,7 @@ import { X, Rocket, AlertTriangle, RefreshCw } from "lucide-react";
 import { JobStatus } from "@prisma/client";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
 
 export interface RoadmapViewerProps {
   roadmapId?: string;
@@ -25,6 +24,8 @@ export interface RoadmapViewerProps {
   error?: string;
   onRegenerate?: () => void;
   canRegenerate?: boolean;
+  triggerRunId?: string;
+  publicAccessToken?: string;
 }
 
 export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
@@ -36,22 +37,19 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
   error,
   onRegenerate,
   canRegenerate = true,
+  triggerRunId,
+  publicAccessToken,
 }) => {
   const router = useRouter();
   const [selectedNodeData, setSelectedNodeData] = useState<any | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [liveProgress, setLiveProgress] = useState(jobProgress);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Compute graph dynamically to ensure layout reflects current sizing and spacing rules
+  // Use pre-computed layout directly from artifact (computed in Trigger.dev background task)
   const graph = useMemo(() => {
-    if (artifact?.logicalGraph?.nodes && artifact?.logicalGraph?.edges) {
-      return RoadmapRenderService.convertToReactFlow(
-        artifact.logicalGraph.nodes,
-        artifact.logicalGraph.edges
-      );
-    }
     return artifact?.reactFlow || { nodes: [], edges: [] };
-  }, [artifact]);
+  }, [artifact?.reactFlow]);
 
   // Clear the local retry state once the server reflects the loading status, completion, or provides an artifact
   React.useEffect(() => {
@@ -60,18 +58,39 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
     }
   }, [isLoading, jobState, artifact]);
 
-  // Hook handles short polling while job is in active state (e.g. IN_PROGRESS / RUNNING / QUEUED)
-  useRoadmapPolling(isLoading || isRetrying);
+  // Sync progress if prop changes
+  React.useEffect(() => {
+    setLiveProgress(jobProgress);
+  }, [jobProgress]);
 
-  const handleDownloadPdf = () => {
+  // Hook handles realtime streaming updates over SSE, falling back to short polling if offline
+  useRoadmapPolling(isLoading || isRetrying, {
+    triggerRunId,
+    publicAccessToken,
+    onMetadataUpdate: (progress) => {
+      if (progress > 0) setLiveProgress(progress);
+    },
+  });
+
+  const handleDownloadPdf = async () => {
     if (canvasRef.current && artifact) {
-      RoadmapExportUtility.downloadPdf(
-        canvasRef.current,
-        artifact.reactFlow.nodes,
-        `${artifact.metadata.title || "roadmap"}.pdf`
-      );
+      try {
+        const { RoadmapExportUtility } = await import(
+          "@/services/roadmaps/roadmap-export.utility"
+        );
+        RoadmapExportUtility.downloadPdf(
+          canvasRef.current,
+          artifact.reactFlow.nodes,
+          `${artifact.metadata.title || "roadmap"}.pdf`
+        );
+      } catch (err) {
+        console.error("Failed to load PDF export module:", err);
+        toast.error("Failed to export PDF. Please try again.");
+      }
     }
   };
+
+  const { runWorkflow } = useBackgroundWorkflow();
 
   const handleRetry = async () => {
     if (onRegenerate) {
@@ -79,25 +98,29 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
       return;
     }
     if (!roadmapId) return;
-    try {
-      setIsRetrying(true);
-      const res = await retryRoadmapGenerationAction(roadmapId);
-      if (!res.success) {
-        toast.error(res.error?.message || "Failed to retry roadmap generation. Please try again.");
+    setIsRetrying(true);
+    await runWorkflow({
+      serviceName: "Roadmap Regeneration",
+      serviceType: "ROADMAP",
+      initiationMessage: "Initiating Roadmap Regeneration...",
+      execute: async () => await retryRoadmapGenerationAction(roadmapId),
+      extractJobId: () => roadmapId,
+      defaultViewUrl: `/dashboard/roadmaps/${roadmapId}`,
+      onInitiated: (res) => {
+        if (res.success) {
+          router.refresh();
+        }
+      },
+      onError: (err: any) => {
+        console.error("Failed to retry roadmap generation:", err);
         setIsRetrying(false);
-        return;
-      }
-      router.refresh();
-    } catch (err: any) {
-      console.error("Failed to retry roadmap generation:", err);
-      toast.error(err?.message || "Failed to retry roadmap generation. Please try again.");
-      setIsRetrying(false);
-    }
+      },
+    });
   };
 
   // 1. Loading State (active background job or retrying)
   if (isLoading || isRetrying) {
-    return <LoadingOverlay progress={isRetrying && !isLoading ? 5 : jobProgress} />;
+    return <LoadingOverlay progress={isRetrying && !isLoading ? 5 : (liveProgress || jobProgress)} />;
   }
 
   // 2. Failed State (AI error, high demand 503, rate limit 429, or pipeline failure)

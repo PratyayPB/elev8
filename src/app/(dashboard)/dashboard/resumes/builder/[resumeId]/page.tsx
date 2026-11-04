@@ -27,9 +27,9 @@ export default async function EditResumePage({ params }: EditResumePageProps) {
   try {
     const dbUser = await getOrCreateDbUser();
     
-    // Fetch resume metadata & artifact
+    // Fetch resume metadata & reuse the entity for blob fetching to eliminate duplicate DB queries
     const resume = await ResumeBuilderService.getResume(dbUser.id, resumeId);
-    const initialArtifact = await ResumeBuilderService.getResumeArtifact(dbUser.id, resumeId);
+    const initialArtifact = await ResumeBuilderService.getResumeArtifact(dbUser.id, resumeId, resume);
 
     return (
       <ResumeEditor

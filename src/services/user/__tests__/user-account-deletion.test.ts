@@ -14,6 +14,9 @@ vi.mock("@/lib/prisma", () => ({
     job: {
       updateMany: vi.fn(),
     },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({ id: "audit_1" }),
+    },
   },
 }));
 

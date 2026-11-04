@@ -1,14 +1,33 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { InterviewSession, InterviewStatus, InterviewTemplate } from "@prisma/client";
+import { useWorkflowStore } from "@/store/workflow.store";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function useInterviewWorkspace(initialData: { sessions: InterviewSession[]; templates: InterviewTemplate[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 250);
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
   const [sortOption, setSortOption] = useState<string>("NEWEST");
+  const activeJobs = useWorkflowStore((state) => state.activeJobs);
+  const prevJobCountRef = useRef(Object.keys(activeJobs).length);
 
-  // Auto-refresh when any interview is in GENERATING state or being assessed
+  // Auto-refresh when an active interview background job completes in useWorkflowStore
+  useEffect(() => {
+    const activeInterviewJobs = Object.values(activeJobs).filter(
+      (j) => j.serviceType === "INTERVIEW"
+    );
+    const currentCount = activeInterviewJobs.length;
+
+    // A job has finished and been unregistered -> refresh view once
+    if (prevJobCountRef.current > currentCount) {
+      router.refresh();
+    }
+    prevJobCountRef.current = currentCount;
+  }, [activeJobs, router]);
+
+  // Fallback slow refresh ONLY if there are active items on server without client-side job tracking
   useEffect(() => {
     const hasActiveSession = initialData.sessions.some(
       (i) =>
@@ -21,9 +40,10 @@ export function useInterviewWorkspace(initialData: { sessions: InterviewSession[
 
     if (!hasActiveSession && !hasActiveTemplate) return;
 
+    // 10s fallback guard for orphaned or background tasks triggered from other devices
     const interval = setInterval(() => {
       router.refresh();
-    }, 3000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [initialData, router]);
@@ -31,9 +51,9 @@ export function useInterviewWorkspace(initialData: { sessions: InterviewSession[
   const filterAndSort = (items: any[]) => {
     return items.filter((item) => {
       const matchesSearch =
-        search === "" ||
-        item.role.toLowerCase().includes(search.toLowerCase()) ||
-        (item.interviewType && item.interviewType.toLowerCase().includes(search.toLowerCase()));
+        debouncedSearch === "" ||
+        item.role.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (item.interviewType && item.interviewType.toLowerCase().includes(debouncedSearch.toLowerCase()));
 
       const matchesDifficulty =
         difficultyFilter === "ALL" ||
@@ -57,8 +77,8 @@ export function useInterviewWorkspace(initialData: { sessions: InterviewSession[
     });
   };
 
-  const filteredSessions = useMemo(() => filterAndSort(initialData.sessions), [initialData.sessions, search, difficultyFilter, sortOption]);
-  const filteredTemplates = useMemo(() => filterAndSort(initialData.templates), [initialData.templates, search, difficultyFilter, sortOption]);
+  const filteredSessions = useMemo(() => filterAndSort(initialData.sessions), [initialData.sessions, debouncedSearch, difficultyFilter, sortOption]);
+  const filteredTemplates = useMemo(() => filterAndSort(initialData.templates), [initialData.templates, debouncedSearch, difficultyFilter, sortOption]);
 
   const inProgressList = useMemo(() => {
     return filteredSessions.filter((i) => i.status === "IN_PROGRESS");

@@ -302,12 +302,14 @@ export class ResumeBuilderService {
 
   /**
    * Retrieves full structured Resume Artifact JSON from Blob Storage.
+   * Can accept an existing ResumeBuild entity to prevent duplicate Prisma queries.
    */
   public static async getResumeArtifact(
     userId: string,
-    resumeId: string
+    resumeId: string,
+    existingResume?: { artifactBlobUrl?: string | null }
   ): Promise<BuilderResumeArtifact> {
-    const resume = await this.getResume(userId, resumeId);
+    const resume = existingResume || (await this.getResume(userId, resumeId));
 
     if (!resume.artifactBlobUrl) {
       throw new ResumeBuilderError(

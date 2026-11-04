@@ -6,6 +6,7 @@ import { Globe, PlayCircle, RefreshCw, Calendar, HelpCircle, Loader2, Clock, Che
 import { LibraryGlobalInterview } from "../../types";
 import { startGlobalInterviewSessionAction, retryGlobalInterviewAction } from "../../actions/interview-actions";
 import { toast } from "sonner";
+import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
 
 interface GlobalInterviewCardProps {
   interview: LibraryGlobalInterview;
@@ -38,26 +39,26 @@ export function GlobalInterviewCard({ interview, onRetried }: GlobalInterviewCar
     }
   };
 
+  const { runWorkflow } = useBackgroundWorkflow();
+
   const handleRetry = async () => {
     setIsRetrying(true);
-    try {
-      const res = await retryGlobalInterviewAction(interview.id);
-      if (res.success) {
-        toast.success("Interview generation restarted");
+    await runWorkflow({
+      serviceName: "Global Interview Generation",
+      serviceType: "INTERVIEW",
+      initiationMessage: "Restarting Global Interview Generation...",
+      execute: async () => await retryGlobalInterviewAction(interview.id),
+      extractJobId: (res) =>
+        res.success && res.data ? res.data.interviewId : interview.id,
+      defaultViewUrl: "/dashboard/interviews?tab=global",
+      onInitiated: () => {
         if (onRetried) onRetried();
         router.refresh();
-      } else {
-        toast.error(res.error?.message || "Failed to restart generation");
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message || "Failed to restart generation");
-      } else {
-        toast.error("Failed to restart generation");
-      }
-    } finally {
-      setIsRetrying(false);
-    }
+      },
+      onError: () => {
+        setIsRetrying(false);
+      },
+    });
   };
 
   const getStatusBadge = () => {

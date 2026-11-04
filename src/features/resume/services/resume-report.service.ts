@@ -9,13 +9,17 @@ import { ModuleActivityEventType, ModuleType } from "@/features/progress/types";
 export class ResumeReportService {
   /**
    * Loads a Resume record from Prisma and fetches its associated ResumeArtifact from Blob Storage.
+   * Can accept an existing ResumeScore to prevent duplicate queries.
    */
   public static async getResumeReport(
-    resumeId: string
+    resumeId: string,
+    existingResume?: { id: string; userId: string; status: any; artifactBlobUrl: string | null; ovrScore: number | null; atsScore: number | null } | null
   ): Promise<ResumeReport | null> {
-    const resume = await prisma.resumeScore.findUnique({
-      where: { id: resumeId },
-    });
+    const resume = existingResume !== undefined
+      ? existingResume
+      : await prisma.resumeScore.findUnique({
+          where: { id: resumeId },
+        });
 
     if (!resume || !resume.artifactBlobUrl) {
       return null;

@@ -28,11 +28,11 @@ export function QuestionCard({
     if (score === undefined) return null;
     let color = "bg-surface-muted text-text-secondary border border-border-subtle";
     if (score >= 80)
-      color = "bg-emerald-50 text-emerald-700 border border-emerald-200";
+      color = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
     else if (score >= 60)
-      color = "bg-dashboard-metricHighlight text-black border border-dashboard-metricHighlight/50";
+      color = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
     else 
-      color = "bg-rose-50 text-rose-800 border border-rose-200";
+      color = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20";
 
     return (
       <span className={`px-2.5 py-1 rounded-full text-xs font-display font-bold ${color}`}>
@@ -107,7 +107,7 @@ export function QuestionCard({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-dashboard-metricHighlight/10 rounded-xl border border-dashboard-metricHighlight/30 space-y-2">
+                <div className="p-4 bg-surface-muted rounded-xl border border-border-subtle space-y-2">
                   <h5 className="text-xs font-display font-bold text-text-primary uppercase tracking-wider">
                     AI Evaluation & Coaching
                   </h5>
@@ -115,7 +115,7 @@ export function QuestionCard({
                     {feedback.feedback}
                   </p>
                   {feedback.strengths && feedback.strengths.length > 0 && (
-                    <div className="pt-2 border-t border-dashboard-metricHighlight/20">
+                    <div className="pt-2 border-t border-border-subtle">
                       <span className="text-[11px] font-display font-bold text-text-primary block mb-1">Key Strengths:</span>
                       <ul className="space-y-1">
                         {feedback.strengths.map((s, i) => (

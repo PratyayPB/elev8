@@ -28,8 +28,8 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ progress = 0 }) 
   const currentStageIndex = resolveRoadmapStage(progress);
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
-      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 max-w-md w-full shadow-xl space-y-6">
+    <div className="w-full max-w-xl mx-auto my-8 p-4 text-center animate-in fade-in duration-300">
+      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-8 w-full shadow-sm space-y-6">
         <div className="flex flex-col items-center space-y-2">
           <RocketLoader size="md" />
           <div>
@@ -37,7 +37,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ progress = 0 }) 
               Crafting Your Custom Roadmap
             </h3>
             <p className="text-xs font-sans text-text-secondary mt-1">
-              Our AI is personalizing your learning pathway
+              Our AI is personalizing your learning pathway in the background
             </p>
           </div>
         </div>

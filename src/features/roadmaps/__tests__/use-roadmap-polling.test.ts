@@ -1,146 +1,115 @@
-import assert from "node:assert";
+import { describe, it, expect } from "vitest";
 import {
   ROADMAP_STAGES,
   resolveRoadmapStage,
 } from "../components/roadmap-viewer/LoadingOverlay";
 import { POLLING_INTERVAL_MS } from "../hooks/use-roadmap-polling";
 
-async function runPollingAndStageTests() {
-  console.log("Running Roadmap Polling & Stage-Based UX Tests...\n");
+describe("Roadmap Polling & Stage-Based UX Tests", () => {
+  it("should have correct resolveRoadmapStage mapping", () => {
+    expect(ROADMAP_STAGES.length).toBe(4);
+    expect(ROADMAP_STAGES[0]).toBe("Analyzing your career goals");
+    expect(ROADMAP_STAGES[1]).toBe("Building skill requirements");
+    expect(ROADMAP_STAGES[2]).toBe("Generating roadmap");
+    expect(ROADMAP_STAGES[3]).toBe("Preparing your roadmap");
 
-  // ==========================================
-  // 1. Stage Resolution Function
-  // ==========================================
-  console.log("1. Testing resolveRoadmapStage mapping...");
-  
-  assert.strictEqual(ROADMAP_STAGES.length, 4, "Must have exactly 4 defined user-facing stages");
-  assert.strictEqual(ROADMAP_STAGES[0], "Analyzing your career goals");
-  assert.strictEqual(ROADMAP_STAGES[1], "Building skill requirements");
-  assert.strictEqual(ROADMAP_STAGES[2], "Generating roadmap");
-  assert.strictEqual(ROADMAP_STAGES[3], "Preparing your roadmap");
+    // Range 0-24 -> Stage 0
+    expect(resolveRoadmapStage(0)).toBe(0);
+    expect(resolveRoadmapStage(10)).toBe(0);
+    expect(resolveRoadmapStage(24)).toBe(0);
 
-  // Range 0-24 -> Stage 0
-  assert.strictEqual(resolveRoadmapStage(0), 0, "Progress 0 must map to Stage 0");
-  assert.strictEqual(resolveRoadmapStage(10), 0, "Progress 10 must map to Stage 0");
-  assert.strictEqual(resolveRoadmapStage(24), 0, "Progress 24 must map to Stage 0");
+    // Range 25-49 -> Stage 1
+    expect(resolveRoadmapStage(25)).toBe(1);
+    expect(resolveRoadmapStage(35)).toBe(1);
+    expect(resolveRoadmapStage(49)).toBe(1);
 
-  // Range 25-49 -> Stage 1
-  assert.strictEqual(resolveRoadmapStage(25), 1, "Progress 25 must map to Stage 1");
-  assert.strictEqual(resolveRoadmapStage(35), 1, "Progress 35 must map to Stage 1");
-  assert.strictEqual(resolveRoadmapStage(49), 1, "Progress 49 must map to Stage 1");
+    // Range 50-79 -> Stage 2
+    expect(resolveRoadmapStage(50)).toBe(2);
+    expect(resolveRoadmapStage(65)).toBe(2);
+    expect(resolveRoadmapStage(79)).toBe(2);
 
-  // Range 50-79 -> Stage 2
-  assert.strictEqual(resolveRoadmapStage(50), 2, "Progress 50 must map to Stage 2");
-  assert.strictEqual(resolveRoadmapStage(65), 2, "Progress 65 must map to Stage 2");
-  assert.strictEqual(resolveRoadmapStage(79), 2, "Progress 79 must map to Stage 2");
+    // Range 80-100 -> Stage 3
+    expect(resolveRoadmapStage(80)).toBe(3);
+    expect(resolveRoadmapStage(95)).toBe(3);
+    expect(resolveRoadmapStage(100)).toBe(3);
+  });
 
-  // Range 80-100 -> Stage 3
-  assert.strictEqual(resolveRoadmapStage(80), 3, "Progress 80 must map to Stage 3");
-  assert.strictEqual(resolveRoadmapStage(95), 3, "Progress 95 must map to Stage 3");
-  assert.strictEqual(resolveRoadmapStage(100), 3, "Progress 100 must map to Stage 3");
+  it("should verify polling interval bounds", () => {
+    expect(POLLING_INTERVAL_MS).toBeGreaterThanOrEqual(2000);
+    expect(POLLING_INTERVAL_MS).toBeLessThanOrEqual(3000);
+  });
 
-  console.log("✔ resolveRoadmapStage tests passed.");
+  it("should guard timer lifecycle and duplicate timers", async () => {
+    class PollingController {
+      public timerId: any = null;
+      public pollCount = 0;
+      public isActive = false;
 
-  // ==========================================
-  // 2. Polling Interval Constant
-  // ==========================================
-  console.log("2. Testing polling interval bounds...");
-  assert.ok(
-    POLLING_INTERVAL_MS >= 2000 && POLLING_INTERVAL_MS <= 3000,
-    `POLLING_INTERVAL_MS (${POLLING_INTERVAL_MS}) must be between 2000ms and 3000ms`
-  );
-  console.log("✔ Polling interval constant verified (2500ms).");
+      update(isLoading: boolean) {
+        if (!isLoading) {
+          if (this.timerId) {
+            clearInterval(this.timerId);
+            this.timerId = null;
+          }
+          this.isActive = false;
+          return;
+        }
 
-  // ==========================================
-  // 3. Timer Lifecycle Controller Logic
-  // ==========================================
-  console.log("3. Testing timer lifecycle state machine logic...");
+        if (this.timerId) {
+          return;
+        }
 
-  class PollingController {
-    public timerId: any = null;
-    public pollCount = 0;
-    public isActive = false;
-
-    public update(isLoading: boolean) {
-      if (!isLoading) {
-        this.stop();
-        return;
+        this.isActive = true;
+        this.timerId = setInterval(() => {
+          this.pollCount++;
+        }, 50);
       }
 
-      // Guard: prevent duplicate timers
-      if (this.timerId !== null) {
-        return;
+      stop() {
+        if (this.timerId) {
+          clearInterval(this.timerId);
+          this.timerId = null;
+        }
+        this.isActive = false;
       }
-
-      this.isActive = true;
-      this.timerId = setInterval(() => {
-        this.pollCount++;
-      }, 20);
     }
 
-    public stop() {
-      if (this.timerId !== null) {
-        clearInterval(this.timerId);
-        this.timerId = null;
-      }
-      this.isActive = false;
-    }
-  }
+    const controller = new PollingController();
 
-  const controller = new PollingController();
+    // Inactive initially
+    controller.update(false);
+    expect(controller.timerId).toBeNull();
+    expect(controller.isActive).toBe(false);
 
-  // Test Case A: Initial load with isLoading = false -> Timer not created
-  controller.update(false);
-  assert.strictEqual(controller.timerId, null, "Timer should not start if isLoading is false");
-  assert.strictEqual(controller.isActive, false);
+    // Active
+    controller.update(true);
+    expect(controller.timerId).not.toBeNull();
+    expect(controller.isActive).toBe(true);
 
-  // Test Case B: Active generation starts (isLoading = true) -> Timer starts
-  controller.update(true);
-  assert.ok(controller.timerId !== null, "Timer must be active when isLoading is true");
-  assert.strictEqual(controller.isActive, true);
+    const initialTimer = controller.timerId;
 
-  const initialTimer = controller.timerId;
+    // Multiple updates while loading -> no duplicate timers
+    controller.update(true);
+    controller.update(true);
+    expect(controller.timerId).toBe(initialTimer);
 
-  // Test Case C: Multiple re-renders while still loading -> Duplicate timers guarded
-  controller.update(true);
-  controller.update(true);
-  assert.strictEqual(
-    controller.timerId,
-    initialTimer,
-    "Timer ID must not change / duplicate on multiple render calls"
-  );
+    // Wait for ticks
+    await new Promise((res) => setTimeout(res, 120));
+    expect(controller.pollCount).toBeGreaterThanOrEqual(2);
 
-  // Wait for intervals to fire
-  await new Promise((res) => setTimeout(res, 150));
-  assert.ok(controller.pollCount >= 2, `Expected at least 2 polls, got ${controller.pollCount}`);
+    // Stops when loading finishes
+    controller.update(false);
+    expect(controller.timerId).toBeNull();
+    expect(controller.isActive).toBe(false);
 
-  // Test Case D: Job finishes (isLoading = false) -> Polling terminates immediately
-  controller.update(false);
-  assert.strictEqual(controller.timerId, null, "Timer must be cleared when isLoading becomes false");
-  assert.strictEqual(controller.isActive, false);
+    const countAfterStop = controller.pollCount;
+    await new Promise((res) => setTimeout(res, 60));
+    expect(controller.pollCount).toBe(countAfterStop);
 
-  const countAfterStop = controller.pollCount;
-  await new Promise((res) => setTimeout(res, 100));
-  assert.strictEqual(
-    controller.pollCount,
-    countAfterStop,
-    "Poll count must not increase after termination"
-  );
-
-  // Test Case E: Unmount cleanup
-  controller.update(true);
-  assert.ok(controller.timerId !== null);
-  controller.stop();
-  assert.strictEqual(controller.timerId, null, "Timer must be cleaned up on unmount");
-
-  console.log("✔ Timer lifecycle and duplicate guard tests passed.");
-
-  console.log("\n=========================================");
-  console.log("All Roadmap Polling unit tests passed!");
-  console.log("=========================================\n");
-}
-
-runPollingAndStageTests().catch((err) => {
-  console.error("Test failed:", err);
-  process.exit(1);
+    // Unmount cleanup
+    controller.update(true);
+    expect(controller.timerId).not.toBeNull();
+    controller.stop();
+    expect(controller.timerId).toBeNull();
+  });
 });

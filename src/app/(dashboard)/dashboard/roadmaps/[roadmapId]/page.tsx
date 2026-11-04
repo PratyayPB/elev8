@@ -4,6 +4,7 @@ import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { RoadmapViewerService } from "@/services/roadmaps/roadmap-viewer.service";
 import { RoadmapViewer } from "@/features/roadmaps/components/roadmap-viewer";
+import { RealtimeTokenService } from "@/services/jobs/realtime-token.service";
 
 interface RoadmapViewerPageProps {
   params: Promise<{
@@ -50,6 +51,17 @@ export default async function RoadmapViewerPage({ params }: RoadmapViewerPagePro
     ? res.job?.error || res.error || "The AI model encountered an error while generating your roadmap. Please try again."
     : res.error;
 
+  let publicAccessToken: string | undefined;
+  if (isJobRunning && res.job?.triggerRunId) {
+    try {
+      publicAccessToken = await RealtimeTokenService.mintRunToken({
+        triggerRunId: res.job.triggerRunId,
+      });
+    } catch (err) {
+      console.warn("[RoadmapViewerPage] Failed to mint public token for run:", err);
+    }
+  }
+
   return (
     <div className="p-6">
       <RoadmapViewer
@@ -60,6 +72,8 @@ export default async function RoadmapViewerPage({ params }: RoadmapViewerPagePro
         jobState={res.job?.status ?? null}
         error={displayError}
         canRegenerate={Boolean(res.roadmap.canRegenerate)}
+        triggerRunId={res.job?.triggerRunId || undefined}
+        publicAccessToken={publicAccessToken}
       />
     </div>
   );

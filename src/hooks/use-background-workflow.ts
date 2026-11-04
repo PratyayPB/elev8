@@ -9,6 +9,7 @@ export interface ExecuteWorkflowOptions<T> {
   initiationMessage?: string; // Default: "Initiating the workflow..."
   execute: () => Promise<T>;
   extractJobId?: (result: T) => string | undefined;
+  extractRealtimeInfo?: (result: T) => { triggerRunId?: string; publicAccessToken?: string } | undefined;
   defaultViewUrl?: string;
   onInitiated?: (result: T) => void;
   onError?: (error: any) => void;
@@ -26,6 +27,7 @@ export function useBackgroundWorkflow() {
     initiationMessage = "Initiating the workflow...",
     execute,
     extractJobId,
+    extractRealtimeInfo,
     defaultViewUrl,
     onInitiated,
     onError,
@@ -60,6 +62,7 @@ export function useBackgroundWorkflow() {
 
       // 5. Register with background job watcher for completion toast tracking
       const jobId = extractJobId ? extractJobId(result) : undefined;
+      const realtime = extractRealtimeInfo ? extractRealtimeInfo(result) : undefined;
       if (jobId) {
         registerJob({
           id: jobId,
@@ -67,6 +70,8 @@ export function useBackgroundWorkflow() {
           serviceType,
           startedAt: Date.now(),
           viewUrl: defaultViewUrl,
+          triggerRunId: realtime?.triggerRunId,
+          publicAccessToken: realtime?.publicAccessToken,
         });
       }
 

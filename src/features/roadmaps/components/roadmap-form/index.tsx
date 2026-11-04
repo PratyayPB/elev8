@@ -14,7 +14,6 @@ import { usePersonalization } from "../../hooks/use-personalization";
 import { useRoadmapRequest } from "../../hooks/use-roadmap-request";
 import { RoadmapRequest } from "../../types";
 import { generateRoadmapAction } from "../../actions/roadmap-actions";
-import { LoadingOverlay } from "../roadmap-viewer/LoadingOverlay";
 import { normalizeError } from "@/lib/error-handler";
 import { toast } from "sonner";
 import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
@@ -27,7 +26,6 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isGeneratingOverlay, setIsGeneratingOverlay] = useState<boolean>(false);
 
   // Hook 1: Required Form Inputs (Stage 1)
   const form = useRoadmapForm();
@@ -121,9 +119,7 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
   };
 
   return (
-    <>
-      {isGeneratingOverlay && <LoadingOverlay progress={10} />}
-      <div className="w-full max-w-3xl mx-auto bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 sm:p-8 shadow-sm">
+    <div className="w-full max-w-3xl mx-auto bg-dashboard-card border border-dashboard-cardBorder rounded-[var(--card-radius-lg)] p-6 sm:p-8 shadow-sm">
       {/* Wizard Header */}
       <div className="text-center mb-8">
         <h2 className="text-2xl font-display font-bold text-text-primary tracking-tight">
@@ -188,6 +184,5 @@ export function RoadmapWizard({ onComplete }: RoadmapWizardProps) {
         />
       </div>
     </div>
-  </>
-);
+  );
 }

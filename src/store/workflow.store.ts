@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type BackgroundServiceType =
   | "ROADMAP"
@@ -13,6 +14,8 @@ export interface ActiveBackgroundJob {
   serviceType: BackgroundServiceType;
   startedAt: number;
   viewUrl?: string; // Optional URL to navigate to upon completion
+  triggerRunId?: string; // Trigger.dev Run Handle ID for Realtime SSE
+  publicAccessToken?: string; // Scoped Public JWT for useRealtimeRun
 }
 
 interface WorkflowState {
@@ -22,32 +25,58 @@ interface WorkflowState {
   startInitiating: (message?: string) => void;
   stopInitiating: () => void;
   registerJob: (job: ActiveBackgroundJob) => void;
+  updateJobRealtime: (id: string, realtime: { triggerRunId?: string; publicAccessToken?: string }) => void;
   unregisterJob: (id: string) => void;
 }
 
-export const useWorkflowStore = create<WorkflowState>((set) => ({
-  isInitiating: false,
-  initiatingMessage: "Initiating the workflow...",
-  activeJobs: {},
+export const useWorkflowStore = create<WorkflowState>()(
+  persist(
+    (set) => ({
+      isInitiating: false,
+      initiatingMessage: "Initiating the workflow...",
+      activeJobs: {},
 
-  startInitiating: (message = "Initiating the workflow...") =>
-    set({ isInitiating: true, initiatingMessage: message }),
+      startInitiating: (message = "Initiating the workflow...") =>
+        set({ isInitiating: true, initiatingMessage: message }),
 
-  stopInitiating: () =>
-    set({ isInitiating: false }),
+      stopInitiating: () =>
+        set({ isInitiating: false }),
 
-  registerJob: (job) =>
-    set((state) => ({
-      activeJobs: {
-        ...state.activeJobs,
-        [job.id]: job,
-      },
-    })),
+      registerJob: (job) =>
+        set((state) => ({
+          activeJobs: {
+            ...state.activeJobs,
+            [job.id]: job,
+          },
+        })),
 
-  unregisterJob: (id) =>
-    set((state) => {
-      const next = { ...state.activeJobs };
-      delete next[id];
-      return { activeJobs: next };
+      updateJobRealtime: (id, realtime) =>
+        set((state) => {
+          const existing = state.activeJobs[id];
+          if (!existing) return state;
+          return {
+            activeJobs: {
+              ...state.activeJobs,
+              [id]: {
+                ...existing,
+                triggerRunId: realtime.triggerRunId ?? existing.triggerRunId,
+                publicAccessToken: realtime.publicAccessToken ?? existing.publicAccessToken,
+              },
+            },
+          };
+        }),
+
+      unregisterJob: (id) =>
+        set((state) => {
+          const next = { ...state.activeJobs };
+          delete next[id];
+          return { activeJobs: next };
+        }),
     }),
-}));
+    {
+      name: "elev8-workflow-jobs",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ activeJobs: state.activeJobs }),
+    }
+  )
+);

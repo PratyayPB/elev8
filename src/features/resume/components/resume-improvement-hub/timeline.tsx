@@ -24,8 +24,8 @@ export function TimelineComponent({ report }: TimelineProps) {
   return (
     <div className="bg-dashboard-card rounded-3xl p-6 sm:p-8 border border-dashboard-cardBorder shadow-sm space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-dashboard-metricHighlight/20 border border-dashboard-metricHighlight/30 text-text-primary flex items-center justify-center">
-          <Clock className="w-5 h-5 text-text-primary" />
+        <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
+          <Clock className="w-5 h-5 text-primary" />
         </div>
         <div>
           <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">Artifact Audit Timeline</h3>
@@ -42,8 +42,8 @@ export function TimelineComponent({ report }: TimelineProps) {
             className="p-4 bg-surface-muted rounded-2xl border border-border-subtle space-y-1.5"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase text-text-primary flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-text-primary bg-dashboard-metricHighlight border border-border-strong rounded-full p-[1px]" /> {step.status}
+              <span className="text-[9px] font-black uppercase text-text-primary flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {step.status}
               </span>
               <span className="text-[9px] font-bold text-text-muted">Step 0{i + 1}</span>
             </div>

@@ -167,12 +167,27 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   },
 
   addNotificationLocally: (notification) => {
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount:
-        notification.status === "UNREAD"
-          ? state.unreadCount + 1
-          : state.unreadCount,
-    }));
+    set((state) => {
+      // Prevent duplicate entry if already present by id or idempotencyKey
+      const alreadyExists = state.notifications.some(
+        (n) =>
+          n.id === notification.id ||
+          (notification.idempotencyKey &&
+            n.idempotencyKey &&
+            n.idempotencyKey === notification.idempotencyKey)
+      );
+
+      if (alreadyExists) {
+        return state;
+      }
+
+      return {
+        notifications: [notification, ...state.notifications],
+        unreadCount:
+          notification.status === "UNREAD"
+            ? state.unreadCount + 1
+            : state.unreadCount,
+      };
+    });
   },
 }));

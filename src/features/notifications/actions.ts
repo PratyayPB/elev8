@@ -156,6 +156,7 @@ export async function createNotificationAction(input: {
   message: string;
   type?: NotificationType;
   actionUrl?: string | null;
+  idempotencyKey?: string | null;
 }) {
   return safeAction(async () => {
     const userId = await getAuthUserId();
@@ -165,6 +166,7 @@ export async function createNotificationAction(input: {
       message: input.message,
       type: input.type || "SYSTEM",
       actionUrl: input.actionUrl,
+      idempotencyKey: input.idempotencyKey,
     });
   });
 }
@@ -174,6 +176,22 @@ export async function createNotificationAction(input: {
  * (e.g., from Trigger.dev tasks, webhooks, or background routines).
  */
 export async function createDbNotification(input: CreateNotificationInput) {
+  if (input.idempotencyKey) {
+    return prisma.notification.upsert({
+      where: { idempotencyKey: input.idempotencyKey },
+      create: {
+        userId: input.userId,
+        title: input.title,
+        message: input.message,
+        type: input.type || "SYSTEM",
+        status: "UNREAD",
+        actionUrl: input.actionUrl || null,
+        idempotencyKey: input.idempotencyKey,
+      },
+      update: {}, // Deduplication: if already exists, return existing
+    });
+  }
+
   return prisma.notification.create({
     data: {
       userId: input.userId,

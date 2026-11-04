@@ -16,6 +16,7 @@ export default async function ResumesPage() {
       include: {
         resumeScores: {
           orderBy: { createdAt: "desc" },
+          take: 50,
         },
       },
     });

@@ -33,8 +33,8 @@ export function AnalyticsDashboard({ report }: AnalyticsDashboardProps) {
       {/* Deterministic Stats Card */}
       <div className="bg-dashboard-card rounded-3xl p-6 sm:p-8 border border-dashboard-cardBorder shadow-sm space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-dashboard-metricHighlight/20 border border-dashboard-metricHighlight/30 text-text-primary flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-text-primary" />
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className="text-lg font-display font-black text-text-primary uppercase tracking-wide">Deterministic Analytics</h3>

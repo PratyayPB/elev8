@@ -40,19 +40,13 @@ still exists.
 
 ### Candidate resources from the supplied reference images
 
--   **Vitest skill --- antfu/skills**\
-    Candidate path shown in the reference:
-    `https://github.com/antfu/skills/tree/main/skills/vitest`
--   **Playwright skill --- LambdaTest agent-skills**\
-    Discover the currently available Playwright skill in
-    `https://github.com/LambdaTest/agent-skills` or its published Skills
-    directory.
--   **Full Stack Skills --- Testing Skills**\
-    Candidate repository shown in the reference:
-    `https://github.com/full-stack-skills/testing-skills`
--   **The Frontend Testing Skill --- PracticaJS**\
-    Candidate repository shown in the reference:
-    `https://github.com/practicajs/the-frontend-testing-skill`
+- **Vitest skill --- antfu/skills**\
+  Candidate path shown in the reference:
+  `https://github.com/antfu/skills/tree/main/skills/vitest`
+- **Playwright skill --- LambdaTest agent-skills**\
+  Discover the currently available Playwright skill in
+  `https://github.com/LambdaTest/agent-skills` or its published Skills
+  directory.
 
 These are candidate sources, not guaranteed valid or maintained
 endpoints. Verify each source and its current skill names before
@@ -65,7 +59,7 @@ inventing a command.
 Use the Skills CLI to search the current registry and list available
 skills:
 
-``` bash
+```bash
 npx skills find vitest
 npx skills find playwright
 npx skills find testing
@@ -74,13 +68,13 @@ npx skills find react testing
 
 For a verified repository, inspect available skills before choosing one:
 
-``` bash
+```bash
 npx skills add OWNER/REPOSITORY --list
 ```
 
 Install only the relevant skill(s), for example:
 
-``` bash
+```bash
 npx skills add OWNER/REPOSITORY --skill VERIFIED_SKILL_NAME
 ```
 
@@ -106,20 +100,20 @@ verified source URLs, and any candidates skipped.
 
 Configure only what is missing. Follow current official documentation:
 
--   Vitest: https://vitest.dev/guide/
--   Playwright Test: https://playwright.dev/docs/intro
--   Playwright best practices:
-    https://playwright.dev/docs/best-practices
--   Testing Library: https://testing-library.com/docs/
+- Vitest: https://vitest.dev/guide/
+- Playwright Test: https://playwright.dev/docs/intro
+- Playwright best practices:
+  https://playwright.dev/docs/best-practices
+- Testing Library: https://testing-library.com/docs/
 
 ### Vitest
 
 1.  Install compatible versions of Vitest and required environment
     packages only if absent.
 2.  Configure the correct environment:
-    -   `node` for server-side utilities and API logic.
-    -   `jsdom` or the project's existing supported DOM environment for
-        React components.
+    - `node` for server-side utilities and API logic.
+    - `jsdom` or the project's existing supported DOM environment for
+      React components.
 3.  Configure TypeScript, test setup files, aliases, coverage provider,
     and test file patterns in line with the current build configuration.
 4.  Add React Testing Library and `@testing-library/jest-dom` only if
@@ -156,13 +150,13 @@ Configure only what is missing. Follow current official documentation:
 Add or update scripts only after inspecting existing conventions. Use
 appropriate equivalents of:
 
--   `test`: run the project's default Vitest suite.
--   `test:watch`: run Vitest in watch mode.
--   `test:coverage`: run Vitest with coverage.
--   `test:e2e`: run Playwright tests.
--   `test:e2e:ui`: run Playwright's UI mode if useful.
--   `test:all`: run unit/integration tests and E2E tests in a deliberate
-    order.
+- `test`: run the project's default Vitest suite.
+- `test:watch`: run Vitest in watch mode.
+- `test:coverage`: run Vitest with coverage.
+- `test:e2e`: run Playwright tests.
+- `test:e2e:ui`: run Playwright's UI mode if useful.
+- `test:all`: run unit/integration tests and E2E tests in a deliberate
+  order.
 
 Use the project's package manager and ensure scripts invoke the
 installed local binaries. Do not overwrite existing scripts blindly.
@@ -173,60 +167,64 @@ Use the following testing practices as relevant to the codebase. These
 are capabilities and test categories; they do not all need separate
 skills installed.
 
-  -----------------------------------------------------------------------
-  Capability              Preferred tool          Purpose
-  ----------------------- ----------------------- -----------------------
-  Unit testing            Vitest                  Functions, utilities,
-                                                  validation, business
-                                                  logic
+---
 
-  Integration testing     Vitest                  API handlers,
-                                                  middleware, service and
-                                                  database boundaries
+Capability Preferred tool Purpose
 
-  React component testing Vitest + React Testing  User-visible component
-                          Library                 behavior and
-                                                  interactions
+---
 
-  End-to-end testing      Playwright              Real browser workflows
-                                                  across application
-                                                  boundaries
+Unit testing Vitest Functions, utilities,
+validation, business
+logic
 
-  API testing             Vitest, plus Playwright Status codes, schemas,
-                          where end-to-end        errors, request
-                          verification helps      handling
+Integration testing Vitest API handlers,
+middleware, service and
+database boundaries
 
-  Database testing        Vitest + isolated test  Persistence,
-                          database or appropriate constraints,
-                          test doubles            transactions
+React component testing Vitest + React Testing User-visible component
+Library behavior and
+interactions
 
-  Authentication testing  Both                    Sign-in/out, sessions,
-                                                  protected routes
+End-to-end testing Playwright Real browser workflows
+across application
+boundaries
 
-  Authorization testing   Both                    Ownership, roles,
-                                                  permissions,
-                                                  server-side access
-                                                  checks
+API testing Vitest, plus Playwright Status codes, schemas,
+where end-to-end errors, request
+verification helps handling
 
-  Accessibility testing   Playwright and suitable Keyboard access,
-                          accessibility tooling   labels, semantics,
-                                                  basic automated checks
+Database testing Vitest + isolated test Persistence,
+database or appropriate constraints,
+test doubles transactions
 
-  Coverage analysis       Vitest coverage         Uncovered lines,
-                                                  functions, statements,
-                                                  and branches
+Authentication testing Both Sign-in/out, sessions,
+protected routes
 
-  Regression testing      Both                    Ensure fixed defects
-                                                  stay fixed
+Authorization testing Both Ownership, roles,
+permissions,
+server-side access
+checks
 
-  Visual regression       Playwright screenshot   Detect unintended
-  testing                 assertions where        visual changes
-                          justified               
+Accessibility testing Playwright and suitable Keyboard access,
+accessibility tooling labels, semantics,
+basic automated checks
 
-  Test-driven development Both                    Write a failing test,
-                                                  implement behavior,
-                                                  then verify it passes
-  -----------------------------------------------------------------------
+Coverage analysis Vitest coverage Uncovered lines,
+functions, statements,
+and branches
+
+Regression testing Both Ensure fixed defects
+stay fixed
+
+Visual regression Playwright screenshot Detect unintended
+testing assertions where visual changes
+justified
+
+Test-driven development Both Write a failing test,
+implement behavior,
+then verify it passes
+
+---
 
 Do not introduce a tool just to check a box. Use the smallest
 maintainable stack that meets the project's needs.
@@ -270,63 +268,63 @@ roles, or database models.
 
 ### Vitest unit tests
 
--   Input validation and malformed credentials.
--   Permission and role-checking helpers.
--   Token/session validation logic where implemented by the application.
--   Error mapping and safe error responses.
--   Ownership and permission policy functions.
+- Input validation and malformed credentials.
+- Permission and role-checking helpers.
+- Token/session validation logic where implemented by the application.
+- Error mapping and safe error responses.
+- Ownership and permission policy functions.
 
 ### Vitest integration tests
 
--   Authentication API or callback behavior.
--   Protected API routes with and without a valid session.
--   Session creation, persistence, expiry, and logout where controlled
-    by the application.
--   Database constraints and ownership checks using an isolated test
-    database or well-designed test doubles.
--   Provider failures and unexpected service errors.
+- Authentication API or callback behavior.
+- Protected API routes with and without a valid session.
+- Session creation, persistence, expiry, and logout where controlled
+  by the application.
+- Database constraints and ownership checks using an isolated test
+  database or well-designed test doubles.
+- Provider failures and unexpected service errors.
 
 ### Playwright end-to-end tests
 
--   Successful sign-in and sign-out using a dedicated test environment.
--   Invalid credentials and validation messages, where the provider
-    allows safe testing.
--   Redirects for protected pages.
--   Session persistence across reloads where expected.
--   Role-specific pages and actions.
--   Direct URL navigation and direct API requests that attempt to bypass
-    UI restrictions.
--   User A attempting to read or modify User B's private data.
--   A lower-privileged user attempting administrator-only operations.
+- Successful sign-in and sign-out using a dedicated test environment.
+- Invalid credentials and validation messages, where the provider
+  allows safe testing.
+- Redirects for protected pages.
+- Session persistence across reloads where expected.
+- Role-specific pages and actions.
+- Direct URL navigation and direct API requests that attempt to bypass
+  UI restrictions.
+- User A attempting to read or modify User B's private data.
+- A lower-privileged user attempting administrator-only operations.
 
 ### Security requirements
 
--   Test authorization on the server/API, not only whether a button is
-    hidden.
--   Never use real customer accounts or production data.
--   Never commit secrets, cookies, tokens, or Playwright storage-state
-    files.
--   Do not try to bypass a third-party provider's safeguards. Use its
-    documented test mode and supported test flows.
--   Distinguish a failed test caused by environment/setup from a
-    confirmed application defect.
+- Test authorization on the server/API, not only whether a button is
+  hidden.
+- Never use real customer accounts or production data.
+- Never commit secrets, cookies, tokens, or Playwright storage-state
+  files.
+- Do not try to bypass a third-party provider's safeguards. Use its
+  documented test mode and supported test flows.
+- Distinguish a failed test caused by environment/setup from a
+  confirmed application defect.
 
 ## 7. Definition of done
 
 The task is complete only when:
 
--   [ ] Relevant skills were verified, installed (or their absence
-    documented), and read.
--   [ ] The test setup matches the existing framework and package
-    manager.
--   [ ] Tests cover success, failure, edge cases, and security
-    boundaries where applicable.
--   [ ] New tests have been executed, and failures are reported
-    accurately.
--   [ ] Existing unrelated failures are distinguished from new failures.
--   [ ] No secrets or production data are exposed.
--   [ ] The final report lists changed files, commands executed,
-    results, coverage, known issues, and suggested next steps.
+- [ ] Relevant skills were verified, installed (or their absence
+      documented), and read.
+- [ ] The test setup matches the existing framework and package
+      manager.
+- [ ] Tests cover success, failure, edge cases, and security
+      boundaries where applicable.
+- [ ] New tests have been executed, and failures are reported
+      accurately.
+- [ ] Existing unrelated failures are distinguished from new failures.
+- [ ] No secrets or production data are exposed.
+- [ ] The final report lists changed files, commands executed,
+      results, coverage, known issues, and suggested next steps.
 
 ## 8. Required final response format
 

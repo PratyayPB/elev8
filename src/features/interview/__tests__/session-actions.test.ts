@@ -1,5 +1,4 @@
-﻿import { describe, it } from "node:test";
-import assert from "node:assert";
+import { describe, it, expect } from "vitest";
 import {
   fetchSessionArtifact,
   saveSessionProgress,
@@ -30,58 +29,76 @@ describe("Session Server Actions Security & Input Validation Tests", () => {
   describe("Input Sanitization on ID Parameters", () => {
     it("should reject empty interviewId in fetchSessionArtifact", async () => {
       const res = await fetchSessionArtifact("");
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error?.message.includes("Invalid interview ID"));
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.message).toContain("Invalid interview ID");
+      }
     });
 
     it("should reject whitespace interviewId in fetchSessionArtifact", async () => {
       const res = await fetchSessionArtifact("   ");
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error?.message.includes("Invalid interview ID"));
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.message).toContain("Invalid interview ID");
+      }
     });
 
     it("should reject empty interviewId in saveSessionProgress", async () => {
       const res = await saveSessionProgress("", "http://blob.url", dummyArtifact);
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error?.message.includes("Invalid interview ID"));
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.message).toContain("Invalid interview ID");
+      }
     });
 
     it("should reject empty interviewId in submitInterview", async () => {
       const res = await submitInterview("", "http://blob.url", dummyArtifact);
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error?.message.includes("Invalid interview ID"));
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.message).toContain("Invalid interview ID");
+      }
     });
 
     it("should reject empty interviewId in retryAssessmentAction", async () => {
       const res = await retryAssessmentAction("");
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error?.message.includes("Invalid interview ID"));
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.message).toContain("Invalid interview ID");
+      }
     });
   });
 
   describe("Unauthenticated Session Enforcement", () => {
     it("should reject fetchSessionArtifact without auth", async () => {
       const res = await fetchSessionArtifact("dummy_session_id");
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toBeDefined();
+      }
     });
 
     it("should reject saveSessionProgress without auth", async () => {
       const res = await saveSessionProgress("dummy_session_id", "http://blob.url", dummyArtifact);
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toBeDefined();
+      }
     });
 
     it("should reject submitInterview without auth", async () => {
       const res = await submitInterview("dummy_session_id", "http://blob.url", dummyArtifact);
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toBeDefined();
+      }
     });
 
     it("should reject retryAssessmentAction without auth", async () => {
       const res = await retryAssessmentAction("dummy_session_id");
-      assert.strictEqual(res.success, false);
-      assert.ok(res.error);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toBeDefined();
+      }
     });
   });
 });

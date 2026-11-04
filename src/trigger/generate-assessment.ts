@@ -6,6 +6,7 @@ import { SkillGapService } from "@/features/skill-gap/services";
 import { CareerAssessmentLLMService } from "@/features/career-assessment/services/career-assessment-llm.service";
 import { ModuleActivityContextService } from "@/features/career-assessment/services/module-activity-context.service";
 import { ModuleActivityService } from "@/features/progress/services";
+import { createDbNotification } from "@/features/notifications/actions";
 import {
   ModuleType,
   ModuleActivityEventType,
@@ -22,6 +23,12 @@ export const GenerateAssessmentTaskSchema = z.object({
 export const generateAssessmentTask = schemaTask({
   id: "generate-assessment",
   schema: GenerateAssessmentTaskSchema,
+  machine: {
+    preset: "micro",
+  },
+  queue: {
+    concurrencyLimit: 10,
+  },
   retry: {
     maxAttempts: 3,
     factor: 2,
@@ -111,6 +118,20 @@ export const generateAssessmentTask = schemaTask({
       metadata.set("status", "Completed");
       metadata.set("progress", 100);
 
+      // Direct DB notification for resilience
+      try {
+        await createDbNotification({
+          userId,
+          title: "Career Assessment Ready",
+          message: "Your career assessment report has finished processing and is ready to review.",
+          type: "CAREER_ASSESSMENT",
+          actionUrl: "/dashboard/career-assessment",
+          idempotencyKey: `assessment-completed-${record.id}`,
+        });
+      } catch (notifErr) {
+        console.warn("[generateAssessmentTask] Failed to record completion notification:", notifErr);
+      }
+
       return {
         success: true,
         assessmentId: record.id,
@@ -139,6 +160,19 @@ export const generateAssessmentTask = schemaTask({
             error: err instanceof Error ? err.message : String(err),
           },
         });
+
+        try {
+          await createDbNotification({
+            userId,
+            title: "Career Assessment Failed",
+            message: err instanceof Error ? err.message : "The career assessment generation encountered an error.",
+            type: "CAREER_ASSESSMENT",
+            actionUrl: "/dashboard/career-assessment",
+            idempotencyKey: `assessment-failed-${assessmentId}`,
+          });
+        } catch (notifErr) {
+          console.warn("[generateAssessmentTask] Failed to record failure notification:", notifErr);
+        }
       } catch (cleanupErr) {
         console.warn(
           "[generateAssessmentTask] Cleanup on failure failed:",

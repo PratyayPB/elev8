@@ -20,6 +20,7 @@ import { LibraryGlobalInterview } from "../../types";
 import { getGlobalInterviews } from "../../actions/workspace-actions";
 import { toast } from "sonner";
 import { RocketLoader } from "@/components/loading";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface WorkspaceContainerProps {
   initialInterviews: {
@@ -49,6 +50,7 @@ export function WorkspaceContainer({
 
   // Global interviews state
   const [globalSearch, setGlobalSearch] = useState("");
+  const debouncedGlobalSearch = useDebounce(globalSearch, 350);
   const [globalDifficulty, setGlobalDifficulty] = useState("ALL");
   const [globalSort, setGlobalSort] = useState("NEWEST");
   const [globalPage, setGlobalPage] = useState(1);
@@ -76,7 +78,7 @@ export function WorkspaceContainer({
     setLoadingGlobals(true);
     try {
       const res = await getGlobalInterviews({
-        search: globalSearch,
+        search: debouncedGlobalSearch,
         difficulty: globalDifficulty,
         sort: globalSort,
         page: globalPage,
@@ -94,7 +96,7 @@ export function WorkspaceContainer({
     } finally {
       setLoadingGlobals(false);
     }
-  }, [globalSearch, globalDifficulty, globalSort, globalPage]);
+  }, [debouncedGlobalSearch, globalDifficulty, globalSort, globalPage]);
 
   useEffect(() => {
     if (section === "global") {
@@ -208,7 +210,7 @@ export function WorkspaceContainer({
           {/* Empty State */}
           {filteredTemplates.length === 0 && filteredSessions.length === 0 && (
             <div className="bg-dashboard-card rounded-[var(--card-radius)] p-12 text-center border border-dashboard-cardBorder shadow-sm space-y-4">
-              <div className="p-4 bg-dashboard-metricHighlight/30 text-text-primary rounded-full w-fit mx-auto">
+              <div className="p-4 bg-primary/10 text-primary border border-primary/20 rounded-full w-fit mx-auto">
                 <HelpCircle className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-display font-bold text-text-primary">
@@ -221,9 +223,9 @@ export function WorkspaceContainer({
               </p>
               <Link
                 href="/dashboard/interviews/new"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white dark:text-black font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-text-primary hover:bg-black/85 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98]"
               >
-                <PlusCircle className="w-4 h-4 text-dashboard-metricHighlight dark:text-black" />
+                <PlusCircle className="w-4 h-4 text-white dark:text-black" />
                 Generate First Interview
               </Link>
             </div>

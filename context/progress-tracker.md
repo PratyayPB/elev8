@@ -9,6 +9,148 @@ Phase 7: User Onboarding & Dashboard System
 Phase 7.2: Release & Production Verification
 
 ## Completed
+- [x] **Production Database Audit & Reliability Remediation**:
+  - **Resolved Natural-Key Uniqueness & Live Duplicate (`users.email`) [P0-1]**:
+    - Identified and safely aliased historical duplicate developer account (`pratyayborah2005+old_dev@gmail.com`).
+    - Added unique index `users_email_key` on `users.email` enforced by PostgreSQL.
+  - **Established Foreign Key Constraints on `interviews` [P0-2]**:
+    - Added foreign key constraints with `ON DELETE SET NULL` on `interviews.profileId` (references `profiles`), `interviews.resumeId` (references `resume_scores`), and `interviews.roadmapId` (references `roadmaps`).
+    - Added corresponding indexes on `profileId`, `resumeId`, and `roadmapId` in `interviews`.
+  - **Atomic Resume Uploads & Blob Storage Ordering [P0-3, P0-4, P1-5]**:
+    - Fixed `BlobStorageService.replaceJson()` to upload new blob artifacts before deleting stale blobs, preventing unrecoverable data loss upon network failure.
+    - Wrapped `resumeScore.create` and `job.create` into a single `prisma.$transaction` and re-ordered upload handling so failures immediately mark DB rows as `FAILED` instead of leaving dangling references.
+  - **Added `updatedAt` Timestamp to `resume_scores` [P0-6]**:
+    - Added `updatedAt` column maintained automatically via Prisma `@updatedAt`.
+  - **Converted Timestamps to `TIMESTAMPTZ` [P1-1]**:
+    - Converted all 40 timestamp columns across all 16 tables from `TIMESTAMP WITHOUT TIME ZONE` to `TIMESTAMPTZ(3)` using `AT TIME ZONE 'UTC'`.
+  - **Enforced Public Schema Check Constraints [P1-4]**:
+    - Added `CHECK (NOT "isCompleted" OR "currentStatus" IS NOT NULL)` on `profiles`.
+    - Added range check constraints `[0, 100]` for `career_assessments.readinessScore`, `resume_scores.ovrScore`, `resume_scores.atsScore`, and `interviews.overallScore`.
+  - **Resolved Production Migration Drift & Stale Zombie Jobs [P1-7, P1-8]**:
+    - Synchronized unapplied migration `20260918115500_drop_unused_resume_score_fields`.
+    - Resolved zombie job `cmu9f6bbc000hzqik6tvj5ekg` that was stuck in `RUNNING` status.
+  - **Serverless Connection Management & Query Timeouts [P2-1, P2-2]**:
+    - Added `directUrl` configuration for migrations in `schema.prisma` alongside pooled runtime `DATABASE_URL`.
+    - Implemented a 25-second query timeout extension in `src/lib/prisma.ts` to prevent runaway database locks from holding serverless functions.
+  - **Forensic Audit Logging [P2-3]**:
+    - Created `AuditLog` table with indexes on `[userId, createdAt]` and `[action, createdAt]`.
+    - Integrated automatic audit log creation into `UserAccountDeletionService.purgeUserDataByClerkId` prior to user purging.
+- [x] **Compute-Heavy Task Offloading & Pure App Router Architecture (Trigger.dev)**:
+  - **Offloaded Headless Chrome (Puppeteer) to Trigger.dev**:
+    - Created [`exportResumePdfTask`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/export-resume-pdf.ts) running in Trigger.dev with `@trigger.dev/build/extensions/puppeteer` on an isolated `medium-2x` worker.
+    - Uploads generated PDFs directly to Vercel Blob and records user activity asynchronously.
+    - Created [`requestResumePdfExportAction`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/actions/export-actions.ts) with real-time SSE progress reporting in the resume editor.
+    - Completely removed Puppeteer execution from Next.js server runtime, eliminating 500MB–1GB RAM spikes per user download.
+  - **Asynchronous Background Template Switching & Re-compilation**:
+    - Created [`compileResumeTemplateTask`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/compile-resume-template.ts) running in Trigger.dev (`small-1x`).
+    - Handles JSONResume schema population, section mapping, template rendering, and HTML preview caching into Blob storage without blocking the web process.
+    - Created [`switchResumeTemplateAction`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/actions/export-actions.ts) and connected optimistic UI state in [`useResumeEditor`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/hooks/use-resume-editor.ts).
+  - **Dual Router Elimination & Pure App Router Migration**:
+    - Migrated template preview endpoint from Pages Router to App Router at [`/api/builder/preview`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/builder/preview/route.ts).
+    - Deleted legacy `src/pages/` directory completely, eliminating Pages Router dual-compilation overhead and cutting Next.js build times.
+  - **Eliminated Client-Side Dagre Layout & Lazy-Loaded Vector PDF Export**:
+    - Updated [`RoadmapViewer.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-viewer/RoadmapViewer.tsx) to consume pre-calculated `artifact.reactFlow` directly from Blob storage, eliminating synchronous `dagre` recalculation on the UI thread and removing `dagre` from the client bundle.
+    - Code-split `RoadmapExportUtility` via dynamic `import(...)` so heavy vector libraries (`jspdf`, `svg2pdf.js`, `html-to-image`) are fetched strictly on-demand.
+  - **Trigger.dev Worker Right-Sizing & Concurrency Policies**:
+    - Right-sized all AI/LLM network tasks (`generate-roadmap`, `generate-interview`, `assess-interview`, `assess-resume`, `generate-assessment`, `build-ai-resume`) to `micro`/`small-1x` with `concurrencyLimit: 10` to avoid rate limits.
+    - Configured `export-resume-pdf` with `medium-2x` and `concurrencyLimit: 5`.
+  - **Verification**: Verified 100% TypeScript type safety (`npx tsc --noEmit` passed with 0 errors), all Vitest test suites passed, and Next.js production build succeeded with a clean 100% App Router structure.
+- [x] **Debouncing & Throttling Optimization Across User Inputs and High-Cost Actions**:
+  - **Standardized Core Utilities**:
+    - Upgraded [`useDebounce`](file:///d:/Portfolio-projects/elev8-prod/src/hooks/use-debounce.ts) to export both `useDebounce<T>(value, delay = 350)` and `useDebouncedCallback<T>(callback, delay = 350)`.
+    - Created [`useThrottle`](file:///d:/Portfolio-projects/elev8-prod/src/hooks/use-throttle.ts) exporting `useThrottle<T>(value, interval = 500)` and `useThrottledCallback<T>(callback, interval = 1000)`.
+  - **Network Request Storm Elimination on Search Bars**:
+    - **Roadmap Library Search (`RoadmapLibrary.tsx`)**: Debounced search query by 350ms before invoking `fetchUserRoadmaps`, eliminating redundant Server Actions and database round-trips on every keystroke.
+    - **Interview Workspace Global Search (`workspace-container.tsx`)**: Debounced `globalSearch` by 350ms before triggering `getGlobalInterviews`.
+  - **In-Memory Filter Debouncing**:
+    - **Interview Local Workspace Search (`use-interview-workspace.ts`)**: Debounced local session and template query matching by 250ms to prevent expensive re-filtering loops.
+    - **Resume Workspace Search (`use-resume-workspace.ts`)**: Debounced `searchQuery` by 250ms before evaluating `filterAndSortResumes`.
+  - **Typing Autosave for Active Sessions**:
+    - **Interview Session Container (`session-container.tsx`)**: Added a 1500ms debounced autosave when editing answers so progress is continuously and safely backed up while typing, alongside existing explicit action saves.
+  - **Double-Click & Spam Rate-Limiting on High-Cost Actions**:
+    - **Career Assessment (`assessment-client-view.tsx`)**: Throttled `handleGenerate` by 1000ms.
+    - **AI Resume Builder (`ai-build-dialog.tsx`)**: Throttled `handleStartGeneration` by 1000ms.
+    - **Resume Builder Editor Header (`editor-header.tsx`)**: Replaced custom timeout with `useThrottledCallback` (1500ms cooldown).
+  - **Automated Verification**:
+    - Created comprehensive unit tests for `useDebounce`, `useDebouncedCallback`, `useThrottle`, and `useThrottledCallback` in [`src/hooks/__tests__/`](file:///d:/Portfolio-projects/elev8-prod/src/hooks/__tests__/).
+    - Verified 100% type safety via `npx tsc --noEmit` and all unit test suites passing.
+- [x] **Dashboard Data Loading, Fetching & Rendering Performance Optimization**:
+  - **Request-Scoped Auth & User Memoization (`React.cache`)**:
+    - Wrapped [`getOrCreateDbUser`](file:///d:/Portfolio-projects/elev8-prod/src/lib/auth.ts) in React 19's `cache()` to eliminate duplicate `auth()` validations and redundant PostgreSQL user lookups within the same server request lifecycle.
+  - **Sequential Waterfall Elimination**:
+    - **Career Assessment (`/dashboard/career-assessment`)**: Replaced sequential round-trips with parallel `Promise.all([AssessmentQuotaService.getWeeklyQuota, ProfileService.getProfile])`, cutting initial page fetch time significantly.
+    - **Main Dashboard (`/dashboard`)**: Parallelized `CareerAssessmentService.getLatestAssessment` alongside profile and module activity retrieval via `Promise.all`.
+  - **Redundant Database Query Deduplication**:
+    - **Resume Builder Editor (`/dashboard/resumes/builder/[resumeId]`)**: Refactored [`ResumeBuilderService.getResumeArtifact`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/services/resume-builder.service.ts) to accept an existing `ResumeBuild` instance, eliminating back-to-back duplicate queries for the same record.
+    - **Resume Detail Hub (`/dashboard/resumes/[resumeId]`)**: Refactored [`ResumeReportService.getResumeReport`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/services/resume-report.service.ts) and [`page.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/app/(dashboard)/dashboard/resumes/[resumeId]/page.tsx) to query the resume score once and reuse the record.
+  - **Client Hydration & Waterfall Optimization**:
+    - **Roadmap Library (`/dashboard/roadmaps`)**: Converted [`RoadmapsPage`](file:///d:/Portfolio-projects/elev8-prod/src/app/(dashboard)/dashboard/roadmaps/page.tsx) to pre-fetch the initial 9 roadmaps on the server, passing `initialRoadmaps` directly to `RoadmapLibrary` to eliminate the client loading spinner and hydration delay.
+    - **Onboarding Hydration Storm**: Combined profile payload into [`/api/profile/completion`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/profile/completion/route.ts) and streamlined [`OnboardingProvider`](file:///d:/Portfolio-projects/elev8-prod/src/providers/onboarding-provider.tsx) to eliminate the secondary `/api/profile` HTTP fetch on every dashboard page mount.
+    - **Resume Workspace Bounds**: Added safety pagination limit (`take: 50`) in [`ResumesPage`](file:///d:/Portfolio-projects/elev8-prod/src/app/(dashboard)/dashboard/resumes/page.tsx) to protect against unbounded database queries.
+  - **Verification**: Verified 100% TypeScript type safety (`npx tsc --noEmit` passed with 0 errors) and Vitest action test suites (28/28 tests passed).
+- [x] **Trigger.dev Realtime Streaming SDK Migration (`@trigger.dev/react-hooks`)**:
+  - **Dependencies & Backend Token Service**:
+    - Added `@trigger.dev/react-hooks@^4.8.0` matching `@trigger.dev/sdk@4.8.1`.
+    - Created [`RealtimeTokenService`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/realtime-token.service.ts) using `auth.createPublicToken` with scoped run access (`scopes: { read: { runs: [triggerRunId] } }`), 1-hour TTL, and optimized `realtime: { skipColumns: ["payload", "output"] }`.
+    - Created Server Action [`getJobRealtimeTokenAction`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/actions.ts) with Clerk authentication and job ownership validation.
+  - **Global Event-Driven Watcher & Store**:
+    - Augmented [`useWorkflowStore`](file:///d:/Portfolio-projects/elev8-prod/src/store/workflow.store.ts) (`ActiveBackgroundJob`) with `triggerRunId` and `publicAccessToken` fields, persisted to `localStorage`.
+    - Created [`RealtimeJobSubscriber`](file:///d:/Portfolio-projects/elev8-prod/src/components/dashboard/realtime-job-subscriber.tsx) using `useRealtimeRun` with `stopOnCompletion: true`, `onComplete` notification dispatch, and single `router.refresh()`.
+    - Enhanced [`GlobalJobWatcher`](file:///d:/Portfolio-projects/elev8-prod/src/components/dashboard/global-job-watcher.tsx) to mount realtime subscribers for cloud runs while preserving a 3000ms polling fallback only for offline local runs.
+  - **Feature-Level Realtime Subscriptions**:
+    - **AI Resume Builder (`ai-build-dialog.tsx`)**: Upgraded [`AiResumeBuildService`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/services/ai-resume-build.service.ts) to mint and return scoped tokens; replaced 1500ms REST polling with `useRealtimeRun` bound to `metadata.progress` (`15%` -> `30%` -> `50%` -> `75%` -> `90%` -> `100%`) and `metadata.status`.
+    - **Roadmaps (`RoadmapViewer.tsx` / `use-roadmap-polling.ts`)**: Upgraded `useRoadmapPolling` to subscribe via `useRealtimeRun`, updating progress stages live and triggering `router.refresh()` only once upon completion. Connected server component in `roadmapId/page.tsx` to mint tokens.
+    - **Career Assessment (`assessment-client-view.tsx`)**: Upgraded to real-time status subscription with `useRealtimeRun`, eliminating continuous status polling loops.
+    - **Workspaces (`useInterviewWorkspace`, `useResumeWorkspace`)**: Replaced continuous 3000ms `router.refresh()` loops with store completion event triggers and 10s safety fallback.
+    - **Task Metadata (`assess-interview.ts`)**: Added `metadata.set("progress")` and `metadata.set("status")` so mock interview assessments stream live progress over SSE.
+  - **Verification**: Verified 100% TypeScript compilation (`npx tsc --noEmit` passed with 0 errors) and Vitest suites (28/28 tests passed).
+- [x] **Interview Report & Session UI Color Contrast Rectification (`/dashboard/interviews/[interviewId]`)**:
+  - Eliminated zero-contrast black-on-black difficulty pill on the Interview Assessment Report page ([`overview-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/overview-card.tsx)) where `bg-dashboard-metricHighlight text-black` resulted in `#111111` black text on `#111111` solid black pill.
+  - Implemented dynamic semantic difficulty badge styling (`getDifficultyBadgeStyle`):
+    - **Easy**: `bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20`
+    - **Medium / Intermediate**: `bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20`
+    - **Hard / Advanced**: `bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20`
+  - Fixed interview type badge to `bg-text-primary text-white dark:bg-white dark:text-black` to prevent inverted theme contrast bugs.
+  - Fixed difficulty pill and question number pill in the active interview session view ([`question-view.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/question-view.tsx)).
+  - Cleaned up score badges and containers across [`question-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/question-card.tsx), [`analytics-dashboard.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/analytics-dashboard.tsx), [`improvement-plan.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/improvement-plan.tsx), [`next-steps.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/next-steps.tsx), [`score-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/score-card.tsx), [`skill-breakdown.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/skill-breakdown.tsx), [`topic-mastery-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-report/topic-mastery-card.tsx), and workspace components ([`interview-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/interview-card.tsx), [`quick-actions.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/quick-actions.tsx), [`workspace-container.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/workspace-container.tsx)).
+  - Verified 100% TypeScript compilation (`npx tsc --noEmit` passed with 0 errors) and Vitest action test suites (22/22 passed).
+- [x] **Guaranteed Notification Persistence & Universal Toast-to-Database Sync**:
+  - **Schema & Idempotency**: Added `idempotencyKey String? @unique @map("idempotency_key")` to `model Notification` in [`prisma/schema.prisma`](file:///d:/Portfolio-projects/elev8-prod/prisma/schema.prisma) and synchronized with PostgreSQL via `prisma db push`.
+  - **Server-Side Guaranteed Job Persistence**:
+    - Enhanced [`JobService.completeJob`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/job.service.ts) and [`JobService.failJob`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/job.service.ts) to automatically create/upsert persistent `Notification` records directly in PostgreSQL with `idempotencyKey: 'job-completed-' + jobId` and deep-link action URLs across all service types (Roadmaps, Mock Interviews, Resume Scores, AI Builds).
+    - Integrated direct DB notifications into [`generateAssessmentTask`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/generate-assessment.ts) and its local async fallback in [`createAssessmentAction`](file:///d:/Portfolio-projects/elev8-prod/src/features/career-assessment/services/actions.ts) with `idempotencyKey: 'assessment-completed-' + id`.
+    - Wired [`assess-interview.ts`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/assess-interview.ts) into `JobService.completeJob` and `failJob`.
+  - **Universal Toast Interceptor & Client Sync Pipeline**:
+    - Created authenticated API endpoint [`/api/notifications/log-toast`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/notifications/log-toast/route.ts) with Clerk session validation and Zod schema parsing.
+    - Implemented [`src/lib/toast-sync.ts`](file:///d:/Portfolio-projects/elev8-prod/src/lib/toast-sync.ts) using `fetch` with `keepalive: true` to prevent network cancellations during page navigation or `router.refresh()`, backed by in-memory and `sessionStorage` offline queues.
+    - Augmented `<Toaster />` in [`src/components/ui/sonner.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/components/ui/sonner.tsx) with a global interceptor wrapping `toast.success`, `toast.error`, `toast.info`, `toast.warning`, and `toast.message`, ensuring **every single toast notification** shown across the application is reliably written to the database and reflected in the notification bell and unread badge.
+    - Exported unified helper from [`src/lib/toast.ts`](file:///d:/Portfolio-projects/elev8-prod/src/lib/toast.ts).
+  - **Workflow Store & Watcher Hardening**:
+    - Added Zustand `persist` middleware with `localStorage` storage to [`useWorkflowStore`](file:///d:/Portfolio-projects/elev8-prod/src/store/workflow.store.ts) so `activeJobs` survives browser reloads and tab closures.
+    - Fixed race condition in [`GlobalJobWatcher`](file:///d:/Portfolio-projects/elev8-prod/src/components/dashboard/global-job-watcher.tsx) by awaiting `sendNotification` with `idempotencyKey` before calling `router.refresh()`, eliminating duplicate and dropped notifications.
+  - **Test Coverage & Verification**:
+    - Created Vitest suite in [`toast-sync.test.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/notifications/__tests__/toast-sync.test.ts) covering type inference, API route authorization and validation, and `JobService` notification creation (10/10 tests passing).
+    - Verified 100% TypeScript compilation (`npx tsc --noEmit` passed with 0 errors).
+- [x] **Resume Improvement Hub UI Contrast & Badge Rectification (`/dashboard/resumes/[resumeId]`)**:
+  - Eliminated zero-contrast black-on-black rendering caused by `bg-dashboard-metricHighlight text-text-primary` (resolving to `#111111` on `#111111` in light mode).
+  - Fixed active tab pills in [`hub-container.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/hub-container.tsx) to high-contrast `bg-text-primary text-white dark:bg-white dark:text-black shadow-sm`.
+  - Fixed candidate role badge in [`overview-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/overview-card.tsx) to `bg-text-primary text-white dark:bg-white dark:text-black`, and replaced solid black icon boxes for "TOP HIGHLIGHT" and "HIGHEST PRIORITY GAP" with thematic emerald (`bg-emerald-500/10 text-emerald-600`) and rose (`bg-rose-500/10 text-rose-600`) badges.
+  - Refined score and status badges in [`section-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/section-card.tsx), CTA buttons in [`action-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/action-card.tsx), and headers/icons across [`resume-health.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/resume-health.tsx), [`keyword-analysis.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/keyword-analysis.tsx), [`improvement-plan.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/improvement-plan.tsx), [`analytics-dashboard.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/analytics-dashboard.tsx), and [`timeline.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-improvement-hub/timeline.tsx).
+  - Maintained complete exclusion of the AI Resume Builder module per instructions.
+  - Verified 100% TypeScript compilation (`npx tsc --noEmit` passed with 0 errors) and Vitest test suite runs (22/22 tests passing).
+- [x] **Unified Background Running Tasks & Removal of Blocking Modal Overlays**:
+  - Excluded AI Resume Builder per user direction (`AiBuildDialog` left intact).
+  - Fixed interview routes in [`src/services/jobs/actions.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/actions.ts) (`/dashboard/interviews/${id}` and deep links to `/dashboard/interviews/${id}/report`).
+  - **Eliminated Full-Screen Blocking Overlays in Roadmaps**:
+    - Refactored [`LoadingOverlay`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-viewer/LoadingOverlay.tsx) from a blocking `fixed inset-0` modal overlay to an embedded, in-page responsive card within the layout.
+    - Removed `isGeneratingOverlay` and `<LoadingOverlay>` from [`RoadmapWizard`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-form/index.tsx).
+    - Wired `handleRegenerate` in [`RoadmapLibrary`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-library/RoadmapLibrary.tsx) and `handleRetry` in [`RoadmapViewer`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-viewer/RoadmapViewer.tsx) to [`useBackgroundWorkflow`](file:///d:/Portfolio-projects/elev8-prod/src/hooks/use-background-workflow.ts).
+  - **Standardized Mock Interview Assessment & Retries Workflow**:
+    - Wired interview submission in [`SessionContainer`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/session-container.tsx) (`handleSubmitConfirm`) to `useBackgroundWorkflow`: shows brief rocket initiation ("Submitting & Initiating Assessment..."), immediately closes dialog, redirects to `/dashboard/interviews`, and emits background info toast.
+    - Wired `handleRetryAssessment` and `handleRetryGeneration` in [`InterviewCard`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/interview-card.tsx) and `handleRetry` in [`GlobalInterviewCard`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/global-interview-card.tsx) to `useBackgroundWorkflow`.
+    - Integrated automatic completion notifications: [`GlobalJobWatcher`](file:///d:/Portfolio-projects/elev8-prod/src/components/dashboard/global-job-watcher.tsx) saves persistent notifications to DB (`INTERVIEW`), increments header bell unread badge, and renders actionable toasts with "View Report" deep links.
+  - Converted legacy `node:test` suites in [`session-actions.test.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/__tests__/session-actions.test.ts) and [`interview-actions.test.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/__tests__/interview-actions.test.ts) to native Vitest suites (44/44 tests passed across 5 test files).
+  - Verified 100% TypeScript type safety (`npx tsc --noEmit` passed with 0 errors).
 - [x] **User Account Deletion & Cascading Purge (Clerk Webhook & Settings UI)**:
   - Preserved `onDelete: SetNull` on `GlobalRoadmap.createdByUserId` and `GlobalInterviewTemplate.createdByUserId` to retain shared community resources when a creator deletes their account, per explicit requirements.
   - Implemented [`UserAccountDeletionService`](file:///d:/Portfolio-projects/elev8-prod/src/services/user/user-account-deletion.service.ts) and exported via [`src/services/user/index.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/user/index.ts):

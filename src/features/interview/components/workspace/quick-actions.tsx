@@ -13,9 +13,9 @@ export function QuickActions({ latestInProgress, latestCompleted }: QuickActions
       {/* 1. Generate New Interview */}
       <Link
         href="/dashboard/interviews/new"
-        className="px-5 py-2.5 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 text-white dark:text-black font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center gap-2"
+        className="px-5 py-2.5 bg-text-primary hover:bg-black/85 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center gap-2"
       >
-        <PlusCircle className="w-4 h-4 text-dashboard-metricHighlight dark:text-black" />
+        <PlusCircle className="w-4 h-4 text-white dark:text-black" />
         Generate New Interview
       </Link>
 
@@ -23,9 +23,9 @@ export function QuickActions({ latestInProgress, latestCompleted }: QuickActions
       {latestInProgress && (
         <Link
           href={`/dashboard/interviews/${latestInProgress.id}/session`}
-          className="px-5 py-2.5 bg-dashboard-metricHighlight hover:bg-dashboard-metricHighlight/80 text-black border border-dashboard-metricHighlight/40 font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center gap-2"
+          className="px-5 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 font-display font-bold text-sm rounded-xl shadow-sm transition-all active:scale-[0.98] flex items-center gap-2"
         >
-          <PlayCircle className="w-4 h-4 text-black" />
+          <PlayCircle className="w-4 h-4 text-primary" />
           Continue Interview ({latestInProgress.role})
         </Link>
       )}
