@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "node scripts/build-uncompiled-themes.cjs",
     "lint": "next lint",
     "trigger:dev": "npx trigger.dev@latest dev",
     "db:push": "prisma db push",

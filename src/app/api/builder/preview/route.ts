@@ -1,22 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
-import { RESUME_TEMPLATE_REGISTRY } from "@/features/resume-builder/templates/registry";
+import { getOrCreateDbUser } from "@/lib/auth";
+import { renderResumeTheme } from "@/features/resume-builder/templates/registry";
 import { builderToJsonResume } from "@/features/resume-builder/adapters/builder-to-json-resume";
 import { BuilderResumeArtifactSchema } from "@/features/resume-builder/schemas/resume-artifact.schema";
+import { BuilderResumeArtifact } from "@/features/resume-builder/types";
 
 export async function POST(req: Request) {
   try {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-      select: { id: true },
-    });
-
+    const dbUser = await getOrCreateDbUser().catch(() => null);
     if (!dbUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -31,41 +22,55 @@ export async function POST(req: Request) {
       );
     }
 
+    let parsedArtifact: BuilderResumeArtifact;
     const parseResult = BuilderResumeArtifactSchema.safeParse(artifact);
     if (!parseResult.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid artifact structure",
-          details: parseResult.error.format(),
+      // Fallback: build resilient artifact structure so active drafting does not fail preview
+      parsedArtifact = {
+        resumeId: artifact.resumeId || "draft",
+        version: typeof artifact.version === "number" ? artifact.version : 1,
+        personalInformation: {
+          fullName: artifact.personalInformation?.fullName || "Your Name",
+          email: artifact.personalInformation?.email || "",
+          phone: artifact.personalInformation?.phone || "",
+          location: artifact.personalInformation?.location || "",
+          linkedin: artifact.personalInformation?.linkedin || "",
+          github: artifact.personalInformation?.github || "",
+          portfolio: artifact.personalInformation?.portfolio || "",
         },
-        { status: 400 }
-      );
+        professionalSummary: artifact.professionalSummary || "",
+        education: Array.isArray(artifact.education) ? artifact.education : [],
+        experience: Array.isArray(artifact.experience) ? artifact.experience : [],
+        projects: Array.isArray(artifact.projects) ? artifact.projects : [],
+        skills: Array.isArray(artifact.skills) ? artifact.skills : [],
+        certifications: Array.isArray(artifact.certifications) ? artifact.certifications : [],
+        achievements: Array.isArray(artifact.achievements) ? artifact.achievements : [],
+        languages: Array.isArray(artifact.languages) ? artifact.languages : [],
+        volunteer: Array.isArray(artifact.volunteer) ? artifact.volunteer : [],
+        publications: Array.isArray(artifact.publications) ? artifact.publications : [],
+        interests: Array.isArray(artifact.interests) ? artifact.interests : [],
+        references: Array.isArray(artifact.references) ? artifact.references : [],
+      };
+    } else {
+      parsedArtifact = parseResult.data;
     }
 
-    const renderer =
-      RESUME_TEMPLATE_REGISTRY[template] ||
-      RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+    const jsonResume = builderToJsonResume(parsedArtifact);
 
-    if (!renderer) {
-      return NextResponse.json(
-        { error: "Template not found" },
-        { status: 404 }
-      );
-    }
-
-    const jsonResume = builderToJsonResume(parseResult.data);
     let html: string;
     try {
-      html = await renderer(jsonResume);
-    } catch (renderError) {
+      html = await renderResumeTheme(template, jsonResume);
+    } catch (renderError: any) {
       console.warn(
         `Template render failed for "${template}", falling back to academic-cv-lite:`,
-        renderError
+        renderError?.message
       );
-      const fallbackRenderer = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-      html = await fallbackRenderer(jsonResume);
+      html = await renderResumeTheme("academic-cv-lite", jsonResume);
     }
 
+    // Inject CSS to ensure the body and main container fit natural content height,
+    // prevent inner scrollbars from showing on the resume document, and eliminate runaway
+    // 100vh ResizeObserver feedback loops.
     const customCss = `
       <style>
         html, body {
@@ -101,19 +106,13 @@ export async function POST(req: Request) {
       </style>
     `;
 
-    const compiledHtml = `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          ${customCss}
-        </head>
-        <body class="bg-white">
-          ${html}
-        </body>
-      </html>
-    `;
+    // Inject customCss cleanly before </head> since themes already return full HTML documents
+    let compiledHtml: string;
+    if (html.includes("</head>")) {
+      compiledHtml = html.replace("</head>", `${customCss}</head>`);
+    } else {
+      compiledHtml = customCss + html;
+    }
 
     return new Response(compiledHtml, {
       status: 200,
@@ -122,7 +121,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("POST /api/builder/preview error:", error);
     return NextResponse.json(
-      { error: "Failed to render preview" },
+      {
+        error: "Failed to render preview",
+        message: error?.message || "Unknown error",
+      },
       { status: 500 }
     );
   }

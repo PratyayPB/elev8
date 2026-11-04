@@ -175,14 +175,27 @@ export function ResumeTemplateRenderer({
           const resultHtml = await response.text();
           setHtml(resultHtml);
         } else {
+          let errorDetails = "";
+          let errorPayload: any = null;
+          try {
+            errorPayload = await response.json();
+            errorDetails = errorPayload?.message || errorPayload?.error || "";
+          } catch {
+            // response was not JSON
+          }
           setHtml(
-            `<div style="padding: 20px; font-family: sans-serif;">Failed to load preview.</div>`
+            `<div style="padding: 24px; font-family: system-ui, -apple-system, sans-serif; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin: 16px;">
+              <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Failed to load live preview (${response.status})</div>
+              <div style="font-size: 12px; color: #7f1d1d; margin-bottom: 8px;">${errorDetails || "Unable to render template preview."}</div>
+            </div>`
           );
         }
-      } catch (err) {
-        console.error("Preview fetch error", err);
+      } catch (err: any) {
         setHtml(
-          `<div style="padding: 20px; font-family: sans-serif;">Error loading preview.</div>`
+          `<div style="padding: 24px; font-family: system-ui, -apple-system, sans-serif; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin: 16px;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Error loading preview</div>
+            <div style="font-size: 12px; color: #7f1d1d;">${err?.message || "Network or rendering connection failed."}</div>
+          </div>`
         );
       } finally {
         setLoading(false);

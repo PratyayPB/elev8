@@ -98,19 +98,13 @@ export const compileResumeTemplateTask = schemaTask({
       </style>
     `;
 
-    const compiledHtml = `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          ${customCss}
-        </head>
-        <body class="bg-white">
-          ${themeHtml}
-        </body>
-      </html>
-    `;
+    // Inject custom CSS cleanly before </head> since themes already return full HTML documents
+    let compiledHtml: string;
+    if (themeHtml.includes("</head>")) {
+      compiledHtml = themeHtml.replace("</head>", `${customCss}</head>`);
+    } else {
+      compiledHtml = customCss + themeHtml;
+    }
 
     // Cache the rendered HTML in Blob Storage for instant preview loading
     const previewBlobPath = `resumes/previews/${resumeId}_${template}.html`;
