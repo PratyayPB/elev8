@@ -48,6 +48,22 @@ Phase 7.2: Release & Production Verification
     - Updated [`exportResumePdfTask`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/export-resume-pdf.ts) to return the tokenized download URL to the frontend for automated browser download.
   - **Asynchronous Background Template Switching & Re-compilation**:
     - Created [`compileResumeTemplateTask`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/compile-resume-template.ts) running in Trigger.dev (`small-1x`).
+- [x] **Realtime Server Push & Notification System Overhaul (Ably Integration)**:
+  - **Eliminated Polling & Server Action POST Storms**:
+    - Removed 30-second interval polling and window focus refetch from `NotificationWatcher`.
+    - Added SSR initial hydration in `DashboardLayout`, enabling zero HTTP requests on page load.
+    - Connected frontend to Ably Realtime WebSocket stream via `NotificationWatcher` with multi-tab deduplication and idle teardown (5-minute disconnect with gap recovery on resume).
+    - Converted notification mutations (`PATCH /api/notifications/[id]`, `PATCH /api/notifications/read-all`, `DELETE /api/notifications/[id]`, `DELETE /api/notifications`) to REST route handlers with optimistic updates and rollback.
+    - Added gap recovery support (`GET /api/notifications?since=...`).
+  - **Single Source of Truth Server Notifications**:
+    - Created canonical `createNotification()` helper in `src/lib/notify.ts` with database upsert and Ably REST publish.
+    - Standardized deterministic idempotency keys (`job:<id>:completed`, `job:<id>:failed`, `assessment:<id>:completed`).
+    - Removed redundant client-side notification dispatch (`sendNotification`) from `realtime-job-subscriber.tsx` and `global-job-watcher.tsx`.
+    - Deleted `createNotificationAction` Server Action.
+  - **Optimized Background Job Watcher**:
+    - Converted `checkBackgroundJobStatusAction` and `getJobRealtimeTokenAction` into REST GET route handlers.
+    - Switched fallback polling to exponential backoff (3s -> 30s) capped at 15 cycles.
+    - Added reactive Ably notification listener to complete active jobs instantly with zero polling when realtime events arrive.
     - Handles JSONResume schema population, section mapping, template rendering, and HTML preview caching into Blob storage without blocking the web process.
     - Created [`switchResumeTemplateAction`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/actions/export-actions.ts) and connected optimistic UI state in [`useResumeEditor`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/hooks/use-resume-editor.ts).
     - Silenced template switching notifications entirely: removed client toasts in [`useResumeEditor`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/hooks/use-resume-editor.ts) and updated [`JobService.completeJob`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/job.service.ts) to bypass database notification creation for `RESUME_TEMPLATE_SWITCH` artifact types, enabling seamless background preview caching without notification center or toast disruptions.
