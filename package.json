@@ -49,6 +49,7 @@
     "@types/pdf-parse": "^1.1.5",
     "@vercel/blob": "^2.6.1",
     "@xyflow/react": "^12.11.2",
+    "ably": "^2.30.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -115,5 +116,6 @@
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
-  }
+  },
+  "packageManager": "pnpm@12.8.1+sha512.f64ba907507f5ceafe06c8d38e6052d0179444580ec1279ddd5bfc11cb48aa8a2644b66598e07e761da84872a9fc57d5f902b87fa49d024198d558612aabbe45"
 }
