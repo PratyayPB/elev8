@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import * as Ably from "ably";
 import { toast } from "sonner";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { NotificationItemData } from "@/features/notifications/types";
@@ -26,10 +25,10 @@ export function NotificationWatcher({
   const markAllReadLocally = useNotificationsStore((state) => state.markAllReadLocally);
   const fetchNotifications = useNotificationsStore((state) => state.fetchNotifications);
 
-  const ablyClientRef = useRef<Ably.Realtime | null>(null);
-  const channelRef = useRef<Ably.RealtimeChannel | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const latestCreatedAtRef = useRef<string | null>(null);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isIdleRef = useRef<boolean>(false);
   const isHydratedRef = useRef<boolean>(false);
 
@@ -54,122 +53,122 @@ export function NotificationWatcher({
     }
   }, [hydrate, fetchNotifications, initialNotifications, initialUnreadCount]);
 
-  // 2. Ably Realtime Connection & Push Handler
+  // 2. Realtime SSE Connection (Native EventSource via Ably SSE edge protocol)
   useEffect(() => {
     let isMounted = true;
-    let targetChannelName: string | null = null;
 
-    const client = new Ably.Realtime({
-      autoConnect: true,
-      authCallback: async (_data, callback) => {
-        try {
-          const res = await fetch("/api/realtime/token", { method: "POST" });
-          if (!res.ok) {
-            if (res.status === 401) {
-              // Authentication lost; abort reconnecting
-              console.warn("[NotificationWatcher] Unauthorized (401); stopping realtime reconnect.");
-              callback("Unauthorized", null);
-              return;
-            }
-            callback(`Failed to mint realtime token (HTTP ${res.status})`, null);
+    const connectSSE = async () => {
+      try {
+        const tokenRes = await fetch("/api/realtime/token", { method: "POST" });
+        if (!tokenRes.ok) {
+          if (tokenRes.status === 401) {
+            console.warn("[NotificationWatcher] Unauthorized (401); stopping realtime reconnect.");
             return;
           }
-
-          const json = await res.json();
-          if (json.channelName) {
-            targetChannelName = json.channelName;
-          }
-          callback(null, json.tokenRequest);
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "Auth callback failed";
-          callback(message, null);
+          console.warn(`[NotificationWatcher] Token fetch returned HTTP ${tokenRes.status}`);
+          return;
         }
-      },
-    });
 
-    ablyClientRef.current = client;
+        const data = await tokenRes.json();
+        const token = data.token;
+        const channelName = data.channelName;
 
-    // Handle connection state changes for gap recovery
-    client.connection.on("connected", () => {
-      if (!isMounted) return;
+        if (!isMounted || !token || !channelName) return;
 
-      // Subscribe to channel once connected
-      const channelName = targetChannelName || `notifications:user:me`;
-      if (!channelRef.current || channelRef.current.name !== channelName) {
-        const channel = client.channels.get(channelName);
-        channelRef.current = channel;
+        // Connect directly to Ably's global SSE streaming endpoint with scoped token
+        const sseUrl = `https://realtime.ably.io/sse?v=1.2&channels=${encodeURIComponent(
+          channelName
+        )}&accessToken=${encodeURIComponent(token)}&rewind=1`;
 
-        // Subscribe to incoming notifications
-        channel.subscribe("notification", (msg) => {
-          if (!isMounted || !msg.data) return;
-          const notification = msg.data as NotificationItemData;
+        const es = new EventSource(sseUrl);
+        eventSourceRef.current = es;
 
-          // Dedupe and insert into store
-          receive(notification);
+        es.onmessage = (event) => {
+          if (!isMounted || !event.data) return;
 
-          if (notification.createdAt) {
-            latestCreatedAtRef.current = new Date(notification.createdAt).toISOString();
+          try {
+            const parsed = JSON.parse(event.data);
+            const eventName = parsed.name;
+            const eventData =
+              typeof parsed.data === "string" ? JSON.parse(parsed.data) : parsed.data;
+
+            if (eventName === "notification" && eventData) {
+              const notification = eventData as NotificationItemData;
+              receive(notification);
+
+              if (notification.createdAt) {
+                latestCreatedAtRef.current = new Date(notification.createdAt).toISOString();
+              }
+
+              toast.info(notification.title, {
+                description: notification.message,
+                duration: 8000,
+                skipDb: true,
+                action: notification.actionUrl
+                  ? {
+                      label: "View",
+                      onClick: () => router.push(notification.actionUrl!),
+                    }
+                  : undefined,
+              } as any);
+            } else if (eventName === "read" && eventData?.id) {
+              markReadLocally(eventData.id);
+            } else if (eventName === "read-all") {
+              markAllReadLocally();
+            }
+          } catch (err) {
+            console.warn("[NotificationWatcher] Error parsing realtime event:", err);
           }
+        };
 
-          // Trigger toast with action button
-          toast.info(notification.title, {
-            description: notification.message,
-            duration: 8000,
-            skipDb: true,
-            action: notification.actionUrl
-              ? {
-                  label: "View",
-                  onClick: () => router.push(notification.actionUrl!),
-                }
-              : undefined,
-          } as any);
-        });
-
-        // Cross-tab sync: mark single read
-        channel.subscribe("read", (msg) => {
-          if (!isMounted || !msg.data?.id) return;
-          markReadLocally(msg.data.id);
-        });
-
-        // Cross-tab sync: mark all read
-        channel.subscribe("read-all", () => {
+        es.onerror = () => {
           if (!isMounted) return;
-          markAllReadLocally();
-        });
-      }
+          // Tokens expire after 1 hour or connection was dropped.
+          // Close stale EventSource and reconnect with fresh token.
+          es.close();
+          eventSourceRef.current = null;
 
-      // If recovering from a disconnect or idle sleep, perform a single gap recovery fetch
-      if (isIdleRef.current && latestCreatedAtRef.current) {
-        isIdleRef.current = false;
-        fetchNotifications(latestCreatedAtRef.current);
+          if (!isIdleRef.current) {
+            reconnectTimerRef.current = setTimeout(() => {
+              if (isMounted && !isIdleRef.current) {
+                connectSSE();
+              }
+            }, 3000);
+          }
+        };
+      } catch (err) {
+        console.warn("[NotificationWatcher] SSE initialization failed:", err);
       }
-    });
+    };
+
+    connectSSE();
 
     // 3. Idle Teardown & Recovery on Visibility Change
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // Disconnect after 5 minutes hidden to save connection quotas
         idleTimerRef.current = setTimeout(() => {
-          if (document.hidden && ablyClientRef.current) {
+          if (document.hidden && eventSourceRef.current) {
             isIdleRef.current = true;
-            ablyClientRef.current.connection.close();
+            eventSourceRef.current.close();
+            eventSourceRef.current = null;
           }
         }, FIVE_MINUTES_MS);
       } else {
-        // Clear idle disconnect timer if user returns before 5 minutes
         if (idleTimerRef.current) {
           clearTimeout(idleTimerRef.current);
           idleTimerRef.current = null;
         }
 
-        // Reconnect if was closed during idle
-        if (isIdleRef.current && ablyClientRef.current) {
-          ablyClientRef.current.connection.connect();
-          // One-time gap recovery after visibility resume
+        // Reconnect if closed during idle
+        if (isIdleRef.current) {
+          isIdleRef.current = false;
+          connectSSE();
+
+          // One-time gap recovery query after visibility resume
           if (latestCreatedAtRef.current) {
             fetchNotifications(latestCreatedAtRef.current);
           }
-          isIdleRef.current = false;
         }
       }
     };
@@ -184,14 +183,13 @@ export function NotificationWatcher({
         clearTimeout(idleTimerRef.current);
       }
 
-      if (channelRef.current) {
-        channelRef.current.unsubscribe();
-        channelRef.current = null;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
       }
 
-      if (ablyClientRef.current) {
-        ablyClientRef.current.close();
-        ablyClientRef.current = null;
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
     };
   }, [receive, markReadLocally, markAllReadLocally, fetchNotifications, router]);

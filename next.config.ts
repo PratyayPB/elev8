@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -25,6 +26,7 @@ const nextConfig: NextConfig = {
     "jsonresume-theme-macchiato",
     "jsonresume-theme-elegant",
     "jsonresume-theme-even",
+    "ably",
   ],
   transpilePackages: [
     "jsonresume-theme-academic-cv-lite",
