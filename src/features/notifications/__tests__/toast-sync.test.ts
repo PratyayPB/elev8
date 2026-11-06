@@ -166,13 +166,13 @@ describe("Toast Sync & Guaranteed Notification Resilience", () => {
 
       expect(prisma.notification.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { idempotencyKey: "job-completed-job_999" },
+          where: { idempotencyKey: "job:job_999:completed" },
           create: expect.objectContaining({
             userId: "user_owner",
             title: "Roadmap Ready",
             type: "ROADMAP",
             actionUrl: "/dashboard/roadmaps/roadmap_123",
-            idempotencyKey: "job-completed-job_999",
+            idempotencyKey: "job:job_999:completed",
           }),
         })
       );
@@ -204,13 +204,13 @@ describe("Toast Sync & Guaranteed Notification Resilience", () => {
 
       expect(prisma.notification.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { idempotencyKey: "job-failed-job_fail_1" },
+          where: { idempotencyKey: "job:job_fail_1:failed" },
           create: expect.objectContaining({
             userId: "user_owner",
             title: "Interview Task Failed",
             message: "LLM timeout",
             type: "INTERVIEW",
-            idempotencyKey: "job-failed-job_fail_1",
+            idempotencyKey: "job:job_fail_1:failed",
           }),
         })
       );

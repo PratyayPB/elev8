@@ -68,10 +68,10 @@ export function NotificationWatcher({
             if (res.status === 401) {
               // Authentication lost; abort reconnecting
               console.warn("[NotificationWatcher] Unauthorized (401); stopping realtime reconnect.");
-              callback(new Error("Unauthorized"), null);
+              callback("Unauthorized", null);
               return;
             }
-            callback(new Error(`Failed to mint realtime token (HTTP ${res.status})`), null);
+            callback(`Failed to mint realtime token (HTTP ${res.status})`, null);
             return;
           }
 
@@ -82,7 +82,7 @@ export function NotificationWatcher({
           callback(null, json.tokenRequest);
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "Auth callback failed";
-          callback(new Error(message), null);
+          callback(message, null);
         }
       },
     });

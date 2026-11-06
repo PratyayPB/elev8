@@ -59,6 +59,7 @@ export async function createNotification(input: CreateNotificationInput) {
     type: "notification",
     data: {
       id: notification.id,
+      userId: notification.userId,
       title: notification.title,
       message: notification.message,
       type: notification.type,
