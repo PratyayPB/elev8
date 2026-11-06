@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { JobService } from "@/services/jobs/job.service";
+import { UserQuotaService } from "@/services/quota/user-quota.service";
 import { JobType, JobStatus } from "@prisma/client";
 import { ResumeBuilderError } from "./resume-builder.service";
 import { AiBuildResumeInput } from "../schemas/ai-build.schema";
@@ -53,6 +54,9 @@ export class AiResumeBuildService {
         400
       );
     }
+
+    // 1b. Check AI Resume Build quota (max 5/hr, 1 active build)
+    await UserQuotaService.assertAiResumeBuildQuota(userId);
 
     // 2. Verify resume ownership
     const resume = await prisma.resumeBuild.findUnique({

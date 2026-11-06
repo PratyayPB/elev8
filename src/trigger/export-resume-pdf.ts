@@ -3,16 +3,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ResumeBuilderService } from "@/features/resume-builder/services/resume-builder.service";
 import { builderToJsonResume } from "@/features/resume-builder/adapters/builder-to-json-resume";
-import { RESUME_TEMPLATE_REGISTRY } from "@/features/resume-builder/templates/registry";
+import { renderResumeTheme } from "@/features/resume-builder/templates/registry";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { JobService } from "@/services/jobs/job.service";
 import { ModuleActivityService } from "@/features/progress/services";
-import {
-  ModuleType,
-  ModuleActivityEventType,
-  ModuleCompletionStatus,
-} from "@/features/progress/types";
+import { ModuleType, ModuleActivityEventType, ModuleCompletionStatus } from "@/features/progress/types";
 import puppeteer from "puppeteer";
+import crypto from "crypto";
 
 export const ExportResumePdfTaskSchema = z.object({
   resumeId: z.string(),
@@ -46,11 +43,17 @@ export const exportResumePdfTask = schemaTask({
       metadata.set("progress", 25);
       await JobService.updateProgress(jobId, 25, "Rendering Template HTML");
 
-      const renderer =
-        RESUME_TEMPLATE_REGISTRY[resume.template] ||
-        RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
       const jsonResume = builderToJsonResume(artifact);
-      const themeHtml = await renderer(jsonResume);
+      let themeHtml: string;
+      try {
+        themeHtml = await renderResumeTheme(resume.template, jsonResume);
+      } catch (renderError) {
+        console.warn(
+          `[ExportResumePdfTask] Theme render failed for "${resume.template}", falling back to academic-cv-lite:`,
+          renderError
+        );
+        themeHtml = await renderResumeTheme("academic-cv-lite", jsonResume);
+      }
 
       metadata.set("status", "Launching Headless Chrome");
       metadata.set("progress", 45);
@@ -117,11 +120,31 @@ export const exportResumePdfTask = schemaTask({
         .trim()
         .replace(/\s+/g, "-");
       const blobPath = `resumes/exports/${resumeId}_${Date.now()}.pdf`;
-      const downloadUrl = await BlobStorageService.uploadBuffer(
+      const rawBlobUrl = await BlobStorageService.uploadBuffer(
         blobPath,
         pdfBuffer,
         "application/pdf"
       );
+
+      // Create a signed download URL routed through our authenticated Next.js proxy endpoint
+      // This solves the 403 Forbidden issue when downloading from private Vercel Blob stores
+      const secret =
+        process.env.BLOB_READ_WRITE_TOKEN ||
+        process.env.CLERK_SECRET_KEY ||
+        process.env.TRIGGER_SECRET_KEY ||
+        "elev8-fallback-secret-key";
+
+      const tokenPayload = {
+        resumeId,
+        blobUrl: rawBlobUrl,
+        exp: Date.now() + 24 * 60 * 60 * 1000, // Valid for 24 hours
+      };
+      const encodedPayload = Buffer.from(JSON.stringify(tokenPayload)).toString("base64url");
+      const signature = crypto.createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+      const signedToken = `${encodedPayload}.${signature}`;
+
+      // Local app download proxy URL
+      const downloadUrl = `/api/builder/resumes/${resumeId}/download?token=${signedToken}`;
 
       await ModuleActivityService.recordActivity({
         userId,
@@ -135,6 +158,7 @@ export const exportResumePdfTask = schemaTask({
           title: resume.title,
           template: resume.template,
           downloadUrl,
+          rawBlobUrl,
         },
       }).catch((activityError) =>
         console.warn("[ExportResumePdfTask] Failed to record activity:", activityError)

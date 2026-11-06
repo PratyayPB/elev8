@@ -23,20 +23,31 @@ export async function POST(req: Request) {
     }
 
     let parsedArtifact: BuilderResumeArtifact;
-    const parseResult = BuilderResumeArtifactSchema.safeParse(artifact);
-    if (!parseResult.success) {
-      // Fallback: build resilient artifact structure so active drafting does not fail preview
+    // Fast path: if basic structure is sound, normalize with fast defaults instead of running deep recursive 12-array Zod safeParse
+    if (
+      artifact &&
+      typeof artifact === "object" &&
+      typeof artifact.resumeId === "string" &&
+      artifact.personalInformation &&
+      typeof artifact.personalInformation === "object"
+    ) {
       parsedArtifact = {
-        resumeId: artifact.resumeId || "draft",
+        resumeId: artifact.resumeId,
         version: typeof artifact.version === "number" ? artifact.version : 1,
         personalInformation: {
-          fullName: artifact.personalInformation?.fullName || "Your Name",
-          email: artifact.personalInformation?.email || "",
-          phone: artifact.personalInformation?.phone || "",
-          location: artifact.personalInformation?.location || "",
-          linkedin: artifact.personalInformation?.linkedin || "",
-          github: artifact.personalInformation?.github || "",
-          portfolio: artifact.personalInformation?.portfolio || "",
+          fullName: artifact.personalInformation.fullName || "",
+          email: artifact.personalInformation.email || "",
+          phone: artifact.personalInformation.phone || "",
+          location: artifact.personalInformation.location || "",
+          linkedin: artifact.personalInformation.linkedin || "",
+          github: artifact.personalInformation.github || "",
+          portfolio: artifact.personalInformation.portfolio || "",
+          label: artifact.personalInformation.label || "",
+          image: artifact.personalInformation.image || "",
+          city: artifact.personalInformation.city || "",
+          region: artifact.personalInformation.region || "",
+          countryCode: artifact.personalInformation.countryCode || "",
+          twitter: artifact.personalInformation.twitter || "",
         },
         professionalSummary: artifact.professionalSummary || "",
         education: Array.isArray(artifact.education) ? artifact.education : [],
@@ -52,7 +63,36 @@ export async function POST(req: Request) {
         references: Array.isArray(artifact.references) ? artifact.references : [],
       };
     } else {
-      parsedArtifact = parseResult.data;
+      const parseResult = BuilderResumeArtifactSchema.safeParse(artifact);
+      if (parseResult.success) {
+        parsedArtifact = parseResult.data;
+      } else {
+        parsedArtifact = {
+          resumeId: artifact?.resumeId || "draft",
+          version: typeof artifact?.version === "number" ? artifact.version : 1,
+          personalInformation: {
+            fullName: artifact?.personalInformation?.fullName || "Your Name",
+            email: artifact?.personalInformation?.email || "",
+            phone: artifact?.personalInformation?.phone || "",
+            location: artifact?.personalInformation?.location || "",
+            linkedin: artifact?.personalInformation?.linkedin || "",
+            github: artifact?.personalInformation?.github || "",
+            portfolio: artifact?.personalInformation?.portfolio || "",
+          },
+          professionalSummary: artifact?.professionalSummary || "",
+          education: Array.isArray(artifact?.education) ? artifact.education : [],
+          experience: Array.isArray(artifact?.experience) ? artifact.experience : [],
+          projects: Array.isArray(artifact?.projects) ? artifact.projects : [],
+          skills: Array.isArray(artifact?.skills) ? artifact.skills : [],
+          certifications: Array.isArray(artifact?.certifications) ? artifact.certifications : [],
+          achievements: Array.isArray(artifact?.achievements) ? artifact.achievements : [],
+          languages: Array.isArray(artifact?.languages) ? artifact.languages : [],
+          volunteer: Array.isArray(artifact?.volunteer) ? artifact.volunteer : [],
+          publications: Array.isArray(artifact?.publications) ? artifact.publications : [],
+          interests: Array.isArray(artifact?.interests) ? artifact.interests : [],
+          references: Array.isArray(artifact?.references) ? artifact.references : [],
+        };
+      }
     }
 
     const jsonResume = builderToJsonResume(parsedArtifact);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { PageHeader, SectionHeader } from "@/components/dashboard";
 import { ProgressService } from "@/features/progress/services";
 import {
@@ -17,14 +17,9 @@ export const metadata: Metadata = {
 };
 
 export default async function ProgressPage() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
-    redirect(ROUTES.SIGN_IN);
-  }
-
-  const dbUser = await prisma.user.findUnique({ where: { clerkId } });
+  const dbUser = await getOrCreateDbUser().catch(() => null);
   if (!dbUser) {
-    redirect(ROUTES.ONBOARDING);
+    redirect(ROUTES.SIGN_IN);
   }
 
   const data = await ProgressService.getDashboardData(dbUser.id);

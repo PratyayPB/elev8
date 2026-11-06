@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { JobService } from "@/services/jobs/job.service";
@@ -15,11 +15,7 @@ import { safeAction } from "@/lib/error-handler";
  */
 export async function requestResumePdfExportAction(resumeId: string) {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const user = await prisma.user.findUnique({ where: { clerkId } });
-    if (!user) throw new Error("User not found");
+    const user = await getOrCreateDbUser();
 
     const resume = await prisma.resumeBuild.findUnique({
       where: { id: resumeId, userId: user.id },
@@ -65,11 +61,7 @@ export async function switchResumeTemplateAction(
   newTemplate: string
 ) {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const user = await prisma.user.findUnique({ where: { clerkId } });
-    if (!user) throw new Error("User not found");
+    const user = await getOrCreateDbUser();
 
     const resume = await prisma.resumeBuild.findUnique({
       where: { id: resumeId, userId: user.id },

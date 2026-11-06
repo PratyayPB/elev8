@@ -8,7 +8,7 @@ export function NotificationWatcher() {
   const fetchNotifications = useNotificationsStore(
     (state) => state.fetchNotifications
   );
-  const isInitialRef = useRef(true);
+  const lastFocusFetchRef = useRef<number>(Date.now());
 
   useEffect(() => {
     // Initial fetch on mount
@@ -19,9 +19,13 @@ export function NotificationWatcher() {
       fetchNotifications();
     }, 30000);
 
-    // Revalidate when user returns to the tab
+    // Throttle window focus revalidation to at most once every 60 seconds
     const handleFocus = () => {
-      fetchNotifications();
+      const now = Date.now();
+      if (now - lastFocusFetchRef.current >= 60000) {
+        lastFocusFetchRef.current = now;
+        fetchNotifications();
+      }
     };
     window.addEventListener("focus", handleFocus);
 

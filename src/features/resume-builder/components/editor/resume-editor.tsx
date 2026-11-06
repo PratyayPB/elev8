@@ -200,7 +200,8 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
       await runWorkflow({
         serviceName: "Resume PDF Export",
         serviceType: "RESUME_BUILD",
-        initiationMessage: "Initiating PDF export worker...",
+        showOverlay: false,
+        suppressInitiationToast: true,
         execute: async () => await requestResumePdfExportAction(resume.id),
         extractJobId: (res) => (res.success && res.data?.jobId ? res.data.jobId : undefined),
         extractRealtimeInfo: (res) =>
@@ -211,9 +212,10 @@ export function ResumeEditor({ resume, initialArtifact }: ResumeEditorProps) {
               }
             : undefined,
         defaultViewUrl: `/dashboard/resumes/builder/${resume.id}`,
+        autoDownloadPdf: true,
         onInitiated: () => {
           toast.info("PDF generation started in background", {
-            description: "Chromium is rendering your PDF with high fidelity.",
+            description: "Chromium is rendering your PDF. Download will begin automatically once complete.",
           });
         },
         onError: (err) => {

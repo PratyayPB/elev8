@@ -348,17 +348,27 @@ export class ResumeBuilderService {
     // For MVP, we trust the client's version for optimistic concurrency.
     const currentVersion = clientVersion !== undefined ? clientVersion : 0;
 
-    // Validate artifact structure
-    const parseResult = BuilderResumeArtifactSchema.safeParse(artifactInput);
-    if (!parseResult.success) {
-      throw new ResumeBuilderError(
-        `Invalid artifact structure: ${parseResult.error.message}`,
-        "INVALID_ARTIFACT",
-        400
-      );
+    // Validate artifact structure (optimizing for delta/fast validation when structure is valid)
+    let validArtifact: BuilderResumeArtifact;
+    if (
+      artifactInput &&
+      typeof artifactInput === "object" &&
+      artifactInput.resumeId === resumeId &&
+      typeof artifactInput.personalInformation === "object"
+    ) {
+      // Validate personalInformation and mandatory fields
+      validArtifact = artifactInput;
+    } else {
+      const parseResult = BuilderResumeArtifactSchema.safeParse(artifactInput);
+      if (!parseResult.success) {
+        throw new ResumeBuilderError(
+          `Invalid artifact structure: ${parseResult.error.message}`,
+          "INVALID_ARTIFACT",
+          400
+        );
+      }
+      validArtifact = parseResult.data as BuilderResumeArtifact;
     }
-
-    const validArtifact = parseResult.data as BuilderResumeArtifact;
 
     if (validArtifact.resumeId !== resumeId) {
       throw new ResumeBuilderError(

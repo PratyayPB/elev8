@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { after } from "next/server";
 import {
   ModuleType,
   ModuleCompletionStatus,
@@ -11,8 +12,86 @@ import {
 
 export class ModuleActivityService {
   /**
+   * Helper that runs an asynchronous task using Next.js 15 after() when available in request scope,
+   * or floating void Promise / background execution when called outside request scope (e.g. background tasks / unit tests).
+   */
+  public static runNonBlocking(task: () => Promise<any>): void {
+    try {
+      after(task);
+    } catch {
+      // Outside Next.js request scope (Trigger.dev worker, node worker, or test runner)
+      task().catch((err) => {
+        console.warn("[ModuleActivityService] Background task failed:", err);
+      });
+    }
+  }
+
+  /**
+   * Internal worker executing the 3 database queries for activity ledgering & projections.
+   */
+  private static async executeRecordActivity(
+    userId: string,
+    module: ModuleType,
+    eventType: ModuleActivityEventType,
+    completionStatus?: ModuleCompletionStatus | null,
+    metadata?: Record<string, any> | null,
+    finalEntityId?: string
+  ): Promise<ModuleActivityRecord> {
+    // 1. Idempotency check – guard against duplicate logs
+    if (finalEntityId) {
+      const existing = await prisma.moduleActivity.findFirst({
+        where: {
+          userId,
+          module,
+          eventType,
+          entityId: finalEntityId,
+        },
+      });
+      if (existing) {
+        return {
+          id: existing.id,
+          userId: existing.userId,
+          module: existing.module,
+          eventType: existing.eventType,
+          completionStatus: existing.completionStatus,
+          entityId: existing.entityId,
+          metadata: existing.metadata as Record<string, any> | null,
+          createdAt: existing.createdAt,
+        };
+      }
+    }
+
+    // 2. Insert ledger record
+    const record = await prisma.moduleActivity.create({
+      data: {
+        userId,
+        module,
+        eventType,
+        completionStatus: completionStatus ?? undefined,
+        entityId: finalEntityId ?? undefined,
+        metadata: metadata ?? undefined,
+      },
+    });
+
+    // 3. Update progress projection
+    await this.updateProgressProjection(userId, module, eventType, metadata, finalEntityId);
+
+    return {
+      id: record.id,
+      userId: record.userId,
+      module: record.module,
+      eventType: record.eventType,
+      completionStatus: record.completionStatus,
+      entityId: record.entityId,
+      metadata: record.metadata as Record<string, any> | null,
+      createdAt: record.createdAt,
+    };
+  }
+
+  /**
    * Records a user's activity in a platform module, handles idempotency,
    * and updates the user's Progress current-state projection.
+   * Offloads writes to Next.js 15 after() when called in a server action or route.
    */
   public static async recordActivity(
     inputOrUserId: RecordActivityInput | string,
@@ -88,55 +167,40 @@ export class ModuleActivityService {
 
     const finalEntityId = computeIdempotentEntityId(eventType, entityId ?? undefined, metadata);
 
-    // Idempotency check – guard against duplicate logs
-    if (finalEntityId) {
-      const existing = await prisma.moduleActivity.findFirst({
-        where: {
+    // Fast-path: Schedule the 3 sequential DB queries using Next.js 15 after()
+    try {
+      after(async () => {
+        await this.executeRecordActivity(
           userId,
           module,
           eventType,
-          entityId: finalEntityId,
-        },
+          completionStatus,
+          metadata,
+          finalEntityId
+        );
       });
-      if (existing) {
-        return {
-          id: existing.id,
-          userId: existing.userId,
-          module: existing.module,
-          eventType: existing.eventType,
-          completionStatus: existing.completionStatus,
-          entityId: existing.entityId,
-          metadata: existing.metadata as Record<string, any> | null,
-          createdAt: existing.createdAt,
-        };
-      }
-    }
-
-    // Insert ledger record
-    const record = await prisma.moduleActivity.create({
-      data: {
+      // Return optimistic record immediately without blocking the action response
+      return {
+        id: `opt_${Date.now()}`,
         userId,
         module,
         eventType,
-        completionStatus: completionStatus ?? undefined,
-        entityId: finalEntityId ?? undefined,
-        metadata: metadata ?? undefined,
-      },
-    });
-
-    // Update progress projection
-    await this.updateProgressProjection(userId, module, eventType, metadata, finalEntityId);
-
-    return {
-      id: record.id,
-      userId: record.userId,
-      module: record.module,
-      eventType: record.eventType,
-      completionStatus: record.completionStatus,
-      entityId: record.entityId,
-      metadata: record.metadata as Record<string, any> | null,
-      createdAt: record.createdAt,
-    };
+        completionStatus: completionStatus ?? null,
+        entityId: finalEntityId ?? null,
+        metadata: metadata ?? null,
+        createdAt: new Date(),
+      };
+    } catch {
+      // If outside Next.js request lifecycle (e.g. Trigger.dev worker or test harness), execute synchronously
+      return await this.executeRecordActivity(
+        userId,
+        module,
+        eventType,
+        completionStatus,
+        metadata,
+        finalEntityId
+      );
+    }
   }
 
   /**
@@ -360,10 +424,12 @@ export class ModuleActivityService {
 
   /**
    * Retrieves recent module activities for a user within a specified day window.
+   * Capped to prevent unbounded multi-day transfers across the wire.
    */
   public static async getRecentActivity(
     userId: string,
-    limitDays: number = 90
+    limitDays: number = 90,
+    take: number = 50
   ): Promise<ModuleActivityRecord[]> {
     if (!userId || typeof userId !== "string" || !userId.trim()) {
       return [];
@@ -377,6 +443,7 @@ export class ModuleActivityService {
         createdAt: { gte: since },
       },
       orderBy: { createdAt: "desc" },
+      take: Math.min(Math.max(1, take), 100),
     });
 
     return records.map((r) => ({

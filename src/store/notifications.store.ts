@@ -40,6 +40,24 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
+      // In browser environment, fetch via lightweight GET route handler
+      if (typeof window !== "undefined") {
+        const response = await fetch("/api/notifications?limit=50", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          set({
+            notifications: data.notifications || [],
+            unreadCount: data.unreadCount ?? 0,
+          });
+          return;
+        }
+      }
+
+      // In Node.js / unit test environments or as a fallback
       const res = await getNotificationsAction(50);
       if (res.success && res.data) {
         set({

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { getOrCreateDbUser } from "@/lib/auth";
 import {
   ProfileService,
   calculateProfileCompleteness,
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CareerAssessmentPage() {
-  const { userId: clerkId } = await auth();
+  const user = await getOrCreateDbUser().catch(() => null);
 
   let initialAssessment = null;
   let isStale = false;
@@ -36,30 +35,26 @@ export default async function CareerAssessmentPage() {
     resetFormatted: null,
   };
 
-  if (clerkId) {
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+  if (user) {
+    // Run quota, profile, and latest assessment concurrently in Promise.all
+    const [quotaResult, profile, assessment] = await Promise.all([
+      AssessmentQuotaService.getWeeklyQuota(user.id),
+      ProfileService.getProfile(user.id),
+      CareerAssessmentService.getLatestAssessment(user.id),
+    ]);
+    initialQuota = quotaResult;
 
-    if (user) {
-      // Parallelize quota calculation and profile retrieval to eliminate sequential waterfall
-      const [quotaResult, profile] = await Promise.all([
-        AssessmentQuotaService.getWeeklyQuota(user.id),
-        ProfileService.getProfile(user.id),
-      ]);
-      initialQuota = quotaResult;
+    if (profile) {
+      currentProfileVersion = profile.profileVersion;
+      const completeness = calculateProfileCompleteness(profile);
+      profileComplete = completeness.state === "COMPLETED";
 
-      if (profile) {
-        currentProfileVersion = profile.profileVersion;
-        const completeness = calculateProfileCompleteness(profile);
-        profileComplete = completeness.state === "COMPLETED";
-
-        const assessment = await CareerAssessmentService.getLatestAssessment(
-          user.id,
+      if (assessment) {
+        initialAssessment = assessment;
+        isStale = CareerAssessmentService.isAssessmentStale(
+          assessment.profileVersion,
           profile.profileVersion
         );
-        initialAssessment = assessment;
-        isStale = assessment?.isStale || false;
       }
     }
   }

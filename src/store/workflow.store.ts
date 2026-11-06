@@ -16,6 +16,7 @@ export interface ActiveBackgroundJob {
   viewUrl?: string; // Optional URL to navigate to upon completion
   triggerRunId?: string; // Trigger.dev Run Handle ID for Realtime SSE
   publicAccessToken?: string; // Scoped Public JWT for useRealtimeRun
+  autoDownloadPdf?: boolean; // When true, triggers automatic browser file download upon task completion
 }
 
 interface WorkflowState {

@@ -1,8 +1,11 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
+import { UserQuotaService } from "@/services/quota/user-quota.service";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { InterviewArtifact } from "../types";
 import { InterviewStatus, JobType, JobStatus } from "@prisma/client";
 import { tasks } from "@trigger.dev/sdk/v3";
@@ -24,11 +27,7 @@ export async function fetchSessionArtifact(interviewId: string) {
     }
     const sanitizedId = interviewId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     const interview = await prisma.interviewSession.findUnique({
       where: { id: sanitizedId, userId: dbUser.id },
@@ -91,11 +90,7 @@ export async function saveSessionProgress(
     }
     const sanitizedId = interviewId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     // Verify ownership
     const interview = await prisma.interviewSession.findUnique({
@@ -104,6 +99,15 @@ export async function saveSessionProgress(
     });
 
     if (!interview) throw new Error("Interview not found or unauthorized");
+
+    // Rate limit: 20 autosaves / minute per session
+    const rl = checkRateLimit(`autosave:session:${sanitizedId}`, {
+      limit: 20,
+      windowMs: 60 * 1000,
+    });
+    if (!rl.success) {
+      throw new Error("Autosave rate limit exceeded. Please wait a moment before saving again.");
+    }
 
     // We no longer manually delete the old blob because upsertJson safely overwrites in place
     const newBlobUrl = await BlobStorageService.upsertJson(
@@ -171,11 +175,7 @@ export async function submitInterview(
     }
     const sanitizedId = interviewId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     const interview = await prisma.interviewSession.findUnique({
       where: { id: sanitizedId, userId: dbUser.id },
@@ -183,6 +183,9 @@ export async function submitInterview(
     });
 
     if (!interview) throw new Error("Interview not found or unauthorized");
+
+    // Rate limit: 10 submissions / hour per user
+    await UserQuotaService.assertInterviewSubmissionQuota(dbUser.id);
 
     const isTemplateBlob = currentBlobUrl.includes("interview-templates/");
     const oldBlobToDelete = isTemplateBlob ? "" : currentBlobUrl;
@@ -313,11 +316,7 @@ export async function retryAssessmentAction(interviewId: string) {
     }
     const sanitizedId = interviewId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     const interview = await prisma.interviewSession.findUnique({
       where: { id: sanitizedId, userId: dbUser.id },

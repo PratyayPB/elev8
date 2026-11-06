@@ -27,7 +27,7 @@ import {
   getActivityEventDetails,
 } from "@/features/progress";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { getOrCreateDbUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Dashboard | Elev8",
@@ -35,16 +35,13 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) return null;
-
-  const dbUser = await prisma.user.findUnique({ where: { clerkId } });
+  const dbUser = await getOrCreateDbUser().catch(() => null);
   if (!dbUser) return null;
 
   // Run all independent queries in parallel to eliminate sequential database waterfalls
   const [profile, recentActivities, latestAssessment] = await Promise.all([
     getProfileAction(),
-    ModuleActivityService.getRecentActivity(dbUser.id, 30),
+    ModuleActivityService.getRecentActivity(dbUser.id, 30, 20),
     CareerAssessmentService.getLatestAssessment(dbUser.id),
   ]);
 

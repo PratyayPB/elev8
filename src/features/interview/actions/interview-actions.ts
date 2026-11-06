@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { InterviewRequest } from "../types";
@@ -19,6 +20,7 @@ import {
 import { tasks } from "@trigger.dev/sdk/v3";
 import { generateInterviewTask } from "@/trigger/generate-interview";
 import { GlobalInterviewTemplateService } from "../services/global-interview-template.service";
+import { UserQuotaService } from "@/services/quota/user-quota.service";
 import { ModuleActivityService } from "@/features/progress/services";
 import {
   ModuleType,
@@ -36,23 +38,13 @@ import {
 
 export async function createInterviewJob(request: InterviewRequest) {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-
-    if (!clerkId) {
-      throw new Error("Unauthorized: You must be logged in to generate an interview.");
-    }
-
-  // Find DB User
-  const dbUser = await prisma.user.findUnique({
-    where: { clerkId },
-  });
-
-  if (!dbUser) {
-    throw new Error("User record not found.");
-  }
+    const dbUser = await getOrCreateDbUser();
 
   // Validate incoming request
   const validatedRequest = InterviewRequestSchema.parse(request);
+
+  // Assert hourly interview generation quota (max 5 / hour)
+  await UserQuotaService.assertInterviewGenerationQuota(dbUser.id);
   const targetQuestionCount = validatedRequest.questionCount || 10;
   const mappedInterviewType = mapInterviewType(validatedRequest.interviewType);
   const mappedExpLevel = mapExperienceLevel(validatedRequest.experienceLevel);
@@ -668,11 +660,7 @@ export async function retryInterviewGenerationAction(interviewId: string) {
     }
     const sanitizedId = interviewId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized: You must be logged in.");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User record not found.");
+    const dbUser = await getOrCreateDbUser();
 
     const session = await prisma.interviewSession.findUnique({
       where: { id: sanitizedId, userId: dbUser.id },
@@ -794,11 +782,7 @@ export async function retryGlobalInterviewAction(globalInterviewTemplateId: stri
     }
     const sanitizedId = globalInterviewTemplateId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized: You must be logged in.");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User record not found.");
+    const dbUser = await getOrCreateDbUser();
 
     const globalTemplate = await prisma.globalInterviewTemplate.findUnique({
       where: { id: sanitizedId },
@@ -916,11 +900,7 @@ export async function startPersonalizedSessionAction(interviewTemplateId: string
     }
     const sanitizedId = interviewTemplateId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized: You must be logged in.");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User record not found.");
+    const dbUser = await getOrCreateDbUser();
 
     const template = await prisma.interviewTemplate.findUnique({
       where: { id: sanitizedId, userId: dbUser.id },
@@ -978,11 +958,7 @@ export async function startGlobalInterviewSessionAction(globalInterviewTemplateI
     }
     const sanitizedId = globalInterviewTemplateId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized: You must be logged in.");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User record not found.");
+    const dbUser = await getOrCreateDbUser();
 
     const globalTemplate = await prisma.globalInterviewTemplate.findUnique({
       where: { id: sanitizedId },

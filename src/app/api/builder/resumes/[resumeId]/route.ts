@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateDbUser } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { ResumeBuilderService, ResumeBuilderError } from "@/features/resume-builder/services/resume-builder.service";
 import { UpdateResumeInputSchema } from "@/features/resume-builder/schemas/resume-artifact.schema";
 
@@ -35,6 +36,19 @@ export async function PATCH(
   try {
     const dbUser = await getOrCreateDbUser();
     const { resumeId } = await params;
+
+    // Rate limit: 30 saves / minute per user ID
+    const rl = checkRateLimit(`autosave:resume:${dbUser.id}`, {
+      limit: 30,
+      windowMs: 60 * 1000,
+    });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many saves. Please slow down.", code: "RATE_LIMIT_EXCEEDED" },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
 
     const parseResult = UpdateResumeInputSchema.safeParse(body);

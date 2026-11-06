@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { ProfileService, getProfileCompletionPrompts } from "@/features/profile/services";
 import { PromptContext } from "@/features/profile/types";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 const VALID_CONTEXTS: PromptContext[] = [
   "PROFILE",
@@ -17,6 +18,18 @@ export async function GET(req: NextRequest) {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 60 req / minute per user
+    const rl = checkRateLimit(`prompts:${clerkId}`, {
+      limit: 60,
+      windowMs: 60 * 1000,
+    });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many prompt requests. Please slow down." },
+        { status: 429 }
+      );
     }
 
     const { searchParams } = new URL(req.url);

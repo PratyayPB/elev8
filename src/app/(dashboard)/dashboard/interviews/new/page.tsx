@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { isProfileComplete } from "@/lib/profile";
 import { InterviewWizard } from "@/features/interview/components/interview-wizard";
 import { Metadata } from "next";
@@ -12,10 +11,13 @@ export const metadata: Metadata = {
 };
 
 export default async function NewInterviewPage() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) redirect("/sign-in");
+  let dbUser;
+  try {
+    dbUser = await getOrCreateDbUser();
+  } catch {
+    redirect("/sign-in");
+  }
 
-  const dbUser = await prisma.user.findUnique({ where: { clerkId } });
   if (!dbUser) redirect("/dashboard/interviews");
 
   const profileComplete = await isProfileComplete(dbUser.id);

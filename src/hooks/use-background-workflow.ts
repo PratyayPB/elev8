@@ -7,10 +7,13 @@ export interface ExecuteWorkflowOptions<T> {
   serviceName: string; // e.g. "Roadmap Generation", "Career Assessment"
   serviceType: BackgroundServiceType;
   initiationMessage?: string; // Default: "Initiating the workflow..."
+  showOverlay?: boolean; // Default: true. Set to false to run completely without the fullscreen modal overlay
+  suppressInitiationToast?: boolean; // Default: false. Set to true to skip generic toast when caller has custom onInitiated toast
   execute: () => Promise<T>;
   extractJobId?: (result: T) => string | undefined;
   extractRealtimeInfo?: (result: T) => { triggerRunId?: string; publicAccessToken?: string } | undefined;
   defaultViewUrl?: string;
+  autoDownloadPdf?: boolean;
   onInitiated?: (result: T) => void;
   onError?: (error: any) => void;
 }
@@ -25,22 +28,29 @@ export function useBackgroundWorkflow() {
     serviceName,
     serviceType,
     initiationMessage = "Initiating the workflow...",
+    showOverlay = true,
+    suppressInitiationToast = false,
     execute,
     extractJobId,
     extractRealtimeInfo,
     defaultViewUrl,
+    autoDownloadPdf,
     onInitiated,
     onError,
   }: ExecuteWorkflowOptions<T>): Promise<T | null> => {
-    // 1. Display rocket loader with initiation text
-    startInitiating(initiationMessage);
+    // 1. Display rocket loader with initiation text if overlay is enabled
+    if (showOverlay) {
+      startInitiating(initiationMessage);
+    }
 
     try {
       // 2. Execute backend task dispatch
       const result = await execute();
 
       // 3. End loader animation immediately upon backend initiation
-      stopInitiating();
+      if (showOverlay) {
+        stopInitiating();
+      }
 
       // Check for structured safeAction error if result has success: false
       const maybeSafeAction = result as any;
@@ -54,11 +64,13 @@ export function useBackgroundWorkflow() {
         return result;
       }
 
-      // 4. Send toast notification for initiated background job
-      toast.info(`Background job initialized for ${serviceName}`, {
-        description: `Your request is running in the background. You will be notified once the task has been completed.`,
-        duration: 6000,
-      });
+      // 4. Send toast notification for initiated background job (unless suppressed in favor of custom onInitiated toast)
+      if (!suppressInitiationToast) {
+        toast.info(`Background job initialized for ${serviceName}`, {
+          description: `Your request is running in the background. You will be notified once the task has been completed.`,
+          duration: 6000,
+        });
+      }
 
       // 5. Register with background job watcher for completion toast tracking
       const jobId = extractJobId ? extractJobId(result) : undefined;
@@ -72,6 +84,7 @@ export function useBackgroundWorkflow() {
           viewUrl: defaultViewUrl,
           triggerRunId: realtime?.triggerRunId,
           publicAccessToken: realtime?.publicAccessToken,
+          autoDownloadPdf,
         });
       }
 
@@ -81,7 +94,9 @@ export function useBackgroundWorkflow() {
 
       return result;
     } catch (err: any) {
-      stopInitiating();
+      if (showOverlay) {
+        stopInitiating();
+      }
 
       const errorMessage =
         err?.message || `Failed to initialize ${serviceName.toLowerCase()}. Please try again.`;

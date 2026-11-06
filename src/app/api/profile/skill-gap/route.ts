@@ -3,12 +3,25 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { ProfileService } from "@/features/profile/services";
 import { SkillGapService } from "@/features/skill-gap/services";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 export async function GET() {
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 20 req / minute per user
+    const rl = checkRateLimit(`skill-gap:${clerkId}`, {
+      limit: 20,
+      windowMs: 60 * 1000,
+    });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many skill-gap requests. Please slow down." },
+        { status: 429 }
+      );
     }
 
     const user = await prisma.user.findUnique({

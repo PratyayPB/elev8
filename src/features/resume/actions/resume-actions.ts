@@ -1,12 +1,13 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { JobType, JobStatus, ResumeScoreStatus, CareerExperienceLevel } from "@prisma/client";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { assessResumeTask } from "@/trigger/assess-resume";
 import { ModuleActivityService } from "@/features/progress/services";
+import { UserQuotaService } from "@/services/quota/user-quota.service";
 import {
   ModuleActivityEventType,
   ModuleType,
@@ -26,19 +27,7 @@ function mapExperienceLevel(level: string): CareerExperienceLevel {
 
 export async function createResumeAssessmentJob(formData: FormData) {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-
-    if (!clerkId) {
-      throw new Error("Unauthorized: You must be logged in to upload a resume.");
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-    });
-
-    if (!dbUser) {
-      throw new Error("User record not found.");
-    }
+    const dbUser = await getOrCreateDbUser();
 
     const rawFile = formData.get("file");
     const rawRole = formData.get("role");
@@ -55,6 +44,9 @@ export async function createResumeAssessmentJob(formData: FormData) {
     });
 
     const { file, role, roleDescription, experienceLevel, includeProfile } = validatedInput;
+
+    // Rate limit: 10 uploads / day, max 3 / 10 minutes
+    await UserQuotaService.assertResumeUploadQuota(dbUser.id);
 
     // Fetch approved profile data server-side if user opted in
     let profileContext = undefined;
@@ -216,19 +208,7 @@ export async function deleteResume(resumeId: string) {
       throw new Error("Invalid resume ID provided.");
     }
 
-    const { userId: clerkId } = await auth();
-
-    if (!clerkId) {
-      throw new Error("Unauthorized: You must be logged in to delete a resume.");
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-    });
-
-    if (!dbUser) {
-      throw new Error("User record not found.");
-    }
+    const dbUser = await getOrCreateDbUser();
 
     const resume = await prisma.resumeScore.findUnique({
       where: { id: resumeId },

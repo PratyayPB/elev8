@@ -17,7 +17,7 @@ export class ProgressService {
 
     const [progress, recentActivities] = await Promise.all([
       ModuleActivityService.getProgress(userId.trim()),
-      ModuleActivityService.getRecentActivity(userId.trim(), 30),
+      ModuleActivityService.getRecentActivity(userId.trim(), 30, 50),
     ]);
 
     return {

@@ -17,6 +17,8 @@ import { ModuleActivityEventType, ModuleType, ModuleCompletionStatus } from "@/f
 import { RoadmapArtifactService } from "@/services/roadmaps/roadmap-artifact.service";
 import { RoadmapGenerationService } from "@/services/roadmaps/roadmap-generation.service";
 import { JobService } from "@/services/jobs/job.service";
+import { UserQuotaService } from "@/services/quota/user-quota.service";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { parseCareerLevel, normalizeRole, formatCareerLevelToExperience } from "../utils";
 import { normalizeError, safeAction } from "@/lib/error-handler";
 
@@ -46,6 +48,17 @@ export async function fetchUserRoadmaps(
 ) {
   return safeAction(async () => {
     const user = await getOrCreateDbUser();
+
+    if (options.search) {
+      const rl = checkRateLimit(`search:roadmaps:${user.id}`, {
+        limit: 30,
+        windowMs: 60 * 1000,
+      });
+      if (!rl.success) {
+        throw new Error("Search rate limit exceeded. Please slow down your queries.");
+      }
+    }
+
     return RoadmapLibraryService.getRoadmaps({ ...options, userId: user.id });
   });
 }
@@ -323,6 +336,8 @@ export async function generateRoadmapAction(rawPayload: RoadmapRequest) {
     }
 
     // 2. Personalized Roadmap: Create user-specific Roadmap
+    await UserQuotaService.assertRoadmapQuota(user.id);
+
     const targetId = `rm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const profileSnapshot = requestPayload.personalization.profileContext ?? null;
 

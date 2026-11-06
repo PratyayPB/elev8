@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getWorkspaceInterviews, getPerformanceStats } from "@/features/interview/actions/workspace-actions";
+import { getWorkspaceInterviews } from "@/features/interview/actions/workspace-actions";
 import { WorkspaceContainer } from "@/features/interview/components/workspace/workspace-container";
 import { InterviewsWorkspaceSkeleton } from "./loading";
 import { RecommendedActions } from "@/components/dashboard";
@@ -13,17 +13,17 @@ export const metadata: Metadata = {
 export const revalidate = 0; // Dynamic route
 
 export default async function InterviewsPage() {
-  const [interviewsRes, statsRes] = await Promise.all([
-    getWorkspaceInterviews(),
-    getPerformanceStats(),
-  ]);
+  const interviewsRes = await getWorkspaceInterviews();
 
   const initialInterviews = interviewsRes.success
-    ? interviewsRes.data
+    ? {
+        sessions: interviewsRes.data.sessions,
+        templates: interviewsRes.data.templates,
+      }
     : { sessions: [], templates: [] };
 
-  const initialStats = statsRes.success
-    ? statsRes.data
+  const initialStats = interviewsRes.success && interviewsRes.data.stats
+    ? interviewsRes.data.stats
     : {
         total: 0,
         completedCount: 0,

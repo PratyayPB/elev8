@@ -258,10 +258,9 @@ export function useResumeEditor({
             }
             
             if (unsupported.length > 0) {
-              toast.warning(`You switched to ${templateMeta.name}.`, {
-                description: `This template does not support: ${unsupported.join(", ")}. Your data will remain saved but will not appear in this template.`,
-                duration: 6000,
-              });
+              console.warn(
+                `[useResumeEditor] Template ${templateMeta.name} does not support: ${unsupported.join(", ")}`
+              );
             }
           }
         } catch (e) {
@@ -276,10 +275,6 @@ export function useResumeEditor({
         if (!actionResult.success) {
           throw new Error(actionResult.error?.message || "Failed to switch template");
         }
-
-        toast.success("Template switch queued in background", {
-          description: "Populating and re-rendering template layout...",
-        });
       } catch (err: unknown) {
         toast.error("Unable to update template", {
           description: "An error occurred while switching templates.",

@@ -42,10 +42,21 @@ function getJobCompletionDetails(job: Job, artifactId?: string, artifactType?: s
       actionUrl = artifactId ? `/dashboard/resumes/${artifactId}` : "/dashboard/resumes";
       break;
     case "RESUME_BUILD":
-      title = "AI Resume Ready";
-      message = "Your AI-tailored resume draft has been generated and loaded into the editor.";
-      type = "RESUME";
-      actionUrl = artifactId ? `/dashboard/resumes/builder/${artifactId}` : "/dashboard/resumes/builder";
+      // Template switching re-compiles and caches in the background; do not create notifications
+      if (artifactType === "RESUME_TEMPLATE_SWITCH") {
+        return null;
+      }
+      if (artifactType === "RESUME_PDF") {
+        title = "Resume PDF Ready";
+        message = "Your high-fidelity resume PDF has been generated and is ready to download.";
+        type = "RESUME";
+        actionUrl = artifactId ? `/dashboard/resumes/builder/${artifactId}` : "/dashboard/resumes/builder";
+      } else {
+        title = "AI Resume Ready";
+        message = "Your AI-tailored resume draft has been generated and loaded into the editor.";
+        type = "RESUME";
+        actionUrl = artifactId ? `/dashboard/resumes/builder/${artifactId}` : "/dashboard/resumes/builder";
+      }
       break;
     case "CAREER_GUIDANCE":
       title = "Career Assessment Ready";
@@ -115,14 +126,16 @@ export class JobService {
 
     try {
       const details = getJobCompletionDetails(updated, artifactId, artifactType);
-      await createDbNotification({
-        userId: updated.userId,
-        title: details.title,
-        message: details.message,
-        type: details.type,
-        actionUrl: details.actionUrl,
-        idempotencyKey: `job-completed-${jobId}`,
-      });
+      if (details) {
+        await createDbNotification({
+          userId: updated.userId,
+          title: details.title,
+          message: details.message,
+          type: details.type,
+          actionUrl: details.actionUrl,
+          idempotencyKey: `job-completed-${jobId}`,
+        });
+      }
     } catch (err) {
       console.error(
         `[JobService.completeJob] Failed to record completion notification for ${jobId}:`,

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, RoadmapStatus } from "@prisma/client";
 import { LibraryRoadmap } from "@/features/roadmaps/types";
+import { normalizeRole } from "@/features/roadmaps/utils";
 
 export interface GetRoadmapsOptions {
   userId: string;
@@ -37,9 +38,11 @@ export class RoadmapLibraryService {
 
       if (search && search.trim()) {
         const query = search.trim();
+        const normalizedQuery = normalizeRole(query);
         globalWhere.AND = [
           {
             OR: [
+              { normalizedRole: normalizedQuery },
               { title: { contains: query, mode: "insensitive" } },
               { targetRole: { contains: query, mode: "insensitive" } },
             ],

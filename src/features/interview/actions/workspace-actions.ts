@@ -1,6 +1,7 @@
-﻿"use server";
+"use server";
 
 import { auth } from "@clerk/nextjs/server";
+import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   InterviewStatus,
@@ -11,14 +12,12 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { safeAction } from "@/lib/error-handler";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { GlobalInterviewTemplateService } from "../services/global-interview-template.service";
 
 export async function getWorkspaceInterviews() {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     // Automatically fail stuck interview generations older than 5 minutes (e.g. server restarts/crashes)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -137,7 +136,26 @@ export async function getWorkspaceInterviews() {
       }),
     ]);
 
-    return { sessions, templates };
+    const total = sessions.length;
+    const completed = sessions.filter((i) => i.status === InterviewStatus.COMPLETED);
+    const inProgress = sessions.filter((i) => i.status === InterviewStatus.IN_PROGRESS);
+
+    const scores = completed
+      .map((i) => i.overallScore)
+      .filter((s): s is number => s !== null && s !== undefined);
+
+    const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
+
+    const stats = {
+      total,
+      completedCount: completed.length,
+      inProgressCount: inProgress.length,
+      averageScore,
+      highestScore,
+    };
+
+    return { sessions, templates, stats };
   });
 }
 
@@ -148,11 +166,7 @@ export async function deleteInterview(interviewId: string) {
     }
     const sanitizedId = interviewId.trim();
 
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     // Verify ownership before deleting
     const session = await prisma.interviewSession.findUnique({
@@ -220,10 +234,7 @@ export async function getGlobalInterviews(params?: {
   limit?: number;
 }) {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-    const dbUser = clerkId
-      ? await prisma.user.findUnique({ where: { clerkId } })
-      : null;
+    const dbUser = await getOrCreateDbUser().catch(() => null);
 
     const page = Math.max(1, params?.page || 1);
     const limit = Math.max(1, Math.min(50, params?.limit || 9));
@@ -233,6 +244,17 @@ export async function getGlobalInterviews(params?: {
     const difficulty = params?.difficulty || "ALL";
     const sort = params?.sort || "NEWEST";
 
+    if (search) {
+      const rlKey = dbUser ? `search:interviews:${dbUser.id}` : `search:interviews:anon`;
+      const rl = checkRateLimit(rlKey, {
+        limit: 30,
+        windowMs: 60 * 1000,
+      });
+      if (!rl.success) {
+        throw new Error("Search rate limit exceeded. Please slow down your queries.");
+      }
+    }
+
     // Build filter where
     const where: Prisma.GlobalInterviewTemplateWhereInput = {
       status: InterviewTemplateStatus.ACTIVE,
@@ -240,7 +262,9 @@ export async function getGlobalInterviews(params?: {
     };
 
     if (search) {
+      const normalizedQuery = GlobalInterviewTemplateService.normalizeRole(search);
       where.OR = [
+        { normalizedRole: normalizedQuery },
         { role: { contains: search, mode: "insensitive" } },
         { normalizedRole: { contains: search, mode: "insensitive" } },
       ];
@@ -315,11 +339,7 @@ export async function getGlobalInterviews(params?: {
 
 export async function getPerformanceStats() {
   return safeAction(async () => {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const dbUser = await prisma.user.findUnique({ where: { clerkId } });
-    if (!dbUser) throw new Error("User not found");
+    const dbUser = await getOrCreateDbUser();
 
     const interviews = await prisma.interviewSession.findMany({
       where: { userId: dbUser.id },

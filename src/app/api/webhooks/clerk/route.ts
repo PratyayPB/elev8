@@ -3,9 +3,23 @@ import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { prisma } from "@/lib/prisma";
 import { UserAccountDeletionService } from "@/services/user";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export async function POST(req: NextRequest) {
   try {
+    // Edge IP rate limiting: 100 requests / minute per IP
+    const clientIp = getClientIp(req);
+    const rl = checkRateLimit(`webhook:clerk:${clientIp}`, {
+      limit: 100,
+      windowMs: 60 * 1000,
+    });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Rate limit exceeded." },
+        { status: 429 }
+      );
+    }
+
     const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
     if (!WEBHOOK_SECRET) {

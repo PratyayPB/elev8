@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ResumeBuilderService } from "@/features/resume-builder/services/resume-builder.service";
 import { builderToJsonResume } from "@/features/resume-builder/adapters/builder-to-json-resume";
-import { RESUME_TEMPLATE_REGISTRY } from "@/features/resume-builder/templates/registry";
+import { renderResumeTheme } from "@/features/resume-builder/templates/registry";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { JobService } from "@/services/jobs/job.service";
 import { ModuleActivityService } from "@/features/progress/services";
@@ -44,19 +44,15 @@ export const compileResumeTemplateTask = schemaTask({
     metadata.set("progress", 50);
     await JobService.updateProgress(jobId, 50, "Compiling Template HTML");
 
-    const renderer =
-      RESUME_TEMPLATE_REGISTRY[template] ||
-      RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
     let themeHtml: string;
     try {
-      themeHtml = await renderer(jsonResume);
+      themeHtml = await renderResumeTheme(template, jsonResume);
     } catch (renderError) {
       console.warn(
         `Template render failed for "${template}", falling back to academic-cv-lite:`,
         renderError
       );
-      const fallbackRenderer = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-      themeHtml = await fallbackRenderer(jsonResume);
+      themeHtml = await renderResumeTheme("academic-cv-lite", jsonResume);
     }
 
     metadata.set("status", "Caching Rendered Preview");

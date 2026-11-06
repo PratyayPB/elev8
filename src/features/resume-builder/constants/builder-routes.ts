@@ -9,4 +9,8 @@ export const BUILDER_API = {
   RESUME: (resumeId: string) => `/api/builder/resumes/${resumeId}`,
   ARTIFACT: (resumeId: string) => `/api/builder/resumes/${resumeId}/artifact`,
   IMPORT_PROFILE: (resumeId: string) => `/api/builder/resumes/${resumeId}/import-profile`,
+  DOWNLOAD_PDF: (resumeId: string, token?: string) =>
+    token
+      ? `/api/builder/resumes/${resumeId}/download?token=${token}`
+      : `/api/builder/resumes/${resumeId}/download`,
 };

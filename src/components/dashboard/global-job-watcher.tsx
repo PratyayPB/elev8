@@ -8,6 +8,7 @@ import { checkBackgroundJobStatusAction, getJobRealtimeTokenAction } from "@/ser
 import { sendNotification } from "@/features/notifications/notification-sender";
 import { NotificationType } from "@/features/notifications/types";
 import { RealtimeJobSubscriber } from "./realtime-job-subscriber";
+import { downloadFileFromUrl } from "@/lib/download";
 
 export function mapServiceTypeToNotificationType(
   serviceType: BackgroundServiceType
@@ -85,22 +86,37 @@ export function GlobalJobWatcher() {
             const { status, viewUrl, error } = res.data;
 
             if (status === "COMPLETED") {
-              const targetUrl = viewUrl || job.viewUrl;
+              const isPdfExport = job.autoDownloadPdf || job.serviceName.includes("PDF");
+              const targetUrl = job.viewUrl;
+              const notificationActionUrl = isPdfExport ? (targetUrl ?? null) : (viewUrl || targetUrl);
+
+              if (isPdfExport && viewUrl && (viewUrl.startsWith("http") || viewUrl.startsWith("/"))) {
+                downloadFileFromUrl(viewUrl, "resume.pdf").catch((err) =>
+                  console.warn("[GlobalJobWatcher] Auto-download failed:", err)
+                );
+              }
               
               await sendNotification({
                 title: `${job.serviceName} Ready`,
                 message: `Your ${job.serviceName.toLowerCase()} has finished processing and is ready to review.`,
                 type: mapServiceTypeToNotificationType(job.serviceType),
-                actionUrl: targetUrl,
+                actionUrl: notificationActionUrl,
                 idempotencyKey: `job-completed-${job.id}`,
                 showToast: false,
               });
 
               toast.success(`${job.serviceName} Completed`, {
-                description: `Your ${job.serviceName.toLowerCase()} has finished processing and is ready.`,
-                duration: 7000,
+                description: isPdfExport && viewUrl
+                  ? "Your PDF has been generated and your download has started."
+                  : `Your ${job.serviceName.toLowerCase()} has finished processing and is ready.`,
+                duration: 9000,
                 skipDb: true,
-                action: targetUrl
+                action: isPdfExport && viewUrl
+                  ? {
+                      label: "Download Again",
+                      onClick: () => downloadFileFromUrl(viewUrl, "resume.pdf"),
+                    }
+                  : targetUrl
                   ? {
                       label: "View",
                       onClick: () => router.push(targetUrl),
