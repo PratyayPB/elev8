@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../node_modules/puppeteer-core/src/util/version.ts"],
-  "sourcesContent": ["/**\n * @license\n * Copyright 2025 Google Inc.\n * SPDX-License-Identifier: Apache-2.0\n */\n\n// If moved update release-please config\n// x-release-please-start-version\nexport const packageVersion = '25.7.0';\n// x-release-please-end\n"],
-  "mappings": ";;;;;AAAA;AAQO,IAAM,iBAAiB;",
-  "names": []
-}

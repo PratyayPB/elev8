@@ -23,6 +23,12 @@ export interface InterviewSessionState {
   clearSession: () => void;
 }
 
+const fallbackStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
 export const useInterviewSessionStore = create<InterviewSessionState>()(
   persist(
     (set, get) => ({
@@ -175,7 +181,11 @@ export const useInterviewSessionStore = create<InterviewSessionState>()(
     }),
     {
       name: "elev8-active-interview-session",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" && typeof window.sessionStorage !== "undefined"
+          ? window.sessionStorage
+          : fallbackStorage
+      ),
       partialize: (state) => ({
         status: state.status,
         currentQuestionIndex: state.currentQuestionIndex,

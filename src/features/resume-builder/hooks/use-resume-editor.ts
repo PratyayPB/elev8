@@ -79,48 +79,6 @@ export function useResumeEditor({
 
   const draftKey = `elev8:resume_draft:${resumeId}`;
 
-  // Check for unsaved local draft on initial mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(draftKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.artifact) {
-          setArtifact(parsed.artifact);
-          setSaveStatus("dirty");
-          toast.info("Restored unsaved local draft from your previous session", {
-            action: {
-              label: "Save Now",
-              onClick: () => {
-                save();
-              },
-            },
-          });
-        }
-      }
-    } catch (err) {
-      console.warn("[useResumeEditor] Failed to check local draft:", err);
-    }
-  }, [draftKey]);
-
-  // Sync dirty draft to localStorage write-ahead log
-  useEffect(() => {
-    if (saveStatus === "dirty" && typeof window !== "undefined") {
-      try {
-        localStorage.setItem(
-          draftKey,
-          JSON.stringify({
-            artifact,
-            savedAt: Date.now(),
-          })
-        );
-      } catch (err) {
-        console.warn("[useResumeEditor] Failed to write local draft:", err);
-      }
-    }
-  }, [artifact, saveStatus, draftKey]);
-
   const save = useCallback(async (): Promise<boolean> => {
     setSaveStatus("saving");
     setSaveError(null);
@@ -169,9 +127,52 @@ export function useResumeEditor({
       const msg = err instanceof Error ? err.message : "Failed to save changes.";
       setSaveError(msg);
       setSaveStatus("error");
+      toast.error(msg);
       return false;
     }
-  }, [resumeId]);
+  }, [resumeId, draftKey]);
+
+  // Check for unsaved local draft on initial mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.artifact) {
+          setArtifact(parsed.artifact);
+          setSaveStatus("dirty");
+          toast.info("Restored unsaved local draft from your previous session", {
+            action: {
+              label: "Save Now",
+              onClick: () => {
+                save();
+              },
+            },
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("[useResumeEditor] Failed to check local draft:", err);
+    }
+  }, [draftKey, save]);
+
+  // Sync dirty draft to localStorage write-ahead log
+  useEffect(() => {
+    if (saveStatus === "dirty" && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({
+            artifact,
+            savedAt: Date.now(),
+          })
+        );
+      } catch (err) {
+        console.warn("[useResumeEditor] Failed to write local draft:", err);
+      }
+    }
+  }, [artifact, saveStatus, draftKey]);
 
   const markDirty = useCallback(() => {
     setSaveStatus("dirty");

@@ -40,11 +40,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     return NextResponse.json(jsonResponse);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ResumeUploadRoute] Error authorizing client upload:", error);
-    return NextResponse.json(
-      { error: error?.message || "Failed to authorize file upload." },
-      { status: 400 }
-    );
+    const msg = error instanceof Error ? error.message : "Failed to authorize file upload.";
+    let status = 400;
+    if (msg.includes("Unauthorized") || msg.includes("sign in")) {
+      status = 401;
+    } else if (msg.includes("Quota exceeded") || msg.includes("Rate limit")) {
+      status = 429;
+    }
+    return NextResponse.json({ error: msg }, { status });
   }
 }

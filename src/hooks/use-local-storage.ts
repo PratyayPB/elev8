@@ -30,19 +30,28 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
-        setStoredValue((prev) => {
-          const nextValue = value instanceof Function ? value(prev) : value;
-          if (typeof window !== "undefined") {
-            window.localStorage.setItem(key, JSON.stringify(nextValue));
-          }
-          return nextValue;
-        });
+        setStoredValue((prev) =>
+          typeof value === "function" ? (value as (val: T) => T)(prev) : value
+        );
       } catch (err) {
         console.warn(`[useLocalStorage] Write error for key "${key}":`, err);
       }
     },
     [key]
   );
+
+  // Synchronize state changes to localStorage as a pure side-effect after render
+  useEffect(() => {
+    if (!isHydrated || typeof window === "undefined") return;
+    try {
+      const serialized = JSON.stringify(storedValue);
+      if (window.localStorage.getItem(key) !== serialized) {
+        window.localStorage.setItem(key, serialized);
+      }
+    } catch (err) {
+      console.warn(`[useLocalStorage] Write error for key "${key}":`, err);
+    }
+  }, [key, storedValue, isHydrated]);
 
   // Cross-tab synchronization
   useEffect(() => {
