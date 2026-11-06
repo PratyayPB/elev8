@@ -25,25 +25,38 @@ function mapExperienceLevel(level: string): CareerExperienceLevel {
   return CareerExperienceLevel.MID;
 }
 
-export async function createResumeAssessmentJob(formData: FormData) {
+export type CreateResumeAssessmentInput =
+  | FormData
+  | {
+      blobUrl?: string;
+      file?: File;
+      role: string;
+      roleDescription?: string;
+      experienceLevel: string;
+      includeProfile?: boolean;
+    };
+
+export async function createResumeAssessmentJob(input: CreateResumeAssessmentInput) {
   return safeAction(async () => {
     const dbUser = await getOrCreateDbUser();
 
-    const rawFile = formData.get("file");
-    const rawRole = formData.get("role");
-    const rawRoleDesc = formData.get("roleDescription");
-    const rawExp = formData.get("experienceLevel");
-    const rawIncludeProfile = formData.get("includeProfile");
+    const isFormData = typeof FormData !== "undefined" && input instanceof FormData;
 
-    const validatedInput = ServerResumeAssessmentSchema.parse({
-      file: rawFile,
-      role: rawRole,
-      roleDescription: rawRoleDesc ? String(rawRoleDesc) : undefined,
-      experienceLevel: rawExp,
-      includeProfile: rawIncludeProfile === "true",
-    });
+    const validatedInput = isFormData
+      ? ServerResumeAssessmentSchema.parse({
+          blobUrl: input.get("blobUrl") ? String(input.get("blobUrl")) : undefined,
+          file: (() => {
+            const f = input.get("file");
+            return f && typeof (f as any).arrayBuffer === "function" ? (f as File) : undefined;
+          })(),
+          role: input.get("role") ? String(input.get("role")) : undefined,
+          roleDescription: input.get("roleDescription") ? String(input.get("roleDescription")) : undefined,
+          experienceLevel: input.get("experienceLevel") ? String(input.get("experienceLevel")) : undefined,
+          includeProfile: input.get("includeProfile") === "true",
+        })
+      : ServerResumeAssessmentSchema.parse(input);
 
-    const { file, role, roleDescription, experienceLevel, includeProfile } = validatedInput;
+    const { blobUrl, file, role, roleDescription, experienceLevel, includeProfile } = validatedInput;
 
     // Rate limit: 10 uploads / day, max 3 / 10 minutes
     await UserQuotaService.assertResumeUploadQuota(dbUser.id);
@@ -101,32 +114,38 @@ export async function createResumeAssessmentJob(formData: FormData) {
       return [createdResume, createdJob];
     });
 
-    // 2. Upload original PDF to Vercel Blob with automatic cleanup if failed
+    // 2. Resolve original PDF blob URL: use direct-uploaded URL or fallback to server-side buffer upload
     let originalPdfBlobUrl: string;
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const pdfBlobPath = `resumes/originals/${dbUser.id}_${resume.id}_${Date.now()}.pdf`;
-      originalPdfBlobUrl = await BlobStorageService.uploadBuffer(
-        pdfBlobPath,
-        buffer,
-        "application/pdf"
-      );
-    } catch (uploadError) {
-      await prisma.$transaction([
-        prisma.resumeScore.update({
-          where: { id: resume.id },
-          data: { status: ResumeScoreStatus.FAILED },
-        }),
-        prisma.job.update({
-          where: { id: job.id },
-          data: {
-            status: JobStatus.FAILED,
-            error: "Failed to upload resume file to storage",
-          },
-        }),
-      ]);
-      throw uploadError;
+    if (blobUrl) {
+      originalPdfBlobUrl = blobUrl;
+    } else if (file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const pdfBlobPath = `resumes/originals/${dbUser.id}_${resume.id}_${Date.now()}.pdf`;
+        originalPdfBlobUrl = await BlobStorageService.uploadBuffer(
+          pdfBlobPath,
+          buffer,
+          "application/pdf"
+        );
+      } catch (uploadError) {
+        await prisma.$transaction([
+          prisma.resumeScore.update({
+            where: { id: resume.id },
+            data: { status: ResumeScoreStatus.FAILED },
+          }),
+          prisma.job.update({
+            where: { id: job.id },
+            data: {
+              status: JobStatus.FAILED,
+              error: "Failed to upload resume file to storage",
+            },
+          }),
+        ]);
+        throw uploadError;
+      }
+    } else {
+      throw new Error("No PDF file or blobUrl provided");
     }
 
     await ModuleActivityService.recordActivity({

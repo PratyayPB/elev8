@@ -8,10 +8,12 @@ import { Loader2, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { normalizeError } from "@/lib/error-handler";
 import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+import { upload } from "@vercel/blob/client";
 
 export function ReviewStep() {
   const { requestData, prevStep, setStep, reset } = useResumeRequestStore();
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const router = useRouter();
   const { runWorkflow, isInitiating } = useBackgroundWorkflow();
 
@@ -27,23 +29,33 @@ export function ReviewStep() {
         return;
       }
 
-      // 2. Prepare FormData payload for Server Action
-      const formData = new FormData();
-      formData.append("file", finalRequest.uploadedFile);
-      formData.append("role", finalRequest.role);
-      if (finalRequest.roleDescription) {
-        formData.append("roleDescription", finalRequest.roleDescription);
-      }
-      formData.append("experienceLevel", finalRequest.experienceLevel);
-      const includeProfile = !finalRequest.personalization.skipped && Boolean(finalRequest.personalization.profile);
-      formData.append("includeProfile", includeProfile ? "true" : "false");
+      // 2. Direct client-to-storage upload bypassing Next.js server buffering
+      setUploadProgress(0);
+      const blob = await upload(finalRequest.uploadedFile.name, finalRequest.uploadedFile, {
+        access: "public",
+        handleUploadUrl: "/api/resumes/upload",
+        onUploadProgress: (progress) => {
+          setUploadProgress(progress.percentage);
+        },
+      });
+      setUploadProgress(null);
 
-      // 3. Trigger Server Action through unified background workflow hook
+      const includeProfile =
+        !finalRequest.personalization.skipped && Boolean(finalRequest.personalization.profile);
+
+      // 3. Trigger Server Action with direct blobUrl
       await runWorkflow({
         serviceName: "Resume Analysis",
         serviceType: "RESUME_SCORE",
         initiationMessage: "Initiating the workflow...",
-        execute: async () => await createResumeAssessmentJob(formData),
+        execute: async () =>
+          await createResumeAssessmentJob({
+            blobUrl: blob.url,
+            role: finalRequest.role,
+            roleDescription: finalRequest.roleDescription,
+            experienceLevel: finalRequest.experienceLevel,
+            includeProfile,
+          }),
         extractJobId: (res) => (res.success ? res.data.jobId || res.data.resumeId : undefined),
         defaultViewUrl: "/dashboard/resumes",
         onInitiated: () => {
@@ -55,6 +67,7 @@ export function ReviewStep() {
         },
       });
     } catch (err: any) {
+      setUploadProgress(null);
       console.error(err);
       const appError = normalizeError(err);
       setError(appError.message);
@@ -182,7 +195,7 @@ export function ReviewStep() {
         <button
           type="button"
           onClick={prevStep}
-          disabled={isInitiating}
+          disabled={isInitiating || uploadProgress !== null}
           className="px-5 py-2.5 rounded-xl font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle disabled:opacity-50"
         >
           Back
@@ -191,10 +204,15 @@ export function ReviewStep() {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isInitiating}
+          disabled={isInitiating || uploadProgress !== null}
           className="flex items-center px-6 py-2.5 rounded-xl font-display font-semibold text-white dark:text-brand-primary-900 bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-[0.98]"
         >
-          {isInitiating ? (
+          {uploadProgress !== null ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              {uploadProgress > 0 ? `Uploading (${uploadProgress}%)...` : "Uploading resume..."}
+            </>
+          ) : isInitiating ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               Initiating...

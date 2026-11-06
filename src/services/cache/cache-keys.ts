@@ -36,6 +36,10 @@ export const CacheKeys = {
     `${getEnvPrefix()}:artifact:roadmap:${roadmapId}`,
   resumeReport: (resumeId: string) =>
     `${getEnvPrefix()}:artifact:resume:${resumeId}`,
+  interviewArtifact: (interviewId: string) =>
+    `${getEnvPrefix()}:artifact:interview:${interviewId}`,
+  resumeBuilderArtifact: (resumeId: string) =>
+    `${getEnvPrefix()}:artifact:resume-builder:${resumeId}`,
 
   // Notifications
   unreadNotificationCount: (userId: string) =>

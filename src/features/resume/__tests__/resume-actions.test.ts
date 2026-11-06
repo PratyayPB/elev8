@@ -40,7 +40,7 @@ export async function runResumeActionsTests() {
     arrayBuffer: async () => new ArrayBuffer(50),
   };
 
-  // Valid schema parsing
+  // Valid schema parsing with File
   const validResult = ServerResumeAssessmentSchema.safeParse({
     file: validFile,
     role: "Full Stack Engineer",
@@ -49,6 +49,23 @@ export async function runResumeActionsTests() {
     includeProfile: true,
   });
   assert.strictEqual(validResult.success, true, "Valid input should parse successfully");
+
+  // Valid schema parsing with direct blobUrl (bypassing server memory buffering)
+  const validBlobUrlResult = ServerResumeAssessmentSchema.safeParse({
+    blobUrl: "https://store.blob.vercel-storage.com/resumes/originals/user_123.pdf",
+    role: "Full Stack Engineer",
+    roleDescription: "Experienced in React and Node.js",
+    experienceLevel: "Intermediate",
+    includeProfile: true,
+  });
+  assert.strictEqual(validBlobUrlResult.success, true, "Valid direct blobUrl input should parse successfully");
+
+  // Missing both file and blobUrl
+  const missingBothResult = ServerResumeAssessmentSchema.safeParse({
+    role: "Full Stack Engineer",
+    experienceLevel: "Intermediate",
+  });
+  assert.strictEqual(missingBothResult.success, false, "Missing both file and blobUrl must be rejected");
 
   // Invalid role (too short)
   const invalidRoleResult = ServerResumeAssessmentSchema.safeParse({
@@ -108,16 +125,23 @@ export async function runResumeActionsTests() {
   console.log("✔ Server-side schema validation rules verified.");
 
   // ----------------------------------------------------
-  // 3. createResumeAssessmentJob Action Validation on FormData
+  // 3. createResumeAssessmentJob Action Validation on FormData & Object
   // ----------------------------------------------------
-  console.log("3. Testing createResumeAssessmentJob rejects invalid FormData...");
+  console.log("3. Testing createResumeAssessmentJob rejects invalid inputs...");
 
   const emptyFormData = new FormData();
   const createEmptyRes = await createResumeAssessmentJob(emptyFormData);
   assert.strictEqual(createEmptyRes.success, false, "createResumeAssessmentJob must fail on empty FormData");
   assert.ok(createEmptyRes.error, "Should return an AppError structure");
 
-  console.log("✔ Empty FormData rejected safely by server action.");
+  const createEmptyObjRes = await createResumeAssessmentJob({
+    role: "Full Stack Engineer",
+    experienceLevel: "Intermediate",
+  });
+  assert.strictEqual(createEmptyObjRes.success, false, "createResumeAssessmentJob must fail on missing blobUrl/file object");
+  assert.ok(createEmptyObjRes.error, "Should return an AppError structure");
+
+  console.log("✔ Invalid FormData and missing blob/file object inputs rejected safely by server action.");
 
   // ----------------------------------------------------
   // 4. Unauthenticated Session Rejection

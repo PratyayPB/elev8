@@ -16,6 +16,7 @@ import {
   ModuleActivityEventType,
 } from "@/features/progress/types";
 import { normalizeError, safeAction } from "@/lib/error-handler";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 
 /**
  * Fetches the interview metadata and its corresponding Blob artifact.
@@ -43,7 +44,13 @@ export async function fetchSessionArtifact(interviewId: string) {
 
     let artifact: InterviewArtifact;
     try {
-      artifact = await BlobStorageService.fetchJson<InterviewArtifact>(interview.blobUrl);
+      artifact = await CacheService.getOrSet(
+        CacheKeys.interviewArtifact(sanitizedId),
+        async () => {
+          return await BlobStorageService.fetchJson<InterviewArtifact>(interview.blobUrl!);
+        },
+        interview.status === InterviewStatus.COMPLETED ? CacheTTL.ARTIFACT : CacheTTL.MEDIUM
+      );
     } catch (error: unknown) {
       if (error instanceof Error && error.message.includes("Not Found")) {
         await prisma.interviewSession.update({
@@ -113,6 +120,13 @@ export async function saveSessionProgress(
     const newBlobUrl = await BlobStorageService.upsertJson(
       `interviews/${sanitizedId}.json`,
       artifact
+    );
+
+    // Keep cache fresh in Redis
+    await CacheService.set(
+      CacheKeys.interviewArtifact(sanitizedId),
+      artifact,
+      CacheTTL.MEDIUM
     );
 
     await prisma.interviewSession.update({
@@ -196,6 +210,9 @@ export async function submitInterview(
       `interviews/${sanitizedId}.json`,
       artifact
     );
+
+    // Invalidate in-progress cache entry until background assessment completes
+    await CacheService.del(CacheKeys.interviewArtifact(sanitizedId));
 
     await prisma.interviewSession.update({
       where: { id: sanitizedId },

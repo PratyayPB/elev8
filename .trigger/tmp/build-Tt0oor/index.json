@@ -1,0 +1,715 @@
+{
+  "concurrencyLimits": [
+  ],
+  "configPath": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\trigger.config.mjs",
+  "customConditions": [
+  ],
+  "prompts": [
+  ],
+  "queues": [
+  ],
+  "runtime": "node-24",
+  "runtimeVersion": "23.6.1",
+  "skills": [
+  ],
+  "tasks": [
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\generate-assessment.mjs",
+      "filePath": "src/trigger/generate-assessment.ts",
+      "id": "generate-assessment",
+      "machine": {
+        "preset": "micro"
+      },
+      "maxDuration": 300,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "assessmentId": {
+            "type": "string"
+          },
+          "profileVersion": {
+            "type": "number"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assessmentId",
+          "userId",
+          "profileVersion"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 10
+      },
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\generate-interview.mjs",
+      "filePath": "src/trigger/generate-interview.ts",
+      "id": "generate-interview",
+      "machine": {
+        "preset": "micro"
+      },
+      "maxDuration": 300,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "globalInterviewTemplateId": {
+            "type": "string"
+          },
+          "interviewId": {
+            "type": "string"
+          },
+          "interviewTemplateId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "request": {
+            "additionalProperties": false,
+            "properties": {
+              "difficulty": {
+                "enum": [
+                  "Easy",
+                  "Medium",
+                  "Hard"
+                ],
+                "type": "string"
+              },
+              "experienceLevel": {
+                "enum": [
+                  "Beginner",
+                  "Basic",
+                  "Intermediate",
+                  "Advanced"
+                ],
+                "type": "string"
+              },
+              "interviewType": {
+                "enum": [
+                  "Quick Practice",
+                  "Standard Interview",
+                  "Comprehensive Interview",
+                  "Mock Final Round"
+                ],
+                "type": "string"
+              },
+              "personalization": {
+                "additionalProperties": false,
+                "properties": {
+                  "profile": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "currentRole": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "currentStatus": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "fieldOfStudy": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "highestQualification": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "primaryGoal": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "targetCompanyType": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "yearsOfExperience": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "skipped": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "skipped"
+                ],
+                "type": "object"
+              },
+              "profileId": {
+                "type": "string"
+              },
+              "questionCount": {
+                "maximum": 30,
+                "minimum": 1,
+                "type": "number"
+              },
+              "resumeId": {
+                "type": "string"
+              },
+              "roadmapId": {
+                "type": "string"
+              },
+              "role": {
+                "maxLength": 100,
+                "minLength": 2,
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "experienceLevel",
+              "difficulty",
+              "interviewType",
+              "personalization"
+            ],
+            "type": "object"
+          },
+          "templateSource": {
+            "default": "GLOBAL",
+            "enum": [
+              "USER_CREATED",
+              "GLOBAL"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "interviewId",
+          "jobId",
+          "userId",
+          "request"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 10
+      },
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\generate-roadmap.mjs",
+      "filePath": "src/trigger/generate-roadmap.ts",
+      "id": "generate-roadmap",
+      "machine": {
+        "preset": "micro"
+      },
+      "maxDuration": 300,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "experienceLevel": {
+            "enum": [
+              "Beginner",
+              "Basic",
+              "Intermediate",
+              "Advanced"
+            ],
+            "type": "string"
+          },
+          "isGlobal": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "normalizedRole": {
+            "type": "string"
+          },
+          "personalization": {
+            "additionalProperties": false,
+            "properties": {
+              "profileContext": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "currentRole": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "currentStatus": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "existingSkills": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "proficiency": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "proficiency"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "fieldOfStudy": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "highestQualification": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "primaryGoal": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "targetCompanyType": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "weeklyLearningHours": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "yearsOfExperience": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "currentStatus",
+                      "currentRole",
+                      "yearsOfExperience",
+                      "highestQualification",
+                      "fieldOfStudy",
+                      "targetCompanyType",
+                      "weeklyLearningHours",
+                      "existingSkills"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "skipped": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "skipped"
+            ],
+            "type": "object"
+          },
+          "roadmapId": {
+            "type": "string"
+          },
+          "role": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "experienceLevel",
+          "personalization"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 10
+      },
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\index.mjs",
+      "filePath": "src/trigger/index.ts",
+      "id": "assess-interview",
+      "machine": {
+        "preset": "micro"
+      },
+      "maxDuration": 300,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "interviewId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId",
+          "interviewId"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 10
+      },
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 60000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\index.mjs",
+      "filePath": "src/trigger/index.ts",
+      "id": "assess-resume",
+      "machine": {
+        "preset": "small-1x"
+      },
+      "maxDuration": 300,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "experienceLevel": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "originalPdfBlobUrl": {
+            "type": "string"
+          },
+          "profile": {
+            "additionalProperties": false,
+            "properties": {
+              "currentRole": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "currentStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "desiredSkills": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fieldOfStudy": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "highestQualification": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "primaryGoal": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "skills": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "targetCompanyType": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "yearsOfExperience": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "resumeId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "roleDescription": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "resumeId",
+          "jobId",
+          "userId",
+          "role",
+          "experienceLevel",
+          "originalPdfBlobUrl"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 8
+      },
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\index.mjs",
+      "filePath": "src/trigger/index.ts",
+      "id": "build-ai-resume",
+      "machine": {
+        "preset": "micro"
+      },
+      "maxDuration": 300,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "jobDescription": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "resumeId": {
+            "type": "string"
+          },
+          "targetCompany": {
+            "type": "string"
+          },
+          "targetCompanyType": {
+            "enum": [
+              "STARTUP",
+              "PRODUCT_COMPANY",
+              "CONSULTING",
+              "FAANG_ENTERPRISE",
+              "GOVERNMENT",
+              "NON_PROFIT",
+              "AGENCY",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "targetJobTitle": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "resumeId",
+          "userId",
+          "targetJobTitle",
+          "jobDescription"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 10
+      },
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000,
+        "randomize": true
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\index.mjs",
+      "filePath": "src/trigger/index.ts",
+      "id": "compile-resume-template",
+      "machine": {
+        "preset": "small-1x"
+      },
+      "maxDuration": 45,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "resumeId": {
+            "type": "string"
+          },
+          "template": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "resumeId",
+          "userId",
+          "jobId",
+          "template"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 10
+      }
+    },
+    {
+      "entryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\index.mjs",
+      "filePath": "src/trigger/index.ts",
+      "id": "export-resume-pdf",
+      "machine": {
+        "preset": "medium-2x"
+      },
+      "maxDuration": 60,
+      "payloadSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "resumeId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "resumeId",
+          "userId",
+          "jobId"
+        ],
+        "type": "object"
+      },
+      "queue": {
+        "concurrencyLimit": 5
+      }
+    }
+  ],
+  "timings": {
+    "src/features/resume-builder/workers/node-theme-renderer.ts": 7.412799999999947,
+    "src/trigger/assess-interview.ts": 2.5874999999998636,
+    "src/trigger/assess-resume.ts": 1.34050000000002,
+    "src/trigger/build-ai-resume.ts": 1.3553000000001703,
+    "src/trigger/compile-resume-template.ts": 1.1356000000000677,
+    "src/trigger/export-resume-pdf.ts": 4.970800000000054,
+    "src/trigger/generate-assessment.ts": 171.53340000000003,
+    "src/trigger/generate-interview.ts": 160.41020000000003,
+    "src/trigger/generate-roadmap.ts": 20.607299999999896,
+    "src/trigger/index.ts": 82.91469999999981
+  },
+  "unclaimedSessionWebhooks": [
+  ],
+  "webhookEndpoints": [
+  ],
+  "webhookSubscribers": [
+  ],
+  "workerEntryPoint": "D:\\Portfolio-projects\\elev8-prod\\.trigger\\tmp\\build-Tt0oor\\dev-run-worker.mjs"
+}

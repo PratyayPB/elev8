@@ -9,6 +9,22 @@ Phase 7: User Onboarding & Dashboard System
 Phase 7.2: Release & Production Verification
 
 ## Completed
+- [x] **Direct Storage Uploads & Artifact Caching Optimization**:
+  - **Direct Client-to-Storage PDF Upload (`@vercel/blob/client`)**:
+    - Created authorized upload route handler at [`src/app/api/resumes/upload/route.ts`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/resumes/upload/route.ts) with Clerk authentication, `UserQuotaService` verification, 10MB file limit, and strict `application/pdf` MIME type enforcement.
+    - Updated `ServerResumeAssessmentSchema` in [`src/features/resume/schemas/resume-request.schema.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/schemas/resume-request.schema.ts) to accept direct `blobUrl` alongside legacy `file` inputs with mutual requirement validation.
+    - Refactored `createResumeAssessmentJob` in [`src/features/resume/actions/resume-actions.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/actions/resume-actions.ts) to accept `{ blobUrl, role, ... }` or `FormData`. Direct client uploads completely bypass Node.js memory buffering (`file.arrayBuffer()`, `Buffer.from(...)`) and avoid secondary network hops.
+    - Integrated `@vercel/blob/client` `upload()` into [`ReviewStep`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-upload/review-step.tsx) with native percentage upload progress and UI feedback, streaming directly to Vercel Blob before dispatching the background assessment job.
+  - **Eliminated Double-Hop Waterfall on Stored Artifacts (Redis Caching)**:
+    - Added `interviewArtifact` and `resumeBuilderArtifact` key builders to [`src/services/cache/cache-keys.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/cache/cache-keys.ts).
+    - Wrapped remote blob fetches (`BlobStorageService.fetchJson`) in `fetchSessionArtifact` ([`session-actions.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/actions/session-actions.ts)) with Redis caching (4h for completed sessions, 5m for active sessions).
+    - Synchronized Redis cache on session autosaves via `saveSessionProgress` and invalidated cached in-progress entries upon submission in `submitInterview`.
+    - Pre-warmed Redis cache in `AssessmentArtifactService.finalizeAssessment` ([`assessment-artifact.service.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/services/assessment-artifact.service.ts)) to provide instant 0ms latency when navigating to completed interview report pages.
+    - Wrapped remote blob fetches in `getResumeArtifact` ([`resume-builder.service.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/services/resume-builder.service.ts)) with Redis caching (`CacheTTL.ARTIFACT`), with write-through invalidation/updates on `updateResumeArtifact` and `deleteResume`.
+  - **Verification & Testing**:
+    - Verified strict type checking across the entire project with `npx tsc --noEmit` (0 errors).
+    - Validated all Resume Server Action and schema test suites (`node:assert` + `tsx`) passing 100%.
+    - Verified full Next.js production build (`npm run build`) succeeded with exit code 0 and all 26 routes generated cleanly.
 - [x] **Web Storage Resilience & Multi-Layer Memoization**:
   - **Active Interview Crash Resilience (`sessionStorage` + Zustand `persist`)**:
     - Upgraded [`src/features/interview/hooks/use-interview-session.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/hooks/use-interview-session.ts) with Zustand `persist` using `sessionStorage` (`elev8-active-interview-session`).

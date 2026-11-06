@@ -41,36 +41,53 @@ export const ResumeRequestSchema = ResumeStage1Schema.extend({
   }),
 });
 
-export const ServerResumeAssessmentSchema = z.object({
-  role: z
-    .string({ required_error: "Target role is required" })
-    .trim()
-    .min(2, "Target role must be at least 2 characters")
-    .max(100, "Target role must be 100 characters or less"),
-  roleDescription: z.string().trim().max(5000, "Role description too long").optional(),
-  experienceLevel: z.enum(RESUME_EXPERIENCE_LEVELS, {
-    required_error: "Please select a valid experience level",
-  }),
-  includeProfile: z.boolean().default(false),
-  file: z
-    .custom<File>(
-      (val) => val !== null && typeof val === "object" && typeof (val as any).arrayBuffer === "function",
-      { message: "A valid PDF file is required" }
-    )
-    .refine(
-      (file) => {
-        const type = (file as any).type;
-        const name = (file as any).name;
-        return type === "application/pdf" || (typeof name === "string" && name.toLowerCase().endsWith(".pdf"));
-      },
-      { message: "Only PDF files are supported" }
-    )
-    .refine((file) => (file as any).size > 0, {
-      message: "Uploaded file cannot be empty",
-    })
-    .refine((file) => (file as any).size <= MAX_FILE_SIZE_BYTES, {
-      message: "File size must be 10 MB or less",
+export const ServerResumeAssessmentSchema = z
+  .object({
+    role: z
+      .string({ required_error: "Target role is required" })
+      .trim()
+      .min(2, "Target role must be at least 2 characters")
+      .max(100, "Target role must be 100 characters or less"),
+    roleDescription: z.string().trim().max(5000, "Role description too long").optional(),
+    experienceLevel: z.enum(RESUME_EXPERIENCE_LEVELS, {
+      required_error: "Please select a valid experience level",
     }),
-});
+    includeProfile: z.boolean().default(false),
+    blobUrl: z
+      .string()
+      .url("Invalid blob URL")
+      .refine(
+        (url) => url.includes(".blob.vercel-storage.com") || url.startsWith("https://"),
+        { message: "Invalid blob storage URL" }
+      )
+      .optional(),
+    file: z
+      .custom<File>(
+        (val) => val !== null && typeof val === "object" && typeof (val as any).arrayBuffer === "function",
+        { message: "A valid PDF file is required" }
+      )
+      .refine(
+        (file) => {
+          const type = (file as any).type;
+          const name = (file as any).name;
+          return (
+            type === "application/pdf" ||
+            (typeof name === "string" && name.toLowerCase().endsWith(".pdf"))
+          );
+        },
+        { message: "Only PDF files are supported" }
+      )
+      .refine((file) => (file as any).size > 0, {
+        message: "Uploaded file cannot be empty",
+      })
+      .refine((file) => (file as any).size <= MAX_FILE_SIZE_BYTES, {
+        message: "File size must be 10 MB or less",
+      })
+      .optional(),
+  })
+  .refine((data) => data.blobUrl || data.file, {
+    message: "Either a direct blobUrl or a PDF file upload is required",
+    path: ["blobUrl"],
+  });
 
 export type ServerResumeAssessmentInput = z.infer<typeof ServerResumeAssessmentSchema>;

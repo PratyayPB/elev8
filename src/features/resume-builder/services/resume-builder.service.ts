@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { profileToResumeArtifact, mergeProfileIntoResumeArtifact } from "./profile-to-resume.mapper";
 import { createEmptyResumeArtifact } from "../utils/create-empty-resume";
@@ -298,6 +299,9 @@ export class ResumeBuilderService {
         console.warn(`Failed to delete blob artifact for resume ${resumeId}:`, err);
       });
     }
+
+    // Purge cached artifact from Redis
+    await CacheService.del(CacheKeys.resumeBuilderArtifact(resumeId));
   }
 
   /**
@@ -320,8 +324,14 @@ export class ResumeBuilderService {
     }
 
     try {
-      const artifact = await BlobStorageService.fetchJson<BuilderResumeArtifact>(
-        resume.artifactBlobUrl
+      const artifact = await CacheService.getOrSet(
+        CacheKeys.resumeBuilderArtifact(resumeId),
+        async () => {
+          return await BlobStorageService.fetchJson<BuilderResumeArtifact>(
+            resume.artifactBlobUrl!
+          );
+        },
+        CacheTTL.ARTIFACT
       );
       return artifact;
     } catch (error) {
@@ -392,6 +402,13 @@ export class ResumeBuilderService {
           artifactBlobUrl: updatedBlobUrl,
         },
       });
+
+      // Update cache in Redis with freshly saved artifact
+      await CacheService.set(
+        CacheKeys.resumeBuilderArtifact(resumeId),
+        validArtifact,
+        CacheTTL.ARTIFACT
+      );
 
       return {
         artifact: validArtifact,

@@ -2,6 +2,7 @@ import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { InterviewArtifact, AssessmentReport } from "../types";
 import { prisma } from "@/lib/prisma";
 import { InterviewStatus } from "@prisma/client";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 import { ModuleActivityService } from "@/features/progress/services";
 import {
   ModuleType,
@@ -54,6 +55,13 @@ export class AssessmentArtifactService {
         updatedAt: new Date(),
       },
     });
+
+    // 3.5 Prime Redis cache with completed artifact (4-hour TTL)
+    await CacheService.set(
+      CacheKeys.interviewArtifact(interviewId),
+      updatedArtifact,
+      CacheTTL.ARTIFACT
+    );
 
     // 4. Record ModuleActivity
     try {
