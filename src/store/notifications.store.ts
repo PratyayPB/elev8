@@ -1,12 +1,5 @@
 import { create } from "zustand";
 import { NotificationItemData } from "@/features/notifications/types";
-import {
-  getNotificationsAction,
-  markNotificationAsReadAction,
-  markAllNotificationsAsReadAction,
-  deleteNotificationAction,
-  clearAllNotificationsAction,
-} from "@/features/notifications/actions";
 import { toast } from "sonner";
 
 interface NotificationsState {
@@ -18,7 +11,11 @@ interface NotificationsState {
   isModalOpen: boolean;
 
   setFilter: (filter: "ALL" | "UNREAD") => void;
-  fetchNotifications: () => Promise<void>;
+  fetchNotifications: (since?: string) => Promise<void>;
+  receive: (notification: NotificationItemData) => void;
+  hydrate: (items: NotificationItemData[], unreadCount: number) => void;
+  markReadLocally: (id: string) => void;
+  markAllReadLocally: () => void;
   openNotification: (notification: NotificationItemData) => Promise<void>;
   closeModal: () => void;
   deleteNotification: (id: string) => Promise<void>;
@@ -37,36 +34,115 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   setFilter: (filter) => set({ filter }),
 
-  fetchNotifications: async () => {
+  hydrate: (items, unreadCount) => {
+    set({
+      notifications: items || [],
+      unreadCount: Math.max(0, unreadCount ?? 0),
+    });
+  },
+
+  receive: (notification) => {
+    set((state) => {
+      // Deduplicate by ID or idempotencyKey
+      const existingIndex = state.notifications.findIndex(
+        (n) =>
+          n.id === notification.id ||
+          (Boolean(notification.idempotencyKey) &&
+            Boolean(n.idempotencyKey) &&
+            n.idempotencyKey === notification.idempotencyKey)
+      );
+
+      if (existingIndex !== -1) {
+        // If already present, update in-place without duplicating
+        const updated = [...state.notifications];
+        updated[existingIndex] = { ...updated[existingIndex], ...notification };
+        return { notifications: updated };
+      }
+
+      // Prepend newly received notification and cap at 50 items
+      const nextList = [notification, ...state.notifications].slice(0, 50);
+      const isUnread = notification.status === "UNREAD";
+
+      return {
+        notifications: nextList,
+        unreadCount: isUnread ? state.unreadCount + 1 : state.unreadCount,
+      };
+    });
+  },
+
+  markReadLocally: (id) => {
+    set((state) => {
+      const item = state.notifications.find((n) => n.id === id);
+      if (!item || item.status === "READ") return state;
+
+      return {
+        notifications: state.notifications.map((n) =>
+          n.id === id ? { ...n, status: "READ", readAt: new Date() } : n
+        ),
+        unreadCount: Math.max(0, state.unreadCount - 1),
+      };
+    });
+  },
+
+  markAllReadLocally: () => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({
+        ...n,
+        status: "READ",
+        readAt: n.readAt || new Date(),
+      })),
+      unreadCount: 0,
+    }));
+  },
+
+  fetchNotifications: async (since) => {
     set({ isLoading: true });
     try {
-      // In browser environment, fetch via lightweight GET route handler
-      if (typeof window !== "undefined") {
-        const response = await fetch("/api/notifications?limit=50", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+      const url = since
+        ? `/api/notifications?limit=50&since=${encodeURIComponent(since)}`
+        : "/api/notifications?limit=50";
 
-        if (response.ok) {
-          const data = await response.json();
-          set({
-            notifications: data.notifications || [],
-            unreadCount: data.unreadCount ?? 0,
-          });
-          return;
-        }
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        // Do not fall back to Server Actions or POST. Gracefully preserve state.
+        console.warn(`[NotificationsStore] GET /api/notifications returned HTTP ${response.status}`);
+        return;
       }
 
-      // In Node.js / unit test environments or as a fallback
-      const res = await getNotificationsAction(50);
-      if (res.success && res.data) {
+      const data = await response.json();
+      const incoming: NotificationItemData[] = data.notifications || [];
+      const unreadCount: number = data.unreadCount ?? 0;
+
+      if (!since) {
         set({
-          notifications: res.data.notifications,
-          unreadCount: res.data.unreadCount,
+          notifications: incoming,
+          unreadCount,
         });
+        return;
       }
+
+      // Gap recovery merge: merge incoming items into state
+      set((state) => {
+        const existingMap = new Map(state.notifications.map((n) => [n.id, n]));
+        for (const item of incoming) {
+          existingMap.set(item.id, item);
+        }
+
+        const merged = Array.from(existingMap.values()).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ).slice(0, 50);
+
+        return {
+          notifications: merged,
+          unreadCount,
+        };
+      });
     } catch (err) {
-      console.error("[NotificationsStore] Failed to fetch notifications:", err);
+      console.error("[NotificationsStore] Failed to fetch notifications via GET:", err);
     } finally {
       set({ isLoading: false });
     }
@@ -75,7 +151,6 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   openNotification: async (notification) => {
     const isUnread = notification.status === "UNREAD";
 
-    // Open modal with the notification
     set({
       selectedNotification: {
         ...notification,
@@ -85,8 +160,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       isModalOpen: true,
     });
 
-    // If it was unread, update locally & in the database
     if (isUnread) {
+      // Optimistic update
       set((state) => ({
         notifications: state.notifications.map((item) =>
           item.id === notification.id
@@ -97,9 +172,23 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       }));
 
       try {
-        await markNotificationAsReadAction(notification.id);
+        const res = await fetch(`/api/notifications/${notification.id}`, {
+          method: "PATCH",
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
       } catch (err) {
-        console.error("[NotificationsStore] Failed to mark as read in DB:", err);
+        console.error("[NotificationsStore] Rollback: Failed to mark as read:", err);
+        // Rollback on failure
+        set((state) => ({
+          notifications: state.notifications.map((item) =>
+            item.id === notification.id
+              ? { ...item, status: "UNREAD", readAt: null }
+              : item
+          ),
+          unreadCount: state.unreadCount + 1,
+        }));
       }
     }
   },
@@ -112,41 +201,49 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   },
 
   deleteNotification: async (id: string) => {
-    const current = get().notifications.find((n) => n.id === id);
+    const previous = get().notifications;
+    const previousUnread = get().unreadCount;
+    const current = previous.find((n) => n.id === id);
     const wasUnread = current?.status === "UNREAD";
 
-    // Close modal if deleting the currently open one
     if (get().selectedNotification?.id === id) {
       set({ isModalOpen: false, selectedNotification: null });
     }
 
-    // Optimistically remove from state
+    // Optimistically remove
     set((state) => ({
       notifications: state.notifications.filter((n) => n.id !== id),
-      unreadCount: wasUnread
-        ? Math.max(0, state.unreadCount - 1)
-        : state.unreadCount,
+      unreadCount: wasUnread ? Math.max(0, state.unreadCount - 1) : state.unreadCount,
     }));
 
-    toast.success("Notification deleted", {
-      description: "The notification has been permanently removed.",
-    });
-
     try {
-      const res = await deleteNotificationAction(id);
-      if (!res.success) {
-        toast.error("Failed to delete notification from database");
+      const res = await fetch(`/api/notifications/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      toast.success("Notification deleted", {
+        description: "The notification has been permanently removed.",
+        skipDb: true,
+      } as any);
     } catch (err) {
-      console.error("[NotificationsStore] Failed to delete notification:", err);
+      console.error("[NotificationsStore] Rollback: Failed to delete notification:", err);
+      // Rollback
+      set({
+        notifications: previous,
+        unreadCount: previousUnread,
+      });
+      toast.error("Failed to delete notification", { skipDb: true } as any);
     }
   },
 
   markAllAsRead: async () => {
-    const hadUnread = get().unreadCount > 0;
-    if (!hadUnread) return;
+    const previous = get().notifications;
+    const previousUnread = get().unreadCount;
+    if (previousUnread === 0) return;
 
-    // Optimistically update
+    // Optimistically mark all read
     set((state) => ({
       notifications: state.notifications.map((n) => ({
         ...n,
@@ -156,18 +253,31 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       unreadCount: 0,
     }));
 
-    toast.success("All notifications marked as read");
-
     try {
-      await markAllNotificationsAsReadAction();
+      const res = await fetch("/api/notifications/read-all", {
+        method: "PATCH",
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      toast.success("All notifications marked as read", { skipDb: true } as any);
     } catch (err) {
-      console.error("[NotificationsStore] Failed to mark all as read:", err);
+      console.error("[NotificationsStore] Rollback: Failed to mark all as read:", err);
+      // Rollback
+      set({
+        notifications: previous,
+        unreadCount: previousUnread,
+      });
+      toast.error("Failed to mark all as read", { skipDb: true } as any);
     }
   },
 
   clearAll: async () => {
-    if (get().notifications.length === 0) return;
+    const previous = get().notifications;
+    const previousUnread = get().unreadCount;
+    if (previous.length === 0) return;
 
+    // Optimistically clear
     set({
       notifications: [],
       unreadCount: 0,
@@ -175,37 +285,26 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       selectedNotification: null,
     });
 
-    toast.success("All notifications cleared");
-
     try {
-      await clearAllNotificationsAction();
+      const res = await fetch("/api/notifications", {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      toast.success("All notifications cleared", { skipDb: true } as any);
     } catch (err) {
-      console.error("[NotificationsStore] Failed to clear notifications:", err);
+      console.error("[NotificationsStore] Rollback: Failed to clear all notifications:", err);
+      // Rollback
+      set({
+        notifications: previous,
+        unreadCount: previousUnread,
+      });
+      toast.error("Failed to clear notifications", { skipDb: true } as any);
     }
   },
 
   addNotificationLocally: (notification) => {
-    set((state) => {
-      // Prevent duplicate entry if already present by id or idempotencyKey
-      const alreadyExists = state.notifications.some(
-        (n) =>
-          n.id === notification.id ||
-          (notification.idempotencyKey &&
-            n.idempotencyKey &&
-            n.idempotencyKey === notification.idempotencyKey)
-      );
-
-      if (alreadyExists) {
-        return state;
-      }
-
-      return {
-        notifications: [notification, ...state.notifications],
-        unreadCount:
-          notification.status === "UNREAD"
-            ? state.unreadCount + 1
-            : state.unreadCount,
-      };
-    });
+    get().receive(notification);
   },
 }));
