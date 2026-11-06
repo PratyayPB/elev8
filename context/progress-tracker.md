@@ -9,6 +9,34 @@ Phase 7: User Onboarding & Dashboard System
 Phase 7.2: Release & Production Verification
 
 ## Completed
+- [x] **Serverless Redis Integration & Performance Optimization (Upstash Redis)**:
+  - **Infrastructure & Client Abstraction Layer**:
+    - Installed `@upstash/redis` (v1.41.0) and `@upstash/ratelimit` (v2.2.0); documented `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `REDIS_CACHE_ENABLED` in `.env.example`.
+    - Created [`src/lib/redis.ts`](file:///d:/Portfolio-projects/elev8-prod/src/lib/redis.ts) singleton with retry backoff, connection pooling avoidance for serverless lambdas, and fail-open detection (`isRedisConfigured()`).
+    - Implemented [`src/services/cache/cache-keys.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/cache/cache-keys.ts) defining type-safe hierarchical key builders (`elev8:<env>:<namespace>:<entityId>`) and TTL presets.
+    - Implemented [`src/services/cache/cache.service.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/cache/cache.service.ts) providing generic `getOrSet<T>()`, direct `get`/`set`/`del`, wildcard pattern deletion `delPattern()`, atomic counter `incr()`, and distributed mutex lock helpers (`acquireLock`, `releaseLock`).
+  - **Distributed Rate Limiting & Abuse Prevention**:
+    - Created [`src/services/cache/rate-limit.service.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/cache/rate-limit.service.ts) implementing global sliding-window rate limiting via `@upstash/ratelimit`.
+    - Upgraded [`src/lib/rate-limiter.ts`](file:///d:/Portfolio-projects/elev8-prod/src/lib/rate-limiter.ts) to delegate to distributed Redis rate limiting with automatic, zero-downtime fallback to local in-memory sliding windows if Redis is unconfigured or offline.
+    - Applied distributed rate limiting across Clerk webhooks (`100 req/min/IP`), resume autosaves (`30 saves/min`), interview session autosaves (`20 saves/min`), profile completion prompts (`60 req/min`), skill-gap calculations (`20 req/min`), and catalog searches (`30 queries/min`).
+  - **Static & Shared Catalog Caching**:
+    - Cached `RoleSkillMapService.getRoleSkillProfile` and `getSupportedRoles` with 24-hour TTL in [`src/features/skill-gap/services/role-skillmap.service.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/skill-gap/services/role-skillmap.service.ts), reducing database round-trips for reference data.
+    - Cached predefined resume templates in [`GET /api/builder/templates`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/builder/templates/route.ts) with 24-hour TTL.
+    - Cached public catalog roadmaps in [`RoadmapLibraryService.getRoadmaps`](file:///d:/Portfolio-projects/elev8-prod/src/services/roadmaps/roadmap-library.service.ts) with 6-hour TTL, and connected creator roadmap regeneration in [`roadmap-actions.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/actions/roadmap-actions.ts) to invalidate the global catalog cache via `delPattern()`.
+    - Cached shared interview templates in [`getGlobalInterviews`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/actions/workspace-actions.ts) with 6-hour TTL.
+  - **High-Impact User Data & Computed Artifact Caching**:
+    - Standardized request & cross-request user memoization: augmented `getOrCreateDbUser()` in [`src/lib/auth.ts`](file:///d:/Portfolio-projects/elev8-prod/src/lib/auth.ts) with 15-minute Redis caching alongside React 19's `cache()`, with cache invalidation on Clerk user webhooks (`user.updated`, `user.deleted`) in [`/api/webhooks/clerk`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/webhooks/clerk/route.ts).
+    - Cached full user profiles in [`ProfileService.getProfile`](file:///d:/Portfolio-projects/elev8-prod/src/features/profile/services/profile.service.ts) with 30-minute TTL and write-through invalidation in `createProfile`, `updateProfile`, and `upsertProfile`.
+    - Cached parsed ReactFlow roadmap artifacts in [`RoadmapViewerService.getRoadmapForViewer`](file:///d:/Portfolio-projects/elev8-prod/src/services/roadmaps/roadmap-viewer.service.ts) with 4-hour TTL, eliminating redundant outbound HTTP fetches to Vercel Blob.
+    - Cached computed ATS scores, keyword matches, and recommendations in [`ResumeReportService.getResumeReport`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/services/resume-report.service.ts) with 4-hour TTL.
+    - Cached unread notification counts in [`GET /api/notifications`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/notifications/route.ts), invalidating on notification creation in [`notify.ts`](file:///d:/Portfolio-projects/elev8-prod/src/lib/notify.ts), read-all in [`/api/notifications/read-all`](file:///d:/Portfolio-projects/elev8-prod/src/app/api/notifications/read-all/route.ts), and deletion.
+  - **Atomic Quota Guards & Distributed Mutex Locks**:
+    - Cached hourly and weekly quota check queries in [`UserQuotaService`](file:///d:/Portfolio-projects/elev8-prod/src/services/quota/user-quota.service.ts) and [`AssessmentQuotaService`](file:///d:/Portfolio-projects/elev8-prod/src/features/career-assessment/services/assessment-quota.service.ts) to eliminate continuous SQL `COUNT(*)` range scans on high-traffic tables.
+    - Added atomic distributed mutex locks (`SETNX`) to guard against rapid double-clicks and race conditions on high-cost background tasks: roadmap generation (`requestRoadmapGenerationAction`), career assessment generation (`createAssessmentAction`), AI resume builds (`triggerAiBuild`), and headless Chrome PDF exports (`requestResumePdfExportAction`).
+  - **Testing & Verification**:
+    - Built comprehensive unit test suites in [`src/services/cache/__tests__/cache.service.test.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/cache/__tests__/cache.service.test.ts) (12/12 passed) and [`rate-limit.service.test.ts`](file:///d:/Portfolio-projects/elev8-prod/src/services/cache/__tests__/rate-limit.service.test.ts) (4/4 passed).
+    - Verified regression test suites across notifications, quotas, user deletion, and roadmap regeneration (43/43 tests passing).
+    - Verified 100% TypeScript type safety via `npx tsc --noEmit` with 0 errors.
 - [x] **Production Database Audit & Reliability Remediation**:
   - **Resolved Natural-Key Uniqueness & Live Duplicate (`users.email`) [P0-1]**:
     - Identified and safely aliased historical duplicate developer account (`pratyayborah2005+old_dev@gmail.com`).
@@ -52,9 +80,13 @@ Phase 7.2: Release & Production Verification
   - **Eliminated Polling & Server Action POST Storms**:
     - Removed 30-second interval polling and window focus refetch from `NotificationWatcher`.
     - Added SSR initial hydration in `DashboardLayout`, enabling zero HTTP requests on page load.
-    - Connected frontend to Ably Realtime WebSocket stream via `NotificationWatcher` with multi-tab deduplication and idle teardown (5-minute disconnect with gap recovery on resume).
+    - Connected frontend to Ably via native browser `EventSource` on `https://realtime.ably.io/sse` with multi-tab deduplication and idle teardown (5-minute disconnect with gap recovery on resume).
     - Converted notification mutations (`PATCH /api/notifications/[id]`, `PATCH /api/notifications/read-all`, `DELETE /api/notifications/[id]`, `DELETE /api/notifications`) to REST route handlers with optimistic updates and rollback.
     - Added gap recovery support (`GET /api/notifications?since=...`).
+  - **MAU Pricing & Server-Push Transport Hardening**:
+    - Resolved Ably MAU pricing incompatibility error (40168) and identified client requirement (40161) by implementing direct, dependency-free HTTP REST publishing in `AblyNotificationTransport` (`https://rest.ably.io/channels/.../messages`) with `X-Ably-ClientId: Buffer.from("elev8-server")` and a 3-second hard timeout.
+    - Suppressed SDK client-agent string in `POST /api/realtime/token` (`Ably.Rest.Platform.Defaults.agent = ""`) while minting Clerk-authenticated, subscribe-only scoped tokens (`clientId: clerkUserId`, 1h TTL).
+    - Documented key usage: server uses Root API key (`ABLY_API_KEY`) for publishing and token minting; client browser receives short-lived, scoped token requests via `/api/realtime/token` with zero Root key exposure.
   - **Single Source of Truth Server Notifications**:
     - Created canonical `createNotification()` helper in `src/lib/notify.ts` with database upsert and Ably REST publish.
     - Standardized deterministic idempotency keys (`job:<id>:completed`, `job:<id>:failed`, `assessment:<id>:completed`).

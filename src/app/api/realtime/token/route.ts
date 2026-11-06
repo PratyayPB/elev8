@@ -35,6 +35,12 @@ export async function POST() {
       select: { id: true },
     });
 
+    // Suppress default client-agent string that triggers MAU pricing account error (40168)
+    const ablyPlatform = (Ably.Rest as unknown as { Platform?: { Defaults?: { agent?: string } } })?.Platform;
+    if (ablyPlatform?.Defaults) {
+      ablyPlatform.Defaults.agent = "";
+    }
+
     const rest = new Ably.Rest({
       key: apiKey,
       httpRequestTimeout: 4000,
