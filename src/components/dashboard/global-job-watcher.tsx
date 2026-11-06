@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useWorkflowStore, BackgroundServiceType } from "@/store/workflow.store";
 import { checkBackgroundJobStatusAction, getJobRealtimeTokenAction } from "@/services/jobs/actions";
-import { sendNotification } from "@/features/notifications/notification-sender";
 import { NotificationType } from "@/features/notifications/types";
 import { RealtimeJobSubscriber } from "./realtime-job-subscriber";
 import { downloadFileFromUrl } from "@/lib/download";
@@ -88,22 +87,12 @@ export function GlobalJobWatcher() {
             if (status === "COMPLETED") {
               const isPdfExport = job.autoDownloadPdf || job.serviceName.includes("PDF");
               const targetUrl = job.viewUrl;
-              const notificationActionUrl = isPdfExport ? (targetUrl ?? null) : (viewUrl || targetUrl);
 
               if (isPdfExport && viewUrl && (viewUrl.startsWith("http") || viewUrl.startsWith("/"))) {
                 downloadFileFromUrl(viewUrl, "resume.pdf").catch((err) =>
                   console.warn("[GlobalJobWatcher] Auto-download failed:", err)
                 );
               }
-              
-              await sendNotification({
-                title: `${job.serviceName} Ready`,
-                message: `Your ${job.serviceName.toLowerCase()} has finished processing and is ready to review.`,
-                type: mapServiceTypeToNotificationType(job.serviceType),
-                actionUrl: notificationActionUrl,
-                idempotencyKey: `job-completed-${job.id}`,
-                showToast: false,
-              });
 
               toast.success(`${job.serviceName} Completed`, {
                 description: isPdfExport && viewUrl
@@ -130,14 +119,6 @@ export function GlobalJobWatcher() {
               const failureMessage =
                 error ||
                 `The background task for ${job.serviceName.toLowerCase()} encountered an error. Please try again.`;
-
-              await sendNotification({
-                title: `${job.serviceName} Failed`,
-                message: failureMessage,
-                type: mapServiceTypeToNotificationType(job.serviceType),
-                idempotencyKey: `job-failed-${job.id}`,
-                showToast: false,
-              });
 
               toast.error(`${job.serviceName} Failed`, {
                 description: failureMessage,

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { JobStatus, JobType, Job } from "@prisma/client";
-import { createDbNotification } from "@/features/notifications/actions";
+import { createNotification } from "@/lib/notify";
 import { NotificationType } from "@/features/notifications/types";
 
 export interface CreateJobInput {
@@ -127,13 +127,13 @@ export class JobService {
     try {
       const details = getJobCompletionDetails(updated, artifactId, artifactType);
       if (details) {
-        await createDbNotification({
+        await createNotification({
           userId: updated.userId,
           title: details.title,
           message: details.message,
           type: details.type,
           actionUrl: details.actionUrl,
-          idempotencyKey: `job-completed-${jobId}`,
+          idempotencyKey: `job:${jobId}:completed`,
         });
       }
     } catch (err) {
@@ -179,13 +179,13 @@ export class JobService {
           break;
       }
 
-      await createDbNotification({
+      await createNotification({
         userId: updated.userId,
         title,
         message: error || "The background task encountered an error. Please try again.",
         type,
         actionUrl: "/dashboard",
-        idempotencyKey: `job-failed-${jobId}`,
+        idempotencyKey: `job:${jobId}:failed`,
       });
     } catch (err) {
       console.error(

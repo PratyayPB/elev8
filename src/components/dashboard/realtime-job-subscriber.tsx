@@ -2,10 +2,8 @@
 
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
 import { ActiveBackgroundJob, useWorkflowStore } from "@/store/workflow.store";
-import { sendNotification } from "@/features/notifications/notification-sender";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { mapServiceTypeToNotificationType } from "./global-job-watcher";
 import { downloadFileFromUrl } from "@/lib/download";
 
 interface RealtimeJobSubscriberProps {
@@ -35,20 +33,7 @@ export function RealtimeJobSubscriber({ job }: RealtimeJobSubscriberProps) {
           });
         }
 
-        // For PDF exports, use the stable view/builder page as the persistent notification URL.
-        // The signed downloadUrl is short-lived (24h token) and must NOT be persisted in the DB.
-        const isPdfExport = job.autoDownloadPdf || job.serviceName.includes("PDF");
         const targetUrl = job.viewUrl;
-        const notificationActionUrl = isPdfExport ? (targetUrl ?? null) : (downloadUrl || targetUrl);
-
-        await sendNotification({
-          title: `${job.serviceName} Ready`,
-          message: `Your ${job.serviceName.toLowerCase()} has finished processing and is ready to review.`,
-          type: mapServiceTypeToNotificationType(job.serviceType),
-          actionUrl: notificationActionUrl,
-          idempotencyKey: `job-completed-${job.id}`,
-          showToast: false,
-        });
 
         toast.success(`${job.serviceName} Completed`, {
           description: downloadUrl
@@ -75,14 +60,6 @@ export function RealtimeJobSubscriber({ job }: RealtimeJobSubscriberProps) {
         const failureMessage =
           run.error?.message ||
           `The background task for ${job.serviceName.toLowerCase()} encountered an error. Please try again.`;
-
-        await sendNotification({
-          title: `${job.serviceName} Failed`,
-          message: failureMessage,
-          type: mapServiceTypeToNotificationType(job.serviceType),
-          idempotencyKey: `job-failed-${job.id}`,
-          showToast: false,
-        });
 
         toast.error(`${job.serviceName} Failed`, {
           description: failureMessage,

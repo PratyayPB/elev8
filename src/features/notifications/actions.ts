@@ -148,58 +148,12 @@ export async function clearAllNotificationsAction() {
   });
 }
 
-/**
- * Server action to create a notification for the current user.
- */
-export async function createNotificationAction(input: {
-  title: string;
-  message: string;
-  type?: NotificationType;
-  actionUrl?: string | null;
-  idempotencyKey?: string | null;
-}) {
-  return safeAction(async () => {
-    const userId = await getAuthUserId();
-    return await createDbNotification({
-      userId,
-      title: input.title,
-      message: input.message,
-      type: input.type || "SYSTEM",
-      actionUrl: input.actionUrl,
-      idempotencyKey: input.idempotencyKey,
-    });
-  });
-}
+import { createNotification } from "@/lib/notify";
 
 /**
  * Service function to programmatically create a notification for any user
- * (e.g., from Trigger.dev tasks, webhooks, or background routines).
+ * (forwards to canonical createNotification helper).
  */
 export async function createDbNotification(input: CreateNotificationInput) {
-  if (input.idempotencyKey) {
-    return prisma.notification.upsert({
-      where: { idempotencyKey: input.idempotencyKey },
-      create: {
-        userId: input.userId,
-        title: input.title,
-        message: input.message,
-        type: input.type || "SYSTEM",
-        status: "UNREAD",
-        actionUrl: input.actionUrl || null,
-        idempotencyKey: input.idempotencyKey,
-      },
-      update: {}, // Deduplication: if already exists, return existing
-    });
-  }
-
-  return prisma.notification.create({
-    data: {
-      userId: input.userId,
-      title: input.title,
-      message: input.message,
-      type: input.type || "SYSTEM",
-      status: "UNREAD",
-      actionUrl: input.actionUrl || null,
-    },
-  });
+  return createNotification(input);
 }

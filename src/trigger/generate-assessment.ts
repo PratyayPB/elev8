@@ -6,7 +6,7 @@ import { SkillGapService } from "@/features/skill-gap/services";
 import { CareerAssessmentLLMService } from "@/features/career-assessment/services/career-assessment-llm.service";
 import { ModuleActivityContextService } from "@/features/career-assessment/services/module-activity-context.service";
 import { ModuleActivityService } from "@/features/progress/services";
-import { createDbNotification } from "@/features/notifications/actions";
+import { createNotification } from "@/lib/notify";
 import {
   ModuleType,
   ModuleActivityEventType,
@@ -118,15 +118,15 @@ export const generateAssessmentTask = schemaTask({
       metadata.set("status", "Completed");
       metadata.set("progress", 100);
 
-      // Direct DB notification for resilience
+      // Direct DB notification for resilience and realtime push
       try {
-        await createDbNotification({
+        await createNotification({
           userId,
           title: "Career Assessment Ready",
           message: "Your career assessment report has finished processing and is ready to review.",
           type: "CAREER_ASSESSMENT",
           actionUrl: "/dashboard/career-assessment",
-          idempotencyKey: `assessment-completed-${record.id}`,
+          idempotencyKey: `assessment:${record.id}:completed`,
         });
       } catch (notifErr) {
         console.warn("[generateAssessmentTask] Failed to record completion notification:", notifErr);
@@ -162,13 +162,13 @@ export const generateAssessmentTask = schemaTask({
         });
 
         try {
-          await createDbNotification({
+          await createNotification({
             userId,
             title: "Career Assessment Failed",
             message: err instanceof Error ? err.message : "The career assessment generation encountered an error.",
             type: "CAREER_ASSESSMENT",
             actionUrl: "/dashboard/career-assessment",
-            idempotencyKey: `assessment-failed-${assessmentId}`,
+            idempotencyKey: `assessment:${assessmentId}:failed`,
           });
         } catch (notifErr) {
           console.warn("[generateAssessmentTask] Failed to record failure notification:", notifErr);

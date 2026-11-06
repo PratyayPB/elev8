@@ -19,7 +19,7 @@ import {
 } from "@/features/progress/types";
 import { CareerAssessmentStatus } from "@prisma/client";
 import { safeAction } from "@/lib/error-handler";
-import { createDbNotification } from "@/features/notifications/actions";
+import { createNotification } from "@/lib/notify";
 import type { generateAssessmentTask } from "@/trigger/generate-assessment";
 
 export async function createAssessmentAction() {
@@ -152,15 +152,15 @@ export async function createAssessmentAction() {
             },
           });
 
-          // Direct DB notification for resilience
+          // Direct DB notification for resilience and realtime push
           try {
-            await createDbNotification({
+            await createNotification({
               userId: user.id,
               title: "Career Assessment Ready",
               message: "Your career assessment report has finished processing and is ready to review.",
               type: "CAREER_ASSESSMENT",
               actionUrl: "/dashboard/career-assessment",
-              idempotencyKey: `assessment-completed-${assessment.id}`,
+              idempotencyKey: `assessment:${assessment.id}:completed`,
             });
           } catch (notifErr) {
             console.warn("[CareerAssessmentActions] Failed to record completion notification:", notifErr);
@@ -173,13 +173,13 @@ export async function createAssessmentAction() {
           });
 
           try {
-            await createDbNotification({
+            await createNotification({
               userId: user.id,
               title: "Career Assessment Failed",
               message: "The career assessment generation encountered an error. Please try again.",
               type: "CAREER_ASSESSMENT",
               actionUrl: "/dashboard/career-assessment",
-              idempotencyKey: `assessment-failed-${assessment.id}`,
+              idempotencyKey: `assessment:${assessment.id}:failed`,
             });
           } catch (notifErr) {
             console.warn("[CareerAssessmentActions] Failed to record failure notification:", notifErr);
