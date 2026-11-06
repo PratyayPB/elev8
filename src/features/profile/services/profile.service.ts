@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import {
   ProfileData,
@@ -13,6 +14,7 @@ import {
   ProfileDesiredSkill,
   Prisma,
 } from "@prisma/client";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 
 export class ProfileConflictError extends Error {
   constructor(message = "A profile already exists for this user") {
@@ -36,23 +38,37 @@ type ProfileWithRelations = Profile & {
 export class ProfileService {
   /**
    * Retrieves a Profile by internal DB userId.
+   * Cached in React cache() per request and in Redis for 30 minutes with write-through invalidation on mutations.
    */
-  static async getProfile(userId: string): Promise<ProfileData | null> {
-    const profile = await prisma.profile.findUnique({
-      where: { userId },
-      include: {
-        skills: {
-          orderBy: { name: "asc" },
-        },
-        desiredSkills: {
-          orderBy: { name: "asc" },
-        },
-      },
-    });
+  static getProfile = cache(async (userId: string): Promise<ProfileData | null> => {
+    const profile = await CacheService.getOrSet(
+      CacheKeys.userProfile(userId),
+      async () => {
+        const found = await prisma.profile.findUnique({
+          where: { userId },
+          include: {
+            skills: {
+              orderBy: { name: "asc" },
+            },
+            desiredSkills: {
+              orderBy: { name: "asc" },
+            },
+          },
+        });
 
-    if (!profile) return null;
-    return this.mapToProfileData(profile);
-  }
+        if (!found) return null;
+        return ProfileService.mapToProfileData(found);
+      },
+      CacheTTL.USER_PROFILE
+    );
+
+    if (profile) {
+      if (typeof profile.createdAt === "string") profile.createdAt = new Date(profile.createdAt);
+      if (typeof profile.updatedAt === "string") profile.updatedAt = new Date(profile.updatedAt);
+    }
+
+    return profile;
+  });
 
   /**
    * Creates a new Profile for the user.
@@ -132,7 +148,9 @@ export class ProfileService {
       },
     });
 
-    return this.mapToProfileData(created);
+    const mapped = this.mapToProfileData(created);
+    await CacheService.del(CacheKeys.userProfile(userId)).catch(() => {});
+    return mapped;
   }
 
   private static checkIsCompleted(data: any, skills: any[], desiredSkills: any[]): boolean {
@@ -284,6 +302,7 @@ export class ProfileService {
     });
 
     const mapped = this.mapToProfileData(result);
+    await CacheService.del(CacheKeys.userProfile(userId)).catch(() => {});
     return mapped;
   }
 

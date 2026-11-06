@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../node_modules/node-domexception/index.js"],
+  "sourcesContent": ["/*! node-domexception. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */\n\nif (!globalThis.DOMException) {\n  try {\n    const { MessageChannel } = require('worker_threads'),\n    port = new MessageChannel().port1,\n    ab = new ArrayBuffer()\n    port.postMessage(ab, [ab, ab])\n  } catch (err) {\n    err.constructor.name === 'DOMException' && (\n      globalThis.DOMException = err.constructor\n    )\n  }\n}\n\nmodule.exports = globalThis.DOMException\n"],
+  "mappings": ";;;;;;;AAAA;AAAA;AAAA;AAEA,QAAI,CAAC,WAAW,cAAc;AAC5B,UAAI;AACF,cAAM,EAAE,eAAe,IAAI,UAAQ,gBAAgB,GACnD,OAAO,IAAI,eAAe,EAAE,OAC5B,KAAK,IAAI,YAAY;AACrB,aAAK,YAAY,IAAI,CAAC,IAAI,EAAE,CAAC;AAAA,MAC/B,SAAS,KAAK;AACZ,YAAI,YAAY,SAAS,mBACvB,WAAW,eAAe,IAAI;AAAA,MAElC;AAAA,IACF;AAEA,WAAO,UAAU,WAAW;AAAA;AAAA;",
+  "names": []
+}

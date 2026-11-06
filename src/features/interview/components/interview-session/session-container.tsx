@@ -30,7 +30,8 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     nextQuestion,
     jumpToQuestion,
     incrementDuration,
-    durationSeconds
+    durationSeconds,
+    clearSession,
   } = useInterviewSessionStore();
   
   const { status: autosaveStatus, save } = useAutosave(interviewId);
@@ -126,6 +127,7 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
             res.success && res.data ? res.data.jobId || interviewId : interviewId,
           defaultViewUrl: `/dashboard/interviews/${interviewId}/report`,
           onInitiated: () => {
+            clearSession();
             router.push("/dashboard/interviews");
           },
           onError: (err) => {

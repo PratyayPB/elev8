@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchBar } from "./SearchBar";
 import { FilterPanel } from "./FilterPanel";
 import { RoadmapCard } from "./RoadmapCard";
@@ -42,6 +43,7 @@ export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
   const tabParam = searchParams?.get("tab");
   const initialSection = tabParam === "global" ? "global" : "mine";
 
+  const queryClient = useQueryClient();
   const [section, setSection] = useState<"mine" | "global">(initialSection);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 350);
@@ -49,18 +51,49 @@ export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
     "newest" | "oldest" | "updated" | "alphabetical"
   >("newest");
   const [page, setPage] = useState(1);
-
-  const [roadmaps, setRoadmaps] = useState<LibraryRoadmap[]>(initialRoadmaps || []);
-  const [pagination, setPagination] = useState(
-    initialPagination || {
-      total: 0,
-      page: 1,
-      limit: 9,
-      totalPages: 1,
-    }
-  );
-  const [loading, setLoading] = useState(!initialRoadmaps);
   const isInitialMount = React.useRef(Boolean(initialRoadmaps));
+
+  const {
+    data: queryData,
+    isLoading: isQueryLoading,
+  } = useQuery({
+    queryKey: ["roadmaps", section, debouncedSearch, sort, page],
+    queryFn: async () => {
+      const res = await fetchUserRoadmaps({
+        section,
+        search: debouncedSearch,
+        sort,
+        page,
+        limit: 9,
+      });
+      if (!res.success) {
+        toast.error(res.error?.message || "Failed to load roadmaps.");
+        throw new Error(res.error?.message || "Failed to load roadmaps.");
+      }
+      return res.data;
+    },
+    initialData:
+      isInitialMount.current && initialRoadmaps
+        ? {
+            roadmaps: initialRoadmaps,
+            pagination: initialPagination || {
+              total: 0,
+              page: 1,
+              limit: 9,
+              totalPages: 1,
+            },
+          }
+        : undefined,
+  });
+
+  const roadmaps = queryData?.roadmaps || [];
+  const pagination = queryData?.pagination || {
+    total: 0,
+    page: 1,
+    limit: 9,
+    totalPages: 1,
+  };
+  const loading = isQueryLoading;
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<LibraryRoadmap | null>(null);
@@ -76,38 +109,6 @@ export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
       setPage(1);
     }
   }, [tabParam]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetchUserRoadmaps({
-        section,
-        search: debouncedSearch,
-        sort,
-        page,
-        limit: 9,
-      });
-      if (res.success) {
-        setRoadmaps(res.data.roadmaps);
-        setPagination(res.data.pagination);
-      } else {
-        toast.error(res.error?.message || "Failed to load roadmaps.");
-      }
-    } catch (err) {
-      console.error("Failed to load roadmaps:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // If pre-seeded by server component on initial render, skip redundant immediate fetch
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    loadData();
-  }, [section, debouncedSearch, sort, page]);
 
   const handleTabChange = (newTab: string) => {
     const nextSection = newTab as "mine" | "global";
@@ -137,7 +138,7 @@ export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
       if (section === "global") {
         handleTabChange("mine");
       } else {
-        loadData();
+        queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
       }
     } catch (err: any) {
       console.error("Failed to duplicate roadmap:", err);
@@ -156,7 +157,7 @@ export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
       }
       toast.success("Roadmap deleted successfully.");
       setDeleteTarget(null);
-      loadData();
+      queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
     } catch (err: any) {
       console.error("Failed to delete roadmap:", err);
       toast.error(err?.message || "Failed to delete roadmap.");

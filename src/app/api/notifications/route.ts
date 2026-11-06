@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NotificationItemData } from "@/features/notifications/types";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -52,9 +53,14 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
         take: limit,
       }),
-      prisma.notification.count({
-        where: { userId: dbUser.id, status: "UNREAD" },
-      }),
+      CacheService.getOrSet(
+        CacheKeys.unreadNotificationCount(dbUser.id),
+        () =>
+          prisma.notification.count({
+            where: { userId: dbUser.id, status: "UNREAD" },
+          }),
+        30
+      ),
     ]);
 
     return NextResponse.json(
@@ -90,6 +96,8 @@ export async function DELETE() {
     const result = await prisma.notification.deleteMany({
       where: { userId: dbUser.id },
     });
+
+    await CacheService.del(CacheKeys.unreadNotificationCount(dbUser.id)).catch(() => {});
 
     return NextResponse.json({
       success: true,

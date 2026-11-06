@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOrCreateDbUser } from "@/lib/auth";
@@ -12,8 +13,7 @@ interface RoadmapViewerPageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: RoadmapViewerPageProps): Promise<Metadata> {
-  const { roadmapId } = await params;
+const getCachedRoadmapTitle = cache(async (roadmapId: string) => {
   const roadmap =
     (await prisma.roadmap.findUnique({
       where: { id: roadmapId },
@@ -23,9 +23,19 @@ export async function generateMetadata({ params }: RoadmapViewerPageProps): Prom
       where: { id: roadmapId },
       select: { title: true },
     }));
+  return roadmap?.title ?? null;
+});
+
+const getCachedRoadmapForViewer = cache(async (roadmapId: string, userId: string) => {
+  return await RoadmapViewerService.getRoadmapForViewer(roadmapId, userId);
+});
+
+export async function generateMetadata({ params }: RoadmapViewerPageProps): Promise<Metadata> {
+  const { roadmapId } = await params;
+  const title = await getCachedRoadmapTitle(roadmapId);
 
   return {
-    title: roadmap ? `${roadmap.title} | Elev8 Roadmap` : "Roadmap Viewer | Elev8",
+    title: title ? `${title} | Elev8 Roadmap` : "Roadmap Viewer | Elev8",
   };
 }
 
@@ -39,7 +49,7 @@ export default async function RoadmapViewerPage({ params }: RoadmapViewerPagePro
     notFound();
   }
 
-  const res = await RoadmapViewerService.getRoadmapForViewer(roadmapId, user.id);
+  const res = await getCachedRoadmapForViewer(roadmapId, user.id);
 
   if (!res) {
     notFound();

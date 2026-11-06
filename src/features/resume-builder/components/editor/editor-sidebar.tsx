@@ -25,38 +25,38 @@ interface SectionItem {
   icon: React.ReactNode;
 }
 
+const ALL_SECTIONS: SectionItem[] = [
+  { id: "personal-info",   label: "Personal Info",        sectionKey: "personal-info",   icon: <User            className="h-4 w-4 shrink-0" /> },
+  { id: "summary",         label: "Summary",              sectionKey: "summary",         icon: <FileText        className="h-4 w-4 shrink-0" /> },
+  { id: "education",       label: "Education",            sectionKey: "education",       icon: <GraduationCap   className="h-4 w-4 shrink-0" /> },
+  { id: "experience",      label: "Work Experience",      sectionKey: "experience",      icon: <Briefcase       className="h-4 w-4 shrink-0" /> },
+  { id: "projects",        label: "Projects",             sectionKey: "projects",        icon: <Code            className="h-4 w-4 shrink-0" /> },
+  { id: "skills",          label: "Skills",               sectionKey: "skills",          icon: <Sparkles        className="h-4 w-4 shrink-0" /> },
+  { id: "certifications",  label: "Certifications",       sectionKey: "certifications",  icon: <Award           className="h-4 w-4 shrink-0" /> },
+  { id: "achievements",    label: "Achievements",         sectionKey: "achievements",    icon: <Trophy          className="h-4 w-4 shrink-0" /> },
+  { id: "languages",       label: "Languages",            sectionKey: "languages",       icon: <Languages       className="h-4 w-4 shrink-0" /> },
+  { id: "volunteer",       label: "Volunteer",            sectionKey: "volunteer",       icon: <HeartHandshake  className="h-4 w-4 shrink-0" /> },
+  { id: "publications",    label: "Publications",         sectionKey: "publications",    icon: <BookMarked      className="h-4 w-4 shrink-0" /> },
+  { id: "interests",       label: "Interests",            sectionKey: "interests",       icon: <Compass         className="h-4 w-4 shrink-0" /> },
+  { id: "references",      label: "References",           sectionKey: "references",      icon: <Users           className="h-4 w-4 shrink-0" /> },
+];
+
 interface EditorSidebarProps {
   activeSection: string;
   onSectionClick: (id: string) => void;
   templateSupport?: TemplateSupport;
 }
 
-export function EditorSidebar({
+export const EditorSidebar = React.memo(function EditorSidebar({
   activeSection,
   onSectionClick,
   templateSupport,
 }: EditorSidebarProps) {
-  const allSections: SectionItem[] = [
-    { id: "personal-info",   label: "Personal Info",        sectionKey: "personal-info",   icon: <User            className="h-4 w-4 shrink-0" /> },
-    { id: "summary",         label: "Summary",              sectionKey: "summary",         icon: <FileText        className="h-4 w-4 shrink-0" /> },
-    { id: "education",       label: "Education",            sectionKey: "education",       icon: <GraduationCap   className="h-4 w-4 shrink-0" /> },
-    { id: "experience",      label: "Work Experience",      sectionKey: "experience",      icon: <Briefcase       className="h-4 w-4 shrink-0" /> },
-    { id: "projects",        label: "Projects",             sectionKey: "projects",        icon: <Code            className="h-4 w-4 shrink-0" /> },
-    { id: "skills",          label: "Skills",               sectionKey: "skills",          icon: <Sparkles        className="h-4 w-4 shrink-0" /> },
-    { id: "certifications",  label: "Certifications",       sectionKey: "certifications",  icon: <Award           className="h-4 w-4 shrink-0" /> },
-    { id: "achievements",    label: "Achievements",         sectionKey: "achievements",    icon: <Trophy          className="h-4 w-4 shrink-0" /> },
-    { id: "languages",       label: "Languages",            sectionKey: "languages",       icon: <Languages       className="h-4 w-4 shrink-0" /> },
-    { id: "volunteer",       label: "Volunteer",            sectionKey: "volunteer",       icon: <HeartHandshake  className="h-4 w-4 shrink-0" /> },
-    { id: "publications",    label: "Publications",         sectionKey: "publications",    icon: <BookMarked      className="h-4 w-4 shrink-0" /> },
-    { id: "interests",       label: "Interests",            sectionKey: "interests",       icon: <Compass         className="h-4 w-4 shrink-0" /> },
-    { id: "references",      label: "References",           sectionKey: "references",      icon: <Users           className="h-4 w-4 shrink-0" /> },
-  ];
-
   const visibleSections = templateSupport
-    ? allSections.filter((sec) =>
+    ? ALL_SECTIONS.filter((sec) =>
         templateSupport.sections.includes(sec.sectionKey)
       )
-    : allSections;
+    : ALL_SECTIONS;
 
   return (
     <nav
@@ -87,4 +87,4 @@ export function EditorSidebar({
       })}
     </nav>
   );
-}
+});

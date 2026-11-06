@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { JobType, JobStatus, ResumeBuildStatus } from "@prisma/client";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export class UserQuotaService {
   /**
@@ -10,14 +11,19 @@ export class UserQuotaService {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const [recentJobs, inFlightJobs] = await Promise.all([
-      prisma.job.count({
-        where: {
-          userId,
-          type: JobType.ROADMAP,
-          createdAt: { gte: oneHourAgo },
-          status: { not: JobStatus.FAILED },
-        },
-      }),
+      CacheService.getOrSet(
+        CacheKeys.quota("roadmap-recent", userId),
+        () =>
+          prisma.job.count({
+            where: {
+              userId,
+              type: JobType.ROADMAP,
+              createdAt: { gte: oneHourAgo },
+              status: { not: JobStatus.FAILED },
+            },
+          }),
+        15
+      ),
       prisma.job.count({
         where: {
           userId,
@@ -48,14 +54,19 @@ export class UserQuotaService {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const [recentBuilds, activeBuild] = await Promise.all([
-      prisma.job.count({
-        where: {
-          userId,
-          type: JobType.RESUME_BUILD,
-          createdAt: { gte: oneHourAgo },
-          status: { not: JobStatus.FAILED },
-        },
-      }),
+      CacheService.getOrSet(
+        CacheKeys.quota("resume-build-recent", userId),
+        () =>
+          prisma.job.count({
+            where: {
+              userId,
+              type: JobType.RESUME_BUILD,
+              createdAt: { gte: oneHourAgo },
+              status: { not: JobStatus.FAILED },
+            },
+          }),
+        15
+      ),
       prisma.job.count({
         where: {
           userId,
@@ -85,14 +96,19 @@ export class UserQuotaService {
   public static async assertInterviewGenerationQuota(userId: string): Promise<void> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-    const recentGenerations = await prisma.job.count({
-      where: {
-        userId,
-        type: JobType.INTERVIEW,
-        createdAt: { gte: oneHourAgo },
-        status: { not: JobStatus.FAILED },
-      },
-    });
+    const recentGenerations = await CacheService.getOrSet(
+      CacheKeys.quota("interview-gen-recent", userId),
+      () =>
+        prisma.job.count({
+          where: {
+            userId,
+            type: JobType.INTERVIEW,
+            createdAt: { gte: oneHourAgo },
+            status: { not: JobStatus.FAILED },
+          },
+        }),
+      15
+    );
 
     if (recentGenerations >= 5) {
       throw new Error(
@@ -108,13 +124,18 @@ export class UserQuotaService {
   public static async assertInterviewSubmissionQuota(userId: string): Promise<void> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-    const recentSubmissions = await prisma.interviewSession.count({
-      where: {
-        userId,
-        updatedAt: { gte: oneHourAgo },
-        status: { in: ["COMPLETED"] },
-      },
-    });
+    const recentSubmissions = await CacheService.getOrSet(
+      CacheKeys.quota("interview-sub-recent", userId),
+      () =>
+        prisma.interviewSession.count({
+          where: {
+            userId,
+            updatedAt: { gte: oneHourAgo },
+            status: { in: ["COMPLETED"] },
+          },
+        }),
+      15
+    );
 
     if (recentSubmissions >= 10) {
       throw new Error(
@@ -132,20 +153,30 @@ export class UserQuotaService {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const [recentTenMin, recentDay] = await Promise.all([
-      prisma.job.count({
-        where: {
-          userId,
-          type: JobType.RESUME_ANALYSIS,
-          createdAt: { gte: tenMinutesAgo },
-        },
-      }),
-      prisma.job.count({
-        where: {
-          userId,
-          type: JobType.RESUME_ANALYSIS,
-          createdAt: { gte: oneDayAgo },
-        },
-      }),
+      CacheService.getOrSet(
+        CacheKeys.quota("resume-upload-10m", userId),
+        () =>
+          prisma.job.count({
+            where: {
+              userId,
+              type: JobType.RESUME_ANALYSIS,
+              createdAt: { gte: tenMinutesAgo },
+            },
+          }),
+        15
+      ),
+      CacheService.getOrSet(
+        CacheKeys.quota("resume-upload-day", userId),
+        () =>
+          prisma.job.count({
+            where: {
+              userId,
+              type: JobType.RESUME_ANALYSIS,
+              createdAt: { gte: oneDayAgo },
+            },
+          }),
+        30
+      ),
     ]);
 
     if (recentTenMin >= 3) {

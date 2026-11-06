@@ -1,17 +1,40 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { InterviewArtifact } from "../../types";
 import { OverviewCard } from "./overview-card";
 import { ScoreCard } from "./score-card";
-import { CompetencyRadarChart } from "./competency-radar-chart";
 import { AnalyticsDashboard } from "./analytics-dashboard";
-import { PacingComparisonChart } from "./pacing-comparison-chart";
-import { PerformanceTrajectoryChart } from "./performance-trajectory-chart";
 import { SkillBreakdown } from "./skill-breakdown";
 import { TopicMasteryCard } from "./topic-mastery-card";
 import { QuestionReview } from "./question-review";
 import { ImprovementPlan } from "./improvement-plan";
 import { NextSteps } from "./next-steps";
+import { ChartSkeleton } from "@/components/skeletons/chart-skeleton";
+
+const CompetencyRadarChart = dynamic(
+  () => import("./competency-radar-chart").then((mod) => mod.CompetencyRadarChart),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />,
+  }
+);
+
+const PacingComparisonChart = dynamic(
+  () => import("./pacing-comparison-chart").then((mod) => mod.PacingComparisonChart),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />,
+  }
+);
+
+const PerformanceTrajectoryChart = dynamic(
+  () => import("./performance-trajectory-chart").then((mod) => mod.PerformanceTrajectoryChart),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />,
+  }
+);
 
 interface ReportContainerProps {
   artifact: InterviewArtifact;

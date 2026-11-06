@@ -12,6 +12,7 @@ import {
   ModuleType,
 } from "@/features/progress/types";
 import { RealtimeTokenService } from "@/services/jobs/realtime-token.service";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export class AiResumeBuildService {
   /**
@@ -57,6 +58,19 @@ export class AiResumeBuildService {
 
     // 1b. Check AI Resume Build quota (max 5/hr, 1 active build)
     await UserQuotaService.assertAiResumeBuildQuota(userId);
+
+    // Acquire distributed lock to prevent duplicate concurrent triggers
+    const lockAcquired = await CacheService.acquireLock(
+      CacheKeys.workflowLock("ai-resume-build", userId),
+      30
+    );
+    if (!lockAcquired) {
+      throw new ResumeBuilderError(
+        "An AI Resume Build is already initiating for your account. Please wait.",
+        "BUILD_IN_PROGRESS",
+        429
+      );
+    }
 
     // 2. Verify resume ownership
     const resume = await prisma.resumeBuild.findUnique({

@@ -101,7 +101,7 @@ export async function saveSessionProgress(
     if (!interview) throw new Error("Interview not found or unauthorized");
 
     // Rate limit: 20 autosaves / minute per session
-    const rl = checkRateLimit(`autosave:session:${sanitizedId}`, {
+    const rl = await checkRateLimit(`autosave:session:${sanitizedId}`, {
       limit: 20,
       windowMs: 60 * 1000,
     });

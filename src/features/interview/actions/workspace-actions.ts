@@ -14,6 +14,7 @@ import { revalidatePath } from "next/cache";
 import { safeAction } from "@/lib/error-handler";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { GlobalInterviewTemplateService } from "../services/global-interview-template.service";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export async function getWorkspaceInterviews() {
   return safeAction(async () => {
@@ -246,7 +247,7 @@ export async function getGlobalInterviews(params?: {
 
     if (search) {
       const rlKey = dbUser ? `search:interviews:${dbUser.id}` : `search:interviews:anon`;
-      const rl = checkRateLimit(rlKey, {
+      const rl = await checkRateLimit(rlKey, {
         limit: 30,
         windowMs: 60 * 1000,
       });
@@ -283,29 +284,42 @@ export async function getGlobalInterviews(params?: {
       orderBy = { role: "asc" };
     }
 
-    const [total, templates] = await Promise.all([
-      prisma.globalInterviewTemplate.count({ where }),
-      prisma.globalInterviewTemplate.findMany({
-        where,
-        orderBy,
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          role: true,
-          normalizedRole: true,
-          experienceLevel: true,
-          difficulty: true,
-          interviewType: true,
-          questionCount: true,
-          estimatedDuration: true,
-          status: true,
-          createdByUserId: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-    ]);
+    const cacheKey = CacheKeys.catalogGlobalInterviews(
+      page,
+      `${sort}:${search ? encodeURIComponent(search) : "all"}:${limit}`,
+      difficulty
+    );
+
+    const { total, templates } = await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const [count, items] = await Promise.all([
+          prisma.globalInterviewTemplate.count({ where }),
+          prisma.globalInterviewTemplate.findMany({
+            where,
+            orderBy,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              role: true,
+              normalizedRole: true,
+              experienceLevel: true,
+              difficulty: true,
+              interviewType: true,
+              questionCount: true,
+              estimatedDuration: true,
+              status: true,
+              createdByUserId: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          }),
+        ]);
+        return { total: count, templates: items };
+      },
+      6 * 3600 // 6 hours
+    );
 
     const totalPages = Math.max(1, Math.ceil(total / limit));
 

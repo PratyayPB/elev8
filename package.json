@@ -47,6 +47,8 @@
     "@trigger.dev/sdk": "4.8.3",
     "@types/dagre": "^0.7.54",
     "@types/pdf-parse": "^1.1.5",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.41.0",
     "@vercel/blob": "^2.6.1",
     "@xyflow/react": "^12.11.2",
     "ably": "^2.30.0",

@@ -5,11 +5,13 @@ import { KeywordAnalysisService } from "./keyword-analysis.service";
 import { ResumeAnalyticsService } from "./analytics.service";
 import { ModuleActivityService } from "@/features/progress/services";
 import { ModuleActivityEventType, ModuleType } from "@/features/progress/types";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 
 export class ResumeReportService {
   /**
    * Loads a Resume record from Prisma and fetches its associated ResumeArtifact from Blob Storage.
    * Can accept an existing ResumeScore to prevent duplicate queries.
+   * Caches parsed artifact & computed analytics in Redis for 4 hours.
    */
   public static async getResumeReport(
     resumeId: string,
@@ -26,26 +28,39 @@ export class ResumeReportService {
     }
 
     try {
-      const artifact = await BlobStorageService.fetchJson<ResumeArtifact>(
-        resume.artifactBlobUrl
-      );
+      const computed = await CacheService.getOrSet(
+        CacheKeys.resumeReport(resume.id),
+        async () => {
+          const artifact = await BlobStorageService.fetchJson<ResumeArtifact>(
+            resume.artifactBlobUrl!
+          );
 
-      if (!artifact || !artifact.metadata || !artifact.overallAssessment) {
-        throw new Error("Invalid or corrupted ResumeArtifact content.");
-      }
+          if (!artifact || !artifact.metadata || !artifact.overallAssessment) {
+            throw new Error("Invalid or corrupted ResumeArtifact content.");
+          }
 
-      const health = ResumeAnalyticsService.computeHealth(artifact);
-      const keywords = KeywordAnalysisService.analyze(artifact);
+          const health = ResumeAnalyticsService.computeHealth(artifact);
+          const keywords = KeywordAnalysisService.analyze(artifact);
 
-      const recommendations = (artifact.overallAssessment.weaknesses || []).map(
-        (weakness, idx) => ({
-          id: `rec-${idx + 1}`,
-          title: weakness.split(":")[0] || "Area for Improvement",
-          description: weakness,
-          priority: (idx < 2 ? "High" : idx < 4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
-          section: "General",
-          expectedImpact: idx < 2 ? "+10-15 ATS points" : "+5-10 ATS points",
-        })
+          const recommendations = (artifact.overallAssessment.weaknesses || []).map(
+            (weakness, idx) => ({
+              id: `rec-${idx + 1}`,
+              title: weakness.split(":")[0] || "Area for Improvement",
+              description: weakness,
+              priority: (idx < 2 ? "High" : idx < 4 ? "Medium" : "Low") as "High" | "Medium" | "Low",
+              section: "General",
+              expectedImpact: idx < 2 ? "+10-15 ATS points" : "+5-10 ATS points",
+            })
+          );
+
+          return {
+            artifact,
+            health,
+            keywords,
+            recommendations,
+          };
+        },
+        CacheTTL.ARTIFACT
       );
 
       await ModuleActivityService.recordActivity({
@@ -69,10 +84,10 @@ export class ResumeReportService {
       return {
         resumeId: resume.id,
         status: resume.status,
-        artifact,
-        health,
-        keywords,
-        recommendations,
+        artifact: computed.artifact,
+        health: computed.health,
+        keywords: computed.keywords,
+        recommendations: computed.recommendations,
       };
     } catch (error) {
       console.error(

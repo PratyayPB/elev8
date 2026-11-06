@@ -21,6 +21,7 @@ import { UserQuotaService } from "@/services/quota/user-quota.service";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { parseCareerLevel, normalizeRole, formatCareerLevelToExperience } from "../utils";
 import { normalizeError, safeAction } from "@/lib/error-handler";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 async function recordRoadmapActivity(input: {
   userId: string;
@@ -50,7 +51,7 @@ export async function fetchUserRoadmaps(
     const user = await getOrCreateDbUser();
 
     if (options.search) {
-      const rl = checkRateLimit(`search:roadmaps:${user.id}`, {
+      const rl = await checkRateLimit(`search:roadmaps:${user.id}`, {
         limit: 30,
         windowMs: 60 * 1000,
       });
@@ -336,6 +337,14 @@ export async function generateRoadmapAction(rawPayload: RoadmapRequest) {
     }
 
     // 2. Personalized Roadmap: Create user-specific Roadmap
+    const lockAcquired = await CacheService.acquireLock(
+      CacheKeys.workflowLock("roadmap-generate", user.id),
+      30
+    );
+    if (!lockAcquired) {
+      throw new Error("A roadmap generation workflow is already being initiated. Please wait a moment.");
+    }
+
     await UserQuotaService.assertRoadmapQuota(user.id);
 
     const targetId = `rm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -501,6 +510,12 @@ export async function retryRoadmapGenerationAction(roadmapId: string) {
         where: { id: globalRoadmap.id },
         data: { status: RoadmapStatus.IN_PROGRESS },
       });
+
+      // Invalidate cached global catalog & artifact
+      await Promise.all([
+        CacheService.delPattern(CacheKeys.catalogGlobalRoadmapsPattern()),
+        CacheService.del(CacheKeys.roadmapArtifact(globalRoadmap.id)),
+      ]).catch((err) => console.warn("[RoadmapActions] Failed to invalidate global roadmap cache:", err));
 
       const job = await prisma.job.create({
         data: {

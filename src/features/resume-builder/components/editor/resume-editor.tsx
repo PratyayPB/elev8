@@ -32,11 +32,30 @@ import { VolunteerEditor } from "./volunteer-editor";
 import { PublicationsEditor } from "./publications-editor";
 import { InterestsEditor } from "./interests-editor";
 import { ReferencesEditor } from "./references-editor";
-import { AiBuildDialog } from "../ai-build/ai-build-dialog";
-import { ResumeTemplateRenderer } from "../templates/resume-template-renderer";
+import dynamic from "next/dynamic";
+import { ResumePreviewSkeleton } from "../templates/resume-preview-skeleton";
 import { toast } from "sonner";
 import { requestResumePdfExportAction } from "../../actions/export-actions";
 import { useBackgroundWorkflow } from "@/hooks/use-background-workflow";
+
+const ResumeTemplateRenderer = dynamic(
+  () =>
+    import("../templates/resume-template-renderer").then(
+      (mod) => mod.ResumeTemplateRenderer
+    ),
+  {
+    ssr: false,
+    loading: () => <ResumePreviewSkeleton />,
+  }
+);
+
+const AiBuildDialog = dynamic(
+  () =>
+    import("../ai-build/ai-build-dialog").then((mod) => mod.AiBuildDialog),
+  {
+    ssr: false,
+  }
+);
 
 interface ResumeEditorProps {
   resume: BuilderResumeRecord;

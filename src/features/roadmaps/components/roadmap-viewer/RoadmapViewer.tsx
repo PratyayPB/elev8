@@ -1,11 +1,20 @@
 "use client";
 
 import React, { useState, useRef, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { RoadmapArtifact } from "@/services/roadmaps/roadmap-artifact.service";
-import { ReactFlowCanvas } from "./ReactFlowCanvas";
 import { ReadOnlyToolbar } from "./ReadOnlyToolbar";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { EmptyState } from "./EmptyState";
+import { RoadmapCanvasSkeleton } from "./roadmap-canvas-skeleton";
+
+const ReactFlowCanvas = dynamic(
+  () => import("./ReactFlowCanvas").then((mod) => mod.ReactFlowCanvas),
+  {
+    ssr: false,
+    loading: () => <RoadmapCanvasSkeleton />,
+  }
+);
 import { useRoadmapPolling } from "../../hooks/use-roadmap-polling";
 import { retryRoadmapGenerationAction } from "@/features/roadmaps/actions/roadmap-actions";
 import { useRouter } from "next/navigation";

@@ -4,12 +4,13 @@ import { Webhook } from "svix";
 import { prisma } from "@/lib/prisma";
 import { UserAccountDeletionService } from "@/services/user";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export async function POST(req: NextRequest) {
   try {
     // Edge IP rate limiting: 100 requests / minute per IP
     const clientIp = getClientIp(req);
-    const rl = checkRateLimit(`webhook:clerk:${clientIp}`, {
+    const rl = await checkRateLimit(`webhook:clerk:${clientIp}`, {
       limit: 100,
       windowMs: 60 * 1000,
     });
@@ -74,11 +75,14 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      await CacheService.del(CacheKeys.userByClerkId(clerkId)).catch(() => {});
+
       return NextResponse.json({ message: `Handled ${eventType}` }, { status: 200 });
     }
 
     if (eventType === "user.deleted") {
       await UserAccountDeletionService.purgeUserDataByClerkId(clerkId);
+      await CacheService.del(CacheKeys.userByClerkId(clerkId)).catch(() => {});
       return NextResponse.json({ message: "Handled user.deleted" }, { status: 200 });
     }
 

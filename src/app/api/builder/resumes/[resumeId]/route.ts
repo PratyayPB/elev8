@@ -38,7 +38,7 @@ export async function PATCH(
     const { resumeId } = await params;
 
     // Rate limit: 30 saves / minute per user ID
-    const rl = checkRateLimit(`autosave:resume:${dbUser.id}`, {
+    const rl = await checkRateLimit(`autosave:resume:${dbUser.id}`, {
       limit: 30,
       windowMs: 60 * 1000,
     });

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Rate limit: 60 req / minute per user
-    const rl = checkRateLimit(`prompts:${clerkId}`, {
+    const rl = await checkRateLimit(`prompts:${clerkId}`, {
       limit: 60,
       windowMs: 60 * 1000,
     });

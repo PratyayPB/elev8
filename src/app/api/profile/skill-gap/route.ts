@@ -13,7 +13,7 @@ export async function GET() {
     }
 
     // Rate limit: 20 req / minute per user
-    const rl = checkRateLimit(`skill-gap:${clerkId}`, {
+    const rl = await checkRateLimit(`skill-gap:${clerkId}`, {
       limit: 20,
       windowMs: 60 * 1000,
     });

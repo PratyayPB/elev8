@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CacheService, CacheKeys } from "@/services/cache";
 import {
   ASSESSMENT_WEEKLY_QUOTA,
   ASSESSMENT_QUOTA_WINDOW_MS,
@@ -26,48 +27,54 @@ export class AssessmentQuotaService {
     userId: string,
     now: Date = new Date()
   ): Promise<WeeklyQuotaInfo> {
-    const windowStart = new Date(now.getTime() - ASSESSMENT_QUOTA_WINDOW_MS);
+    return CacheService.getOrSet(
+      CacheKeys.quota("assessment-weekly", userId),
+      async () => {
+        const windowStart = new Date(now.getTime() - ASSESSMENT_QUOTA_WINDOW_MS);
 
-    // Fetch non-failed assessments within the rolling 7-day window
-    const recentAssessments = await prisma.careerAssessment.findMany({
-      where: {
-        userId,
-        createdAt: { gte: windowStart },
-        status: { not: "FAILED" },
+        // Fetch non-failed assessments within the rolling 7-day window
+        const recentAssessments = await prisma.careerAssessment.findMany({
+          where: {
+            userId,
+            createdAt: { gte: windowStart },
+            status: { not: "FAILED" },
+          },
+          select: {
+            id: true,
+            createdAt: true,
+            status: true,
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
+        const usedThisWeek = recentAssessments.length;
+        const remaining = Math.max(0, ASSESSMENT_WEEKLY_QUOTA - usedThisWeek);
+        const canGenerate = remaining > 0;
+
+        let earliestExpiringAt: string | null = null;
+        let resetFormatted: string | null = null;
+
+        if (!canGenerate && recentAssessments.length > 0) {
+          // The oldest assessment in this active window will roll off after 7 days from its createdAt
+          const oldestActive = recentAssessments[0];
+          const expiryDate = new Date(
+            oldestActive.createdAt.getTime() + ASSESSMENT_QUOTA_WINDOW_MS
+          );
+          earliestExpiringAt = expiryDate.toISOString();
+          resetFormatted = formatTimeUntilReset(expiryDate, now);
+        }
+
+        return {
+          totalAllowed: ASSESSMENT_WEEKLY_QUOTA,
+          usedThisWeek,
+          remaining,
+          canGenerate,
+          earliestExpiringAt,
+          resetFormatted,
+        };
       },
-      select: {
-        id: true,
-        createdAt: true,
-        status: true,
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    const usedThisWeek = recentAssessments.length;
-    const remaining = Math.max(0, ASSESSMENT_WEEKLY_QUOTA - usedThisWeek);
-    const canGenerate = remaining > 0;
-
-    let earliestExpiringAt: string | null = null;
-    let resetFormatted: string | null = null;
-
-    if (!canGenerate && recentAssessments.length > 0) {
-      // The oldest assessment in this active window will roll off after 7 days from its createdAt
-      const oldestActive = recentAssessments[0];
-      const expiryDate = new Date(
-        oldestActive.createdAt.getTime() + ASSESSMENT_QUOTA_WINDOW_MS
-      );
-      earliestExpiringAt = expiryDate.toISOString();
-      resetFormatted = formatTimeUntilReset(expiryDate, now);
-    }
-
-    return {
-      totalAllowed: ASSESSMENT_WEEKLY_QUOTA,
-      usedThisWeek,
-      remaining,
-      canGenerate,
-      earliestExpiringAt,
-      resetFormatted,
-    };
+      60
+    );
   }
 
   /**

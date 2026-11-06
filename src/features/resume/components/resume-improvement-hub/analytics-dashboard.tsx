@@ -1,9 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { ResumeReport } from "../../types";
-import { ResumeRadarChart } from "./resume-radar-chart";
-import { SectionScoreChart } from "./section-score-chart";
 import { BarChart3, FileText, Code2, Briefcase, GraduationCap, Award, Percent } from "lucide-react";
+import { ChartSkeleton } from "@/components/skeletons/chart-skeleton";
+
+const ResumeRadarChart = dynamic(
+  () => import("./resume-radar-chart").then((mod) => mod.ResumeRadarChart),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />,
+  }
+);
+
+const SectionScoreChart = dynamic(
+  () => import("./section-score-chart").then((mod) => mod.SectionScoreChart),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />,
+  }
+);
 
 interface AnalyticsDashboardProps {
   report: ResumeReport;

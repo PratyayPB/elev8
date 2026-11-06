@@ -4,6 +4,9 @@ import path from "path";
 const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts"],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

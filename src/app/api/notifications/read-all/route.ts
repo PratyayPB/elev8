@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrCreateDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { publishNotificationReadAll } from "@/lib/notify";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export async function PATCH() {
 
     // Broadcast cross-tab sync event to all active client tabs
     if (result.count > 0) {
+      await CacheService.del(CacheKeys.unreadNotificationCount(dbUser.id)).catch(() => {});
       await publishNotificationReadAll(dbUser.id, result.count).catch(() => {});
     }
 

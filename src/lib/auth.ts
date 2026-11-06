@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 
 export async function getAuthSession() {
   return await auth();
@@ -20,7 +21,8 @@ export async function requireAuth() {
 
 /**
  * Returns or creates the database user record for the authenticated Clerk session.
- * Wrapped in React cache() to deduplicate queries within a single server request lifecycle.
+ * Deduplicated in-memory per request lifecycle via React cache(), and cached across
+ * requests via Redis (15-minute TTL) to eliminate repetitive database lookups.
  */
 export const getOrCreateDbUser = cache(async () => {
   const { userId: clerkId } = await auth();
@@ -28,25 +30,39 @@ export const getOrCreateDbUser = cache(async () => {
     throw new Error("Unauthorized: Please sign in.");
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { clerkId },
-  });
+  const user = await CacheService.getOrSet(
+    CacheKeys.userByClerkId(clerkId),
+    async () => {
+      const existingUser = await prisma.user.findUnique({
+        where: { clerkId },
+      });
 
-  if (existingUser) {
-    return existingUser;
+      if (existingUser) {
+        return existingUser;
+      }
+
+      const clerkUser = await currentUser();
+      const primaryEmail = clerkUser?.emailAddresses?.[0]?.emailAddress;
+
+      return prisma.user.upsert({
+        where: { clerkId },
+        create: {
+          clerkId,
+          email: primaryEmail,
+        },
+        update: {
+          email: primaryEmail,
+        },
+      });
+    },
+    CacheTTL.USER_SESSION
+  );
+
+  // Re-hydrate Date objects if parsed from JSON
+  if (user) {
+    if (typeof user.createdAt === "string") user.createdAt = new Date(user.createdAt);
+    if (typeof user.updatedAt === "string") user.updatedAt = new Date(user.updatedAt);
   }
 
-  const clerkUser = await currentUser();
-  const primaryEmail = clerkUser?.emailAddresses?.[0]?.emailAddress;
-
-  return prisma.user.upsert({
-    where: { clerkId },
-    create: {
-      clerkId,
-      email: primaryEmail,
-    },
-    update: {
-      email: primaryEmail,
-    },
-  });
+  return user;
 });

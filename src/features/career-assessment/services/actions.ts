@@ -21,6 +21,7 @@ import { CareerAssessmentStatus } from "@prisma/client";
 import { safeAction } from "@/lib/error-handler";
 import { createNotification } from "@/lib/notify";
 import type { generateAssessmentTask } from "@/trigger/generate-assessment";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export async function createAssessmentAction() {
   return safeAction(async () => {
@@ -37,21 +38,18 @@ export async function createAssessmentAction() {
       throw new Error("User record not found.");
     }
 
-    // Rate-limiting / anti-spam guard: prevent multiple submissions within 10 seconds
-    const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
-    const recentDuplicate = await prisma.careerAssessment.findFirst({
-      where: {
-        userId: user.id,
-        createdAt: { gte: tenSecondsAgo },
-      },
-    });
-
-    if (recentDuplicate) {
+    // Distributed anti-spam lock: prevent multiple submissions within 15 seconds
+    const lockAcquired = await CacheService.acquireLock(
+      CacheKeys.workflowLock("career-assessment", user.id),
+      15
+    );
+    if (!lockAcquired) {
       throw new Error("An assessment was just initiated. Please wait a moment before trying again.");
     }
 
     // Weekly quota guard (Rolling 7-day window: max 3 per week)
     await AssessmentQuotaService.assertQuotaAvailable(user.id);
+    await CacheService.del(CacheKeys.quota("assessment-weekly", user.id)).catch(() => {});
 
     await ModuleActivityService.recordActivity({
       userId: user.id,

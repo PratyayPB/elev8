@@ -3,7 +3,7 @@ import { ReportContainer } from "@/features/interview/components/interview-repor
 import { notFound, redirect } from "next/navigation";
 import { InterviewStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getOrCreateDbUser } from "@/lib/auth";
 import Link from "next/link";
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { retryAssessmentAction } from "@/features/interview/actions/session-actions";
@@ -17,14 +17,12 @@ interface InterviewReportPageProps {
 export default async function InterviewReportPage({ params }: InterviewReportPageProps) {
   const { interviewId } = await params;
 
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  let dbUser;
+  try {
+    dbUser = await getOrCreateDbUser();
+  } catch {
     redirect("/sign-in");
   }
-
-  const dbUser = await prisma.user.findUnique({
-    where: { clerkId },
-  });
 
   if (!dbUser) {
     redirect("/sign-in");

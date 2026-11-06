@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkAuthProvider } from "@/providers/clerk-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Albert_Sans, Geist } from "next/font/google";
 import "./globals.css";
@@ -32,8 +33,10 @@ export default function RootLayout({
         className={`scroll-smooth ${geistSans.variable} ${albertSans.variable}`}
       >
         <body className="font-sans antialiased bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-          {children}
-          <Toaster position="top-right" richColors closeButton />
+          <QueryProvider>
+            {children}
+            <Toaster position="top-right" richColors closeButton />
+          </QueryProvider>
         </body>
       </html>
     </ClerkAuthProvider>

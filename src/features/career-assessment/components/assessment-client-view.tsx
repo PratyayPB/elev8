@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -13,9 +14,47 @@ import {
   getAssessmentStatusAction,
   getWeeklyQuotaAction,
 } from "../services/actions";
-import { AssessmentReadinessScore } from "./assessment-readiness-score";
-import { CareerCompetencyRadar } from "./career-competency-radar";
-import { AssessmentMetricsChart } from "./assessment-metrics-chart";
+import { ChartSkeleton } from "@/components/skeletons/chart-skeleton";
+
+const AssessmentReadinessScore = dynamic(
+  () =>
+    import("./assessment-readiness-score").then(
+      (mod) => mod.AssessmentReadinessScore
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <ChartSkeleton height="h-44" hasLegend={false} className="w-full" />
+    ),
+  }
+);
+
+const CareerCompetencyRadar = dynamic(
+  () =>
+    import("./career-competency-radar").then(
+      (mod) => mod.CareerCompetencyRadar
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />
+    ),
+  }
+);
+
+const AssessmentMetricsChart = dynamic(
+  () =>
+    import("./assessment-metrics-chart").then(
+      (mod) => mod.AssessmentMetricsChart
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />
+    ),
+  }
+);
+
 import { AssessmentStrengths } from "./assessment-strengths";
 import { AssessmentGaps } from "./assessment-gaps";
 import { AssessmentFocusAreas } from "./assessment-focus-areas";

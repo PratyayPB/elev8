@@ -9,6 +9,7 @@ import { RealtimeTokenService } from "@/services/jobs/realtime-token.service";
 import { exportResumePdfTask } from "@/trigger/export-resume-pdf";
 import { compileResumeTemplateTask } from "@/trigger/compile-resume-template";
 import { safeAction } from "@/lib/error-handler";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 /**
  * Initiates an asynchronous headless Chrome PDF export in a Trigger.dev worker.
@@ -16,6 +17,14 @@ import { safeAction } from "@/lib/error-handler";
 export async function requestResumePdfExportAction(resumeId: string) {
   return safeAction(async () => {
     const user = await getOrCreateDbUser();
+
+    const lockAcquired = await CacheService.acquireLock(
+      CacheKeys.workflowLock("export-pdf", resumeId),
+      20
+    );
+    if (!lockAcquired) {
+      throw new Error("A PDF export is already being prepared for this resume. Please wait.");
+    }
 
     const resume = await prisma.resumeBuild.findUnique({
       where: { id: resumeId, userId: user.id },
@@ -62,6 +71,14 @@ export async function switchResumeTemplateAction(
 ) {
   return safeAction(async () => {
     const user = await getOrCreateDbUser();
+
+    const lockAcquired = await CacheService.acquireLock(
+      CacheKeys.workflowLock("switch-template", resumeId),
+      20
+    );
+    if (!lockAcquired) {
+      throw new Error("A template switch is already compiling for this resume. Please wait.");
+    }
 
     const resume = await prisma.resumeBuild.findUnique({
       where: { id: resumeId, userId: user.id },

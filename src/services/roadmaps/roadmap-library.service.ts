@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma, RoadmapStatus } from "@prisma/client";
 import { LibraryRoadmap } from "@/features/roadmaps/types";
 import { normalizeRole } from "@/features/roadmaps/utils";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export interface GetRoadmapsOptions {
   userId: string;
@@ -61,28 +62,40 @@ export class RoadmapLibraryService {
 
       const skip = (page - 1) * limit;
 
-      const [globalRoadmaps, total] = await Promise.all([
-        prisma.globalRoadmap.findMany({
-          where: globalWhere,
-          orderBy,
-          skip,
-          take: limit,
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            targetRole: true,
-            experienceLevel: true,
-            status: true,
-            estimatedDuration: true,
-            blobUrl: true,
-            createdByUserId: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        }),
-        prisma.globalRoadmap.count({ where: globalWhere }),
-      ]);
+      const cacheKey = CacheKeys.catalogGlobalRoadmaps(
+        page,
+        `${sort}:${search ? encodeURIComponent(search) : "all"}:${limit}`
+      );
+
+      const { globalRoadmaps, total } = await CacheService.getOrSet(
+        cacheKey,
+        async () => {
+          const [items, count] = await Promise.all([
+            prisma.globalRoadmap.findMany({
+              where: globalWhere,
+              orderBy,
+              skip,
+              take: limit,
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                targetRole: true,
+                experienceLevel: true,
+                status: true,
+                estimatedDuration: true,
+                blobUrl: true,
+                createdByUserId: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            }),
+            prisma.globalRoadmap.count({ where: globalWhere }),
+          ]);
+          return { globalRoadmaps: items, total: count };
+        },
+        6 * 3600 // 6 hours
+      );
 
       const mapped: LibraryRoadmap[] = globalRoadmaps.map((g) => ({
         id: g.id,

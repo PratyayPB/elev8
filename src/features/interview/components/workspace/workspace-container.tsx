@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { InterviewSession } from "@prisma/client";
 import { useInterviewWorkspace } from "../../hooks/use-interview-workspace";
@@ -10,8 +11,16 @@ import { FiltersAndSearch } from "./filters-and-search";
 import { InterviewCard } from "./interview-card";
 import { GlobalInterviewCard } from "./global-interview-card";
 import { PersonalTemplateCard } from "./personal-template-card";
-import { TrendCharts } from "./trend-charts";
 import { RecommendedActions } from "./recommended-actions";
+import { ChartSkeleton } from "@/components/skeletons/chart-skeleton";
+
+const TrendCharts = dynamic(
+  () => import("./trend-charts").then((mod) => mod.TrendCharts),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton height="h-72" hasLegend={false} className="w-full" />,
+  }
+);
 import { PlusCircle, HelpCircle, User, Globe, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard";

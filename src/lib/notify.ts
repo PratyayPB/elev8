@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@/features/notifications/types";
 import { notificationTransport } from "@/lib/realtime/ably-transport";
+import { CacheService, CacheKeys } from "@/services/cache";
 
 export interface CreateNotificationInput {
   userId: string;
@@ -52,6 +53,9 @@ export async function createNotification(input: CreateNotificationInput) {
       },
     });
   }
+
+  // Invalidate cached unread count for the recipient
+  await CacheService.del(CacheKeys.unreadNotificationCount(input.userId)).catch(() => {});
 
   // Publish to Ably channel notifications:user:{userId}
   // This is fire-and-forget; publish errors are logged without PII and never throw.

@@ -3,6 +3,7 @@ import { BlobStorageService } from "@/services/storage/blob-storage.service";
 import { RoadmapArtifact, RoadmapArtifactService } from "./roadmap-artifact.service";
 import { Job, JobStatus, RoadmapStatus, CareerLevel } from "@prisma/client";
 import { ModuleActivityService } from "@/features/progress/services";
+import { CacheService, CacheKeys, CacheTTL } from "@/services/cache";
 import {
   ModuleActivityEventType,
   ModuleCompletionStatus,
@@ -123,42 +124,50 @@ export class RoadmapViewerService {
 
     if (currentStatus === RoadmapStatus.COMPLETED && blobUrlToFetch) {
       try {
-        const rawArtifact = await BlobStorageService.fetchJson<unknown>(blobUrlToFetch);
-        if (RoadmapArtifactService.validateArtifact(rawArtifact)) {
-          artifact = rawArtifact;
-          await ModuleActivityService.recordActivity({
-            userId,
-            module: ModuleType.ROADMAP,
-            eventType: ModuleActivityEventType.ROADMAP_VIEWED,
-            entityId: roadmapId,
-            metadata: {
-              source: "ROADMAP_VIEWER",
-              roadmapId,
-              isGlobal: roadmapSummary.isGlobal,
-            },
-          }).catch((activityError) =>
-            console.warn("[RoadmapViewerService] Failed to record view activity:", activityError)
-          );
-          await ModuleActivityService.recordActivity({
-            userId,
-            module: ModuleType.ROADMAP,
-            eventType: ModuleActivityEventType.ROADMAP_STARTED,
-            completionStatus: ModuleCompletionStatus.STARTED,
-            entityId: roadmapId,
-            metadata: {
-              source: "ROADMAP_VIEWER",
-              roadmapId,
-              isGlobal: roadmapSummary.isGlobal,
-            },
-          }).catch((activityError) =>
-            console.warn("[RoadmapViewerService] Failed to record started activity:", activityError)
-          );
-        } else {
-          error = "Invalid or corrupted roadmap artifact.";
-        }
-      } catch (err) {
-        console.error("Failed to load roadmap artifact from Blob:", err);
-        error = "Failed to load roadmap file from storage.";
+        const cachedArtifact = await CacheService.getOrSet(
+          CacheKeys.roadmapArtifact(roadmapId),
+          async () => {
+            const rawArtifact = await BlobStorageService.fetchJson<unknown>(blobUrlToFetch!);
+            if (RoadmapArtifactService.validateArtifact(rawArtifact)) {
+              return rawArtifact;
+            }
+            throw new Error("Invalid or corrupted roadmap artifact.");
+          },
+          CacheTTL.ARTIFACT
+        );
+
+        artifact = cachedArtifact;
+
+        await ModuleActivityService.recordActivity({
+          userId,
+          module: ModuleType.ROADMAP,
+          eventType: ModuleActivityEventType.ROADMAP_VIEWED,
+          entityId: roadmapId,
+          metadata: {
+            source: "ROADMAP_VIEWER",
+            roadmapId,
+            isGlobal: roadmapSummary.isGlobal,
+          },
+        }).catch((activityError) =>
+          console.warn("[RoadmapViewerService] Failed to record view activity:", activityError)
+        );
+        await ModuleActivityService.recordActivity({
+          userId,
+          module: ModuleType.ROADMAP,
+          eventType: ModuleActivityEventType.ROADMAP_STARTED,
+          completionStatus: ModuleCompletionStatus.STARTED,
+          entityId: roadmapId,
+          metadata: {
+            source: "ROADMAP_VIEWER",
+            roadmapId,
+            isGlobal: roadmapSummary.isGlobal,
+          },
+        }).catch((activityError) =>
+          console.warn("[RoadmapViewerService] Failed to record started activity:", activityError)
+        );
+      } catch (err: any) {
+        console.error("Failed to load roadmap artifact:", err);
+        error = err?.message || "Failed to load roadmap file from storage.";
       }
     } else if (job && job.status === JobStatus.FAILED) {
       error = job.error || "Roadmap generation failed.";

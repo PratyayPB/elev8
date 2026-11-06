@@ -1,24 +1,26 @@
 /**
- * High-performance In-Memory Sliding-Window Rate Limiter
+ * Distributed and In-Memory Sliding-Window Rate Limiter
  * Provides microsecond-level rate limiting for edge/API routes and autosave actions.
+ * Backed by Upstash Redis with automatic in-memory fallback.
  */
 
-interface RateLimitConfig {
+import { checkDistributedRateLimit } from "@/services/cache/rate-limit.service";
+
+export interface RateLimitConfig {
   /** Maximum number of allowed requests in the sliding window */
   limit: number;
   /** Window duration in milliseconds */
   windowMs: number;
 }
 
-interface RateLimitResult {
+export interface RateLimitResult {
   success: boolean;
   limit: number;
   remaining: number;
   resetMs: number;
 }
 
-// In-memory token bucket / sliding timestamp map
-// Maps identifier key -> array of request timestamps (epoch ms)
+// In-memory token bucket / sliding timestamp map (fallback)
 const requestStore = new Map<string, number[]>();
 
 // Periodic cleanup of stale keys every 5 minutes to prevent memory leaks
@@ -30,7 +32,6 @@ function cleanupStaleEntries(now: number) {
   lastCleanup = now;
 
   for (const [key, timestamps] of requestStore.entries()) {
-    // Keep entries that have at least 1 timestamp within the past 10 minutes
     const validTimestamps = timestamps.filter((t) => now - t < 10 * 60 * 1000);
     if (validTimestamps.length === 0) {
       requestStore.delete(key);
@@ -41,20 +42,19 @@ function cleanupStaleEntries(now: number) {
 }
 
 /**
- * Checks sliding-window rate limit for a given key.
- *
- * @param key Unique identifier (e.g. `ip:127.0.0.1:clerk-webhook` or `user:cuid:autosave`)
- * @param config { limit, windowMs }
- * @returns RateLimitResult with success boolean, remaining count, and reset time in ms
+ * Checks in-memory sliding-window rate limit for a given key.
+ * Used as high-speed fallback when Redis is unconfigured or offline.
  */
-export function checkRateLimit(key: string, config: RateLimitConfig): RateLimitResult {
+export function checkInMemoryLimit(
+  key: string,
+  config: RateLimitConfig
+): RateLimitResult {
   const now = Date.now();
   cleanupStaleEntries(now);
 
   const windowStart = now - config.windowMs;
   const existingTimestamps = requestStore.get(key) || [];
 
-  // Filter timestamps within current window
   const activeTimestamps = existingTimestamps.filter((t) => t > windowStart);
 
   if (activeTimestamps.length >= config.limit) {
@@ -69,7 +69,6 @@ export function checkRateLimit(key: string, config: RateLimitConfig): RateLimitR
     };
   }
 
-  // Record this request
   activeTimestamps.push(now);
   requestStore.set(key, activeTimestamps);
 
@@ -79,6 +78,21 @@ export function checkRateLimit(key: string, config: RateLimitConfig): RateLimitR
     remaining: Math.max(0, config.limit - activeTimestamps.length),
     resetMs: config.windowMs,
   };
+}
+
+/**
+ * Checks sliding-window rate limit for a given key.
+ * Uses distributed Redis when configured; falls back to in-memory store.
+ *
+ * @param key Unique identifier (e.g. `ip:127.0.0.1:clerk-webhook` or `user:cuid:autosave`)
+ * @param config { limit, windowMs }
+ * @returns Promise<RateLimitResult>
+ */
+export async function checkRateLimit(
+  key: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  return checkDistributedRateLimit(key, config);
 }
 
 /**
