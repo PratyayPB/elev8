@@ -64,6 +64,10 @@ Phase 7.2: Release & Production Verification
     - Converted `checkBackgroundJobStatusAction` and `getJobRealtimeTokenAction` into REST GET route handlers.
     - Switched fallback polling to exponential backoff (3s -> 30s) capped at 15 cycles.
     - Added reactive Ably notification listener to complete active jobs instantly with zero polling when realtime events arrive.
+  - **Deprecated Client Toast Persistence (Section C)**:
+    - Removed global monkey-patching in `sonner.tsx`; generic UI toasts are now strictly ephemeral and no longer execute HTTP POST calls to write to PostgreSQL.
+    - Deprecated and removed `/api/notifications/log-toast` route handler and `toast-sync.ts`.
+    - Updated test suites to verify server-side job notifications and idempotency without relying on toast interception.
     - Handles JSONResume schema population, section mapping, template rendering, and HTML preview caching into Blob storage without blocking the web process.
     - Created [`switchResumeTemplateAction`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/actions/export-actions.ts) and connected optimistic UI state in [`useResumeEditor`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/hooks/use-resume-editor.ts).
     - Silenced template switching notifications entirely: removed client toasts in [`useResumeEditor`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/hooks/use-resume-editor.ts) and updated [`JobService.completeJob`](file:///d:/Portfolio-projects/elev8-prod/src/services/jobs/job.service.ts) to bypass database notification creation for `RESUME_TEMPLATE_SWITCH` artifact types, enabling seamless background preview caching without notification center or toast disruptions.
