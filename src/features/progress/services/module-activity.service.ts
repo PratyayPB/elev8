@@ -102,25 +102,25 @@ export class ModuleActivityService {
     let input: RecordActivityInput;
 
     if (typeof inputOrUserId === "string") {
-      const module = moduleArg!;
+      const moduleType = moduleArg!;
       const completionStatus = completionStatusArg;
       const metadata = metadataArg;
 
       // Infer eventType for legacy calls
       let eventType: ModuleActivityEventType = ModuleActivityEventType.ASSESSMENT_COMPLETED;
-      if (module === ModuleType.ROADMAP) {
+      if (moduleType === ModuleType.ROADMAP) {
         eventType = ModuleActivityEventType.ROADMAP_COMPLETED;
-      } else if (module === ModuleType.INTERVIEW_PRACTICE) {
+      } else if (moduleType === ModuleType.INTERVIEW_PRACTICE) {
         eventType = ModuleActivityEventType.INTERVIEW_COMPLETED;
-      } else if (module === ModuleType.RESUME_BUILD) {
+      } else if (moduleType === ModuleType.RESUME_BUILD) {
         eventType = ModuleActivityEventType.RESUME_BUILD_COMPLETED;
-      } else if (module === ModuleType.RESUME_SCORE) {
+      } else if (moduleType === ModuleType.RESUME_SCORE) {
         eventType = ModuleActivityEventType.RESUME_SCORE_COMPLETED;
       }
 
       input = {
         userId: inputOrUserId,
-        module,
+        module: moduleType,
         eventType,
         completionStatus,
         metadata,
@@ -130,7 +130,7 @@ export class ModuleActivityService {
       input = inputOrUserId;
     }
 
-    const { userId, module, eventType, entityId, completionStatus, metadata } = input;
+    const { userId, module: targetModule, eventType, entityId, completionStatus, metadata } = input;
 
     if (!userId || typeof userId !== "string" || !userId.trim()) {
       throw new Error("Valid userId is required to record module activity.");
@@ -172,7 +172,7 @@ export class ModuleActivityService {
       after(async () => {
         await this.executeRecordActivity(
           userId,
-          module,
+          targetModule,
           eventType,
           completionStatus,
           metadata,
@@ -183,7 +183,7 @@ export class ModuleActivityService {
       return {
         id: `opt_${Date.now()}`,
         userId,
-        module,
+        module: targetModule,
         eventType,
         completionStatus: completionStatus ?? null,
         entityId: finalEntityId ?? null,
@@ -194,7 +194,7 @@ export class ModuleActivityService {
       // If outside Next.js request lifecycle (e.g. Trigger.dev worker or test harness), execute synchronously
       return await this.executeRecordActivity(
         userId,
-        module,
+        targetModule,
         eventType,
         completionStatus,
         metadata,

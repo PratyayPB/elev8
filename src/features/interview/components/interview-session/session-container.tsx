@@ -45,6 +45,13 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
+  // Debounced autosave (1.5s) while typing
+  const debouncedAutosave = useDebouncedCallback(() => {
+    save();
+  }, 1500);
+
+  const { runWorkflow } = useBackgroundWorkflow();
+
   // Timer interval
   useEffect(() => {
     const timer = setInterval(() => {
@@ -73,11 +80,6 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
   const isLast = currentQuestionIndex === artifact.questions.length - 1;
   const unansweredCount = artifact.questions.length - artifact.answers.filter(a => a.answerText.trim().length > 0).length;
 
-  // Debounced autosave (1.5s) while typing
-  const debouncedAutosave = useDebouncedCallback(() => {
-    save();
-  }, 1500);
-
   const handleAnswerChange = (text: string) => {
     updateAnswer(currentQuestion.id, text);
     debouncedAutosave();
@@ -98,8 +100,6 @@ export function SessionContainer({ interviewId }: SessionContainerProps) {
     save();
     jumpToQuestion(index);
   };
-
-  const { runWorkflow } = useBackgroundWorkflow();
 
   const handlePauseConfirm = async () => {
     setIsProcessingAction(true);

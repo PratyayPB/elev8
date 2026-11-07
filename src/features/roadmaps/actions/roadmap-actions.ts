@@ -44,6 +44,126 @@ async function recordRoadmapActivity(input: {
   }
 }
 
+async function attachTriggerRunToJob(jobId: string, runId?: string) {
+  if (!runId) return;
+  await prisma.job.update({
+    where: { id: jobId },
+    data: { triggerRunId: runId },
+  });
+}
+
+async function handleLocalRoadmapGenerationError(
+  jobId: string,
+  roadmapId: string,
+  userId: string,
+  err: unknown
+) {
+  console.error("[Local Background Job Error]:", err);
+  const appError = normalizeError(err);
+  await JobService.failJob(jobId, appError.message);
+  await prisma.roadmap
+    .update({
+      where: { id: roadmapId },
+      data: { status: RoadmapStatus.FAILED },
+    })
+    .catch((dbErr) =>
+      console.warn("[Local Background Job] Failed to mark Roadmap as FAILED:", dbErr)
+    );
+  await recordRoadmapActivity({
+    userId,
+    eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
+    entityId: roadmapId,
+    metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", error: appError.message },
+  });
+}
+
+async function executeLocalRoadmapFallback({
+  jobId,
+  roadmapId,
+  userId,
+  requestPayload,
+  isGlobal,
+}: {
+  jobId: string;
+  roadmapId: string;
+  userId: string;
+  requestPayload: any;
+  isGlobal: boolean;
+}) {
+  try {
+    await JobService.updateProgress(
+      jobId,
+      25,
+      isGlobal ? "Generating Global Roadmap" : "Generating Roadmap"
+    );
+    const generatedRoadmap = await RoadmapGenerationService.generate(requestPayload);
+
+    await JobService.updateProgress(jobId, 65, "Computing Layout");
+    const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
+
+    await JobService.updateProgress(jobId, 80, "Uploading Artifact");
+    const blobUrl = await RoadmapArtifactService.uploadArtifact(
+      roadmapId,
+      artifact
+    );
+
+    await JobService.updateProgress(jobId, 95, "Saving Metadata");
+
+    const roadmapMetaUpdate = {
+      title: generatedRoadmap.metadata.title,
+      description: generatedRoadmap.summary,
+      estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
+      status: RoadmapStatus.COMPLETED,
+      blobUrl,
+    };
+
+    if (isGlobal) {
+      await prisma.globalRoadmap.update({
+        where: { id: roadmapId },
+        data: roadmapMetaUpdate,
+      });
+    } else {
+      await prisma.roadmap.update({
+        where: { id: roadmapId },
+        data: roadmapMetaUpdate,
+      });
+    }
+    await JobService.completeJob(jobId, roadmapId, "ROADMAP");
+    await recordRoadmapActivity({
+      userId,
+      eventType: ModuleActivityEventType.ROADMAP_GENERATED,
+      entityId: roadmapId,
+      completionStatus: ModuleCompletionStatus.COMPLETED,
+      metadata: {
+        source: isGlobal ? "LOCAL_GLOBAL_ROADMAP_FALLBACK" : "LOCAL_PERSONALIZED_ROADMAP_FALLBACK",
+        roadmapId,
+      },
+    });
+  } catch (err: unknown) {
+    if (isGlobal) {
+      console.error("[Local Global Background Job Error]:", err);
+      const appError = normalizeError(err);
+      await JobService.failJob(jobId, appError.message);
+      await prisma.globalRoadmap
+        .update({
+          where: { id: roadmapId },
+          data: { status: RoadmapStatus.FAILED },
+        })
+        .catch((dbErr) =>
+          console.warn("[Local Background Job] Failed to mark GlobalRoadmap as FAILED:", dbErr)
+        );
+      await recordRoadmapActivity({
+        userId,
+        eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
+        entityId: roadmapId,
+        metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", error: appError.message },
+      });
+    } else {
+      await handleLocalRoadmapGenerationError(jobId, roadmapId, userId, err);
+    }
+  }
+}
+
 export async function fetchUserRoadmaps(
   options: Omit<GetRoadmapsOptions, "userId">
 ) {
@@ -265,12 +385,7 @@ export async function generateRoadmapAction(rawPayload: RoadmapRequest) {
           }
         );
 
-        if (handle?.id) {
-          await prisma.job.update({
-            where: { id: job.id },
-            data: { triggerRunId: handle.id },
-          });
-        }
+        await attachTriggerRunToJob(job.id, handle?.id);
       } catch (triggerError) {
         console.warn(
           "[Trigger.dev] Direct cloud trigger skipped, running local background task...",
@@ -278,54 +393,13 @@ export async function generateRoadmapAction(rawPayload: RoadmapRequest) {
         );
 
         (async () => {
-          try {
-            await JobService.updateProgress(job.id, 25, "Generating Roadmap");
-            const generatedRoadmap =
-              await RoadmapGenerationService.generate(requestPayload);
-
-            await JobService.updateProgress(job.id, 65, "Computing Layout");
-            const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
-
-            await JobService.updateProgress(job.id, 80, "Uploading Artifact");
-            const blobUrl = await RoadmapArtifactService.uploadArtifact(
-              globalRoadmap.id,
-              artifact
-            );
-
-            await JobService.updateProgress(job.id, 95, "Saving Metadata");
-            await prisma.globalRoadmap.update({
-              where: { id: globalRoadmap.id },
-              data: {
-                title: generatedRoadmap.metadata.title,
-                description: generatedRoadmap.summary,
-                estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
-                status: RoadmapStatus.COMPLETED,
-                blobUrl,
-              },
-            });
-            await JobService.completeJob(job.id, globalRoadmap.id, "GLOBAL_ROADMAP");
-            await recordRoadmapActivity({
-              userId: user.id,
-              eventType: ModuleActivityEventType.ROADMAP_GENERATED,
-              entityId: globalRoadmap.id,
-              completionStatus: ModuleCompletionStatus.COMPLETED,
-              metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", roadmapId: globalRoadmap.id },
-            });
-          } catch (err: any) {
-            console.error("[Local Background Job Error]:", err);
-            const appError = normalizeError(err);
-            await JobService.failJob(job.id, appError.message);
-            await prisma.globalRoadmap.update({
-              where: { id: globalRoadmap.id },
-              data: { status: RoadmapStatus.FAILED },
-            }).catch((dbErr) => console.warn("[Local Background Job] Failed to mark GlobalRoadmap as FAILED:", dbErr));
-            await recordRoadmapActivity({
-              userId: user.id,
-              eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
-              entityId: globalRoadmap.id,
-              metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", error: appError.message },
-            });
-          }
+          await executeLocalRoadmapFallback({
+            jobId: job.id,
+            roadmapId: globalRoadmap.id,
+            userId: user.id,
+            requestPayload,
+            isGlobal: true,
+          });
         })();
       }
 
@@ -395,12 +469,7 @@ export async function generateRoadmapAction(rawPayload: RoadmapRequest) {
         }
       );
 
-      if (handle?.id) {
-        await prisma.job.update({
-          where: { id: job.id },
-          data: { triggerRunId: handle.id },
-        });
-      }
+      await attachTriggerRunToJob(job.id, handle?.id);
     } catch (triggerError) {
       console.warn(
         "[Trigger.dev] Direct cloud trigger skipped, running local background task...",
@@ -408,54 +477,13 @@ export async function generateRoadmapAction(rawPayload: RoadmapRequest) {
       );
 
       (async () => {
-        try {
-          await JobService.updateProgress(job.id, 25, "Generating Roadmap");
-          const generatedRoadmap =
-            await RoadmapGenerationService.generate(requestPayload);
-
-          await JobService.updateProgress(job.id, 65, "Computing Layout");
-          const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
-
-          await JobService.updateProgress(job.id, 80, "Uploading Artifact");
-          const blobUrl = await RoadmapArtifactService.uploadArtifact(
-            roadmap.id,
-            artifact
-          );
-
-          await JobService.updateProgress(job.id, 95, "Saving Metadata");
-          await prisma.roadmap.update({
-            where: { id: roadmap.id },
-            data: {
-              title: generatedRoadmap.metadata.title,
-              description: generatedRoadmap.summary,
-              estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
-              status: RoadmapStatus.COMPLETED,
-              blobUrl,
-            },
-          });
-          await JobService.completeJob(job.id, roadmap.id, "ROADMAP");
-          await recordRoadmapActivity({
-            userId: user.id,
-            eventType: ModuleActivityEventType.ROADMAP_GENERATED,
-            entityId: roadmap.id,
-            completionStatus: ModuleCompletionStatus.COMPLETED,
-            metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", roadmapId: roadmap.id },
-          });
-        } catch (err: any) {
-          console.error("[Local Background Job Error]:", err);
-          const appError = normalizeError(err);
-          await JobService.failJob(job.id, appError.message);
-          await prisma.roadmap.update({
-            where: { id: roadmap.id },
-            data: { status: RoadmapStatus.FAILED },
-          }).catch((dbErr) => console.warn("[Local Background Job] Failed to mark Roadmap as FAILED:", dbErr));
-          await recordRoadmapActivity({
-            userId: user.id,
-            eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
-            entityId: roadmap.id,
-            metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", error: appError.message },
-          });
-        }
+        await executeLocalRoadmapFallback({
+          jobId: job.id,
+          roadmapId: roadmap.id,
+          userId: user.id,
+          requestPayload,
+          isGlobal: false,
+        });
       })();
     }
 
@@ -548,12 +576,7 @@ export async function retryRoadmapGenerationAction(roadmapId: string) {
           }
         );
 
-        if (handle?.id) {
-          await prisma.job.update({
-            where: { id: job.id },
-            data: { triggerRunId: handle.id },
-          });
-        }
+        await attachTriggerRunToJob(job.id, handle?.id);
       } catch (triggerError) {
         console.warn(
           "[Trigger.dev] Direct cloud trigger skipped for global roadmap, running local background task...",
@@ -561,47 +584,13 @@ export async function retryRoadmapGenerationAction(roadmapId: string) {
         );
 
         (async () => {
-          try {
-            await JobService.updateProgress(job.id, 25, "Generating Global Roadmap");
-            const generatedRoadmap = await RoadmapGenerationService.generate(requestPayload);
-
-            await JobService.updateProgress(job.id, 65, "Computing Layout");
-            const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
-
-            await JobService.updateProgress(job.id, 80, "Uploading Artifact");
-            const blobUrl = await RoadmapArtifactService.uploadArtifact(
-              globalRoadmap.id,
-              artifact
-            );
-
-            await JobService.updateProgress(job.id, 95, "Saving Metadata");
-            await prisma.globalRoadmap.update({
-              where: { id: globalRoadmap.id },
-              data: {
-                title: generatedRoadmap.metadata.title,
-                description: generatedRoadmap.summary,
-                estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
-                status: RoadmapStatus.COMPLETED,
-                blobUrl,
-              },
-            });
-            await JobService.completeJob(job.id, globalRoadmap.id, "ROADMAP");
-            await recordRoadmapActivity({
-              userId: user.id,
-              eventType: ModuleActivityEventType.ROADMAP_GENERATED,
-              entityId: globalRoadmap.id,
-              completionStatus: ModuleCompletionStatus.COMPLETED,
-              metadata: { source: "LOCAL_GLOBAL_ROADMAP_FALLBACK", roadmapId: globalRoadmap.id },
-            });
-          } catch (err: any) {
-            console.error("[Local Global Background Job Error]:", err);
-            const appError = normalizeError(err);
-            await JobService.failJob(job.id, appError.message);
-            await prisma.globalRoadmap.update({
-              where: { id: globalRoadmap.id },
-              data: { status: RoadmapStatus.FAILED },
-            });
-          }
+          await executeLocalRoadmapFallback({
+            jobId: job.id,
+            roadmapId: globalRoadmap.id,
+            userId: user.id,
+            requestPayload,
+            isGlobal: true,
+          });
         })();
       }
 
@@ -675,12 +664,7 @@ export async function retryRoadmapGenerationAction(roadmapId: string) {
         }
       );
 
-      if (handle?.id) {
-        await prisma.job.update({
-          where: { id: job.id },
-          data: { triggerRunId: handle.id },
-        });
-      }
+      await attachTriggerRunToJob(job.id, handle?.id);
     } catch (triggerError) {
       console.warn(
         "[Trigger.dev] Direct cloud trigger skipped, running local background task...",
@@ -688,54 +672,13 @@ export async function retryRoadmapGenerationAction(roadmapId: string) {
       );
 
       (async () => {
-        try {
-          await JobService.updateProgress(job.id, 25, "Generating Roadmap");
-          const generatedRoadmap =
-            await RoadmapGenerationService.generate(requestPayload);
-
-          await JobService.updateProgress(job.id, 65, "Computing Layout");
-          const artifact = RoadmapArtifactService.buildArtifact(generatedRoadmap);
-
-          await JobService.updateProgress(job.id, 80, "Uploading Artifact");
-          const blobUrl = await RoadmapArtifactService.uploadArtifact(
-            personalRoadmap.id,
-            artifact
-          );
-
-          await JobService.updateProgress(job.id, 95, "Saving Metadata");
-          await prisma.roadmap.update({
-            where: { id: personalRoadmap.id },
-            data: {
-              title: generatedRoadmap.metadata.title,
-              description: generatedRoadmap.summary,
-              estimatedDuration: generatedRoadmap.metadata.estimatedDuration,
-              status: RoadmapStatus.COMPLETED,
-              blobUrl,
-            },
-          });
-          await JobService.completeJob(job.id, personalRoadmap.id, "ROADMAP");
-          await recordRoadmapActivity({
-            userId: user.id,
-            eventType: ModuleActivityEventType.ROADMAP_GENERATED,
-            entityId: personalRoadmap.id,
-            completionStatus: ModuleCompletionStatus.COMPLETED,
-            metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", roadmapId: personalRoadmap.id },
-          });
-        } catch (err: any) {
-          console.error("[Local Background Job Error]:", err);
-          const appError = normalizeError(err);
-          await JobService.failJob(job.id, appError.message);
-          await prisma.roadmap.update({
-            where: { id: personalRoadmap.id },
-            data: { status: RoadmapStatus.FAILED },
-          }).catch((dbErr) => console.warn("[Local Background Job] Failed to mark Roadmap as FAILED:", dbErr));
-          await recordRoadmapActivity({
-            userId: user.id,
-            eventType: ModuleActivityEventType.ROADMAP_GENERATION_FAILED,
-            entityId: personalRoadmap.id,
-            metadata: { source: "LOCAL_PERSONALIZED_ROADMAP_FALLBACK", error: appError.message },
-          });
-        }
+        await executeLocalRoadmapFallback({
+          jobId: job.id,
+          roadmapId: personalRoadmap.id,
+          userId: user.id,
+          requestPayload,
+          isGlobal: false,
+        });
       })();
     }
 

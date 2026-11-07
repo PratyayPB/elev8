@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SignUp, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,7 +52,7 @@ export default function SignUpPage() {
       </div>
       <div className="flex flex-col items-center gap-3 mt-4 text-sm">
         <p className="text-white/60">
-          Already have an account? <a href="/sign-in" className="text-blue-500 hover:text-blue-400 font-medium transition-colors">Sign in</a>
+          Already have an account? <Link href="/sign-in" className="text-blue-500 hover:text-blue-400 font-medium transition-colors">Sign in</Link>
         </p>
       </div>
     </div>

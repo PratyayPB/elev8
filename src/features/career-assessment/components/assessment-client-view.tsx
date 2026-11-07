@@ -117,7 +117,7 @@ export function AssessmentClientView({
 
   // 1. Trigger.dev Realtime SSE subscription
   const { run } = useRealtimeRun(realtimeCredentials?.triggerRunId, {
-    accessToken: realtimeCredentials?.publicAccessToken!,
+    accessToken: realtimeCredentials?.publicAccessToken ?? "",
     enabled: Boolean(
       assessment?.status === "PROCESSING" &&
         realtimeCredentials?.triggerRunId &&

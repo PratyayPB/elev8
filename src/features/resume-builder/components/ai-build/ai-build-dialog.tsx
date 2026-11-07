@@ -108,7 +108,7 @@ export function AiBuildDialog({
 
   // Realtime Trigger.dev Subscription when generating
   const { run } = useRealtimeRun(realtimeRunInfo?.triggerRunId, {
-    accessToken: realtimeRunInfo?.publicAccessToken!,
+    accessToken: realtimeRunInfo?.publicAccessToken ?? "",
     enabled: Boolean(
       step === "generating" &&
         realtimeRunInfo?.triggerRunId &&

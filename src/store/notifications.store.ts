@@ -24,6 +24,26 @@ interface NotificationsState {
   addNotificationLocally: (notification: NotificationItemData) => void;
 }
 
+async function executeOptimisticNotificationAction(
+  endpoint: string,
+  method: "PATCH" | "DELETE",
+  successMessage: string,
+  errorMessage: string,
+  rollback: () => void
+): Promise<void> {
+  try {
+    const res = await fetch(endpoint, { method });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    toast.success(successMessage, { skipDb: true } as any);
+  } catch (err) {
+    console.error(`[NotificationsStore] Rollback: ${errorMessage}:`, err);
+    rollback();
+    toast.error(errorMessage, { skipDb: true } as any);
+  }
+}
+
 export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
@@ -216,26 +236,13 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       unreadCount: wasUnread ? Math.max(0, state.unreadCount - 1) : state.unreadCount,
     }));
 
-    try {
-      const res = await fetch(`/api/notifications/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      toast.success("Notification deleted", {
-        description: "The notification has been permanently removed.",
-        skipDb: true,
-      } as any);
-    } catch (err) {
-      console.error("[NotificationsStore] Rollback: Failed to delete notification:", err);
-      // Rollback
-      set({
-        notifications: previous,
-        unreadCount: previousUnread,
-      });
-      toast.error("Failed to delete notification", { skipDb: true } as any);
-    }
+    await executeOptimisticNotificationAction(
+      `/api/notifications/${id}`,
+      "DELETE",
+      "Notification deleted",
+      "Failed to delete notification",
+      () => set({ notifications: previous, unreadCount: previousUnread })
+    );
   },
 
   markAllAsRead: async () => {
@@ -243,33 +250,16 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     const previousUnread = get().unreadCount;
     if (previousUnread === 0) return;
 
-    // Optimistically mark all read
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({
-        ...n,
-        status: "READ",
-        readAt: n.readAt || new Date(),
-      })),
-      unreadCount: 0,
-    }));
+    // Optimistically mark all read locally
+    get().markAllReadLocally();
 
-    try {
-      const res = await fetch("/api/notifications/read-all", {
-        method: "PATCH",
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      toast.success("All notifications marked as read", { skipDb: true } as any);
-    } catch (err) {
-      console.error("[NotificationsStore] Rollback: Failed to mark all as read:", err);
-      // Rollback
-      set({
-        notifications: previous,
-        unreadCount: previousUnread,
-      });
-      toast.error("Failed to mark all as read", { skipDb: true } as any);
-    }
+    await executeOptimisticNotificationAction(
+      "/api/notifications/read-all",
+      "PATCH",
+      "All notifications marked as read",
+      "Failed to mark all as read",
+      () => set({ notifications: previous, unreadCount: previousUnread })
+    );
   },
 
   clearAll: async () => {
@@ -285,23 +275,13 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       selectedNotification: null,
     });
 
-    try {
-      const res = await fetch("/api/notifications", {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      toast.success("All notifications cleared", { skipDb: true } as any);
-    } catch (err) {
-      console.error("[NotificationsStore] Rollback: Failed to clear all notifications:", err);
-      // Rollback
-      set({
-        notifications: previous,
-        unreadCount: previousUnread,
-      });
-      toast.error("Failed to clear notifications", { skipDb: true } as any);
-    }
+    await executeOptimisticNotificationAction(
+      "/api/notifications",
+      "DELETE",
+      "All notifications cleared",
+      "Failed to clear notifications",
+      () => set({ notifications: previous, unreadCount: previousUnread })
+    );
   },
 
   addNotificationLocally: (notification) => {
