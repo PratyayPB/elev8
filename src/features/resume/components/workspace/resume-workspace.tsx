@@ -42,7 +42,7 @@ export function ResumeWorkspace({ initialResumes }: ResumeWorkspaceProps) {
         <h1 className="text-3xl font-display font-bold tracking-tight text-text-primary">
           Resume Workspace
         </h1>
-        <p className="text-text-secondary text-sm mt-1">
+        <p className="text-text-secondary dark:text-zinc-300 text-sm mt-1">
           Track your resume evaluations, monitor ATS improvements, and jumpstart
           your career preparation.
         </p>

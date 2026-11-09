@@ -56,9 +56,9 @@ export function PersonalTemplateCard({ template }: PersonalTemplateCardProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isReady && <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-display font-semibold rounded-full">Template Ready</span>}
-          {isGenerating && <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 text-xs font-display font-semibold rounded-full animate-pulse">Generating...</span>}
-          {isFailed && <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-200 text-xs font-display font-semibold rounded-full">Generation Failed</span>}
+          {isReady && <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-display font-semibold rounded-full">Template Ready</span>}
+          {isGenerating && <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs font-display font-semibold rounded-full animate-pulse">Generating...</span>}
+          {isFailed && <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-display font-semibold rounded-full">Generation Failed</span>}
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export function PersonalTemplateCard({ template }: PersonalTemplateCardProps) {
           <button
             onClick={handleStart}
             disabled={isStarting}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-text-primary hover:bg-black/90 text-white text-sm font-display font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-text-primary hover:bg-black/90 text-white dark:bg-white dark:text-black dark:hover:bg-neutral-100 text-sm font-display font-semibold rounded-xl shadow-sm transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
           >
             {isStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlayCircle className="w-4 h-4" />}
             {isStarting ? "Starting..." : "Start New Session"}

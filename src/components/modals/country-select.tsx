@@ -51,8 +51,12 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
         side="top"
         onWheel={(e) => e.stopPropagation()}
       >
-        <Command>
-          <CommandInput placeholder="Search country..." />
+        <Command className="[&_[cmdk-input-wrapper]]:border-b-0">
+          <CommandInput
+            placeholder="Search country..."
+            className="border-none focus:border-none focus:outline-none focus:ring-0 focus-visible:ring-0 shadow-none focus:shadow-none"
+            wrapperClassName="border-b-0"
+          />
           <CommandList>
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>

@@ -20,8 +20,8 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
 
   if (!hasResumes) {
     return (
-      <div className="p-8 text-center bg-surface-muted border border-border-subtle border-dashed rounded-2xl my-6">
-        <p className="text-sm text-text-secondary">No resumes match your filter criteria.</p>
+      <div className="p-8 text-center bg-surface-muted dark:bg-[#161616] border border-border-subtle dark:border-white/10 border-dashed rounded-2xl my-6">
+        <p className="text-sm font-medium text-text-secondary dark:text-zinc-200">No resumes match your filter criteria.</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
 
       {completed.length > 0 && (
         <div>
-          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-primary mb-3">
+          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-primary dark:text-zinc-100 mb-3">
             Completed Assessments ({completed.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -57,7 +57,7 @@ export function ResumeLibrary({ groupedResumes, onDelete, onRescore }: ResumeLib
 
       {archived.length > 0 && (
         <div>
-          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-muted mb-3">
+          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-muted dark:text-zinc-400 mb-3">
             Archived ({archived.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">

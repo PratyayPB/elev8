@@ -64,14 +64,14 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
             </div>
             <div>
               <h3 className="font-semibold font-display text-text-primary line-clamp-1">{resume.role}</h3>
-              <p className="text-xs text-text-secondary">{resume.experienceLevel} Level</p>
+              <p className="text-xs text-text-secondary dark:text-zinc-300">{resume.experienceLevel} Level</p>
             </div>
           </div>
           <div className="relative">
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-1 rounded-lg hover:bg-surface-muted text-text-muted transition-colors"
+              className="p-1 rounded-lg hover:bg-surface-muted text-text-muted dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
@@ -122,7 +122,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
 
         <div className="flex items-center space-x-2 mb-4">
           {getStatusBadge(resume.status)}
-          <span className="text-xs text-text-muted font-sans">
+          <span className="text-xs text-text-muted dark:text-zinc-400 font-sans">
             {new Date(resume.createdAt).toLocaleDateString()}
           </span>
         </div>
@@ -130,7 +130,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
 
       <div className="pt-3 border-t border-border-subtle flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-bold uppercase text-text-muted block">Overall</span>
+          <span className="text-[10px] font-bold uppercase text-text-muted dark:text-zinc-400 block">Overall</span>
           <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-lg border ${getScoreBadgeColor(resume.overallScore)}`}>
             {isProcessing ? (
               <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
@@ -145,7 +145,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
         </div>
 
         <div>
-          <span className="text-[10px] font-bold uppercase text-text-muted block text-right">ATS Match</span>
+          <span className="text-[10px] font-bold uppercase text-text-muted dark:text-zinc-400 block text-right">ATS Match</span>
           <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-lg border ${getScoreBadgeColor(resume.atsScore)}`}>
             {isProcessing ? (
               <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
@@ -161,7 +161,7 @@ export function ResumeCard({ resume, onDelete, onRescore }: ResumeCardProps) {
 
         <Link
           href={`/dashboard/resumes/${resume.id}`}
-          className="px-3.5 py-1.5 text-xs font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle border border-border-subtle rounded-xl transition-colors"
+          className="px-3.5 py-1.5 text-xs font-semibold text-text-primary dark:text-zinc-100 bg-surface-muted dark:bg-[#242424] hover:bg-border-subtle dark:hover:bg-[#2e2e2e] border border-border-subtle dark:border-white/10 rounded-xl transition-colors"
         >
           Details
         </Link>

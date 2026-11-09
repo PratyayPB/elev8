@@ -264,14 +264,14 @@ h6 {
 }
 
 /* Ensure inputs, textareas, and select triggers have elevated background (#242424) in dark mode */
-.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([cmdk-input]),
 .dark textarea,
 .dark select {
   background-color: var(--dm-elevated) !important;
 }
 
 /* Active / Focus border state for inputs in dark mode */
-.dark input:focus,
+.dark input:not([cmdk-input]):focus,
 .dark textarea:focus,
 .dark select:focus,
 .dark [role="combobox"]:focus,
@@ -281,4 +281,13 @@ h6 {
   outline: 1px solid rgba(252, 251, 250, 0.4) !important;
   outline-offset: 0px !important;
   box-shadow: 0 0 0 1px rgba(252, 251, 250, 0.25) !important;
+}
+
+/* Command menu search input override: seamlessly borderless and transparent */
+.dark input[cmdk-input],
+.dark input[cmdk-input]:focus {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }

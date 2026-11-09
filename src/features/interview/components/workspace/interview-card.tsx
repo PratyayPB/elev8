@@ -82,11 +82,11 @@ export function InterviewCard({ interview, onDeleted }: InterviewCardProps) {
         return <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs font-display font-semibold rounded-full">In Progress</span>;
       case InterviewStatus.COMPLETED:
         if (interview.overallScore === null || interview.overallScore === undefined) {
-          return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 text-xs font-display font-semibold rounded-full animate-pulse">Assessing...</span>;
+          return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-xs font-display font-semibold rounded-full animate-pulse">Assessing...</span>;
         }
-        return <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-display font-semibold rounded-full">Completed</span>;
+        return <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-display font-semibold rounded-full">Completed</span>;
       case "ASSESSMENT_FAILED" as any:
-        return <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-200 text-xs font-display font-semibold rounded-full">Assessment Failed</span>;
+        return <span className="px-2.5 py-0.5 bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-display font-semibold rounded-full">Assessment Failed</span>;
       default:
         return <span className="px-2.5 py-0.5 bg-surface-muted text-text-secondary border border-border-subtle text-xs font-display font-semibold rounded-full">{interview.status.replace("_", " ")}</span>;
     }

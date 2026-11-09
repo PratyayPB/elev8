@@ -9,6 +9,58 @@ Phase 7: User Onboarding & Dashboard System
 Phase 7.2: Release & Production Verification
 
 ## Completed
+- [x] **Notification Detail Modal Contrast Enhancement in Dark Mode**:
+  - In [`notification-detail-modal.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/components/notifications/notification-detail-modal.tsx), elevated modal frame to `dark:bg-[#161616]` and `dark:border-white/10`.
+  - Upgraded type badges across all notification types with boosted dark-mode text and border contrasts (`dark:bg-[...]/15`, `dark:border-[...]/40`).
+  - Elevated timestamp and calendar icon contrast with `dark:text-zinc-300` and `dark:text-zinc-400`.
+  - Elevated title to `dark:text-zinc-100 font-bold`.
+  - Elevated message content box to `dark:bg-[#202020]`, `dark:border-white/10`, and `dark:text-zinc-200`.
+  - Enhanced action footer buttons: `Delete` button to `dark:text-red-400 dark:hover:bg-red-950/40`, `Close` button to `dark:bg-[#242424] dark:border-white/10 dark:text-zinc-200`, and `View` primary button to `dark:bg-white dark:text-black dark:hover:bg-neutral-100`.
+- [x] **Wizard Step Indicator Completed Checkmark Visibility in Dark Mode**:
+  - Fixed invisible tick marks on completed steps across wizard step indicators in [`interview-wizard/step-indicator.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-wizard/step-indicator.tsx#L35-L44), [`roadmap-form/step-indicator.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-form/step-indicator.tsx#L35-L44), and [`resume-upload/step-indicator.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-upload/step-indicator.tsx#L37-L46) by styling the indicator circle with `dark:bg-white dark:text-black` and the `<Check>` icon with `text-white dark:text-black`.
+- [x] **Interview Wizard AI Personalization Dark Mode UI Overhaul (`/dashboard/interviews/new`)**:
+  - Restructured containers in [`personalization-step.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-wizard/personalization-step.tsx) with `dark:bg-[#161616]` and `dark:border-white/5`.
+  - Converted profile attribute cards (`Current Role`, `Experience`, `Primary Goal`) to `dark:bg-[#202020]` and `dark:border-white/10`, eliminating bright white boxes in dark mode.
+  - Fixed white-on-white text on primary CTA buttons (`Yes, Use Profile Data`, `Review Personalization Options`, `Continue`) with `dark:bg-white dark:text-black dark:hover:bg-neutral-100`.
+  - Elevated secondary buttons (`Skip & Proceed`, `Skip for now`) with `bg-white dark:bg-[#242424] border border-border-subtle dark:border-white/10 text-text-primary`, resolving illegible text on dark backgrounds.
+  - Upgraded global wizard forward action button in [`navigation.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-wizard/navigation.tsx#L63-L67) with `dark:bg-white dark:text-black dark:hover:bg-neutral-100`.
+- [x] **Interview Session Dark Mode Primary Button Contrast Fixes (`/dashboard/interviews/[interviewId]/session`)**:
+  - Fixed white-on-white text rendering on "Submit" button in [`session-toolbar.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/session-toolbar.tsx#L57) by adding `dark:bg-white dark:text-black dark:hover:bg-neutral-100`.
+  - Fixed white-on-white text on "Record Answer" and transcript "Insert" in [`answer-editor.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/answer-editor.tsx#L48).
+  - Fixed white-on-white text on "Next Question" and "Review & Submit" in [`session-container.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/session-container.tsx#L182-L197).
+  - Fixed modal confirmation button text on Pause and Submit dialogs in [`dialogs.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/dialogs.tsx#L28-L86).
+- [x] **Interview Workspace Dark Mode UI Contrast Fixes (`/dashboard/interviews`)**:
+  - Fixed white-on-white button text and icon rendering on "Start New Session" in [`personal-template-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/personal-template-card.tsx#L84) by adding `dark:bg-white dark:text-black dark:hover:bg-neutral-100`.
+  - Added dark mode badge tokens (`dark:bg-...-950/40 dark:text-...-400 dark:border-...-800`) across `Template Ready`, `Generating...`, and `Generation Failed` in [`personal-template-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/personal-template-card.tsx#L59-L62).
+  - Added dark mode badge tokens across `Assessing...`, `Completed`, and `Assessment Failed` in [`interview-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/workspace/interview-card.tsx#L84-L90).
+- [x] **Resume Wizard UI & Contrast Overhaul in Dark Mode (`/dashboard/resumes/new`)**:
+  - Restructured AI Personalization Step ([`personalization-step.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-upload/personalization-step.tsx)) with `dark:bg-[#161616]` card containers, `dark:border-white/10`, elevated `UserCheck` badge container, and high-contrast primary/secondary CTA buttons with golden `Sparkles`.
+  - Re-architected Review Resume Request ([`review-step.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/resume-upload/review-step.tsx)) by elevating flat nested containers into distinct `dark:bg-[#161616]` sections containing `dark:bg-[#202020]` data cards for uploaded files, target details, and personalization summaries.
+  - Added clean "Edit" pill buttons, styled status indicators, and enhanced navigation action buttons (`Back`, `Start AI Assessment` with AI sparkle accent).
+- [x] **Resume Builder Workspace Dark Mode Card Menu & Modal Fixes**:
+  - Fixed white-on-white text in the resume card 3-dot dropdown menu in [`builder-workspace.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/components/workspace/builder-workspace.tsx#L244-L280) by converting container to `bg-white dark:bg-[#1F1F1F] border border-transparent dark:border-white/10` and styling menu options with `dark:text-zinc-100`, `dark:hover:bg-[#282828]`, and `dark:hover:bg-red-950/40`.
+  - Upgraded card elements in dark mode: `dark:border-white/10`, `dark:bg-[#242424]` for "Open Editor" action, `dark:bg-[#181818]` for icons, and `dark:text-zinc-300` for footer timestamps.
+  - Aligned Rename and Delete modals with dark mode elevation (`dark:bg-[#1F1F1F]`, `dark:border-white/10`, `dark:text-zinc-100`, `dark:bg-[#242424]`).
+- [x] **Resume Workspace Dark Mode Text Contrast Elevation**:
+  - Upgraded filter labels and icons in [`resume-filters.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/workspace/resume-filters.tsx) to `dark:text-zinc-200` and `dark:text-zinc-300`.
+  - Fixed dark-on-dark `<select>` dropdown text (`text-gray-700` on `#242424`) by applying `dark:text-zinc-100`, `dark:bg-[#242424]`, and `dark:border-white/15` across all filter controls and options.
+  - Enhanced search bar input and placeholder contrast in [`resume-search.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/workspace/resume-search.tsx) with `dark:text-zinc-100` and `dark:placeholder:text-zinc-400`.
+  - Boosted empty state criteria message contrast in [`resume-library.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/workspace/resume-library.tsx) to `dark:text-zinc-200 font-medium`.
+  - Elevated metadata, badges, and action button contrast in [`resume-card.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/workspace/resume-card.tsx) and page subtitle in [`resume-workspace.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume/components/workspace/resume-workspace.tsx).
+- [x] **Roadmap Viewer Difficulty Badge Text Contrast in Dark Mode**:
+  - Fixed invisible `text-black` on portfolio project difficulty badges ("Intermediate", "Advanced", "Beginner") in [`RoadmapViewer.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-viewer/RoadmapViewer.tsx#L38-L50) by implementing semantic difficulty pills with high contrast in both light and dark mode (emerald, blue, and purple).
+  - Fixed invisible text on "Generating..." status badge in [`RoadmapCard.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-library/RoadmapCard.tsx#L50-L55).
+  - Fixed white-on-white text in [`ReadOnlyToolbar.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-viewer/ReadOnlyToolbar.tsx#L41-L47) on the "Regenerate" button by adding `dark:text-brand-primary-900`.
+- [x] **Roadmap Form AI Personalization UI Bug Fixes (Dark & Light Mode)**:
+  - Fixed white-on-white text rendering on secondary action buttons (`Skip & Proceed`, `Skip for now`) in dark mode by switching to `bg-white dark:bg-[#242424] border border-border-subtle dark:border-white/10 text-text-primary`.
+  - Fixed invisible `Sparkles` icons caused by `text-dashboard-metricHighlight` matching button backgrounds in both light and dark mode, replacing it with high-contrast amber accent (`text-amber-500 dark:text-amber-400`).
+  - Fixed non-existent Tailwind utility `dark:bg-surface-card` causing bright white card backgrounds in dark mode on profile attribute cards.
+  - Resolved transparent / unstyled badge containers on `UserCheck` by utilizing properly scoped elevated tokens (`bg-brand-secondary-200 dark:bg-[#242424] border border-border-subtle dark:border-white/10`).
+  - Aligned wizard step card containers and alert states with native dark mode palette (`dark:bg-[#161616]`, `dark:border-white/5`, `dark:bg-amber-950/40`).
+- [x] **Country Select Search Input Border Removal**:
+  - Removed global dark mode focus border, outline, box-shadow, and elevated background targeting `[cmdk-input]` in [`src/app/globals.css`](file:///d:/Portfolio-projects/elev8-prod/src/app/globals.css).
+  - Added `wrapperClassName` prop support to [`src/components/ui/command.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/components/ui/command.tsx).
+  - Explicitly stripped focus rings, borders, and wrapper bottom border in [`src/components/modals/country-select.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/components/modals/country-select.tsx) for a seamless embedded search field.
 - [x] **SonarCloud Quality Gate Remediation & Reliability Bug Elimination**:
   - **Reliability Rating Fixed (Grade C -> A)**:
     - Hoisted `useDebouncedCallback` and `useBackgroundWorkflow` before the early return in [`session-container.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/interview/components/interview-session/session-container.tsx), strictly upholding React 19 Rules of Hooks (`react:S6440`).

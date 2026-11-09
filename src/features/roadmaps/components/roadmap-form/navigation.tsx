@@ -70,7 +70,7 @@ export function Navigation({
             </>
           ) : isLast ? (
             <>
-              Generate Roadmap <Sparkles className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+              Generate Roadmap <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             </>
           ) : (
             <>

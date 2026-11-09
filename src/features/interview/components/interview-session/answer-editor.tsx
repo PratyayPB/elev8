@@ -47,7 +47,7 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
             {!isRecording ? (
               <button
                 onClick={startRecording}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-all active:scale-[0.98]"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-display font-bold text-white bg-text-primary hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-neutral-100 transition-all active:scale-[0.98] cursor-pointer"
                 title="Start Voice Recording"
               >
                 <Mic className="w-4 h-4" />
@@ -94,7 +94,7 @@ export function AnswerEditor({ value, onChange, onBlur }: AnswerEditorProps) {
                 </button>
                 <button
                   onClick={handleInsertTranscript}
-                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-display font-semibold bg-text-primary text-white dark:text-brand-primary-900 rounded hover:bg-black/85 dark:hover:bg-brand-secondary-200 transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-display font-semibold bg-text-primary text-white dark:bg-white dark:text-black rounded hover:bg-black/85 dark:hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
                   <CornerDownLeft className="w-3 h-3 text-dashboard-metricHighlight" />
                   Insert

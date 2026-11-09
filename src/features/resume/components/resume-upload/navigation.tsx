@@ -23,7 +23,7 @@ export function Navigation({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-display font-semibold text-text-primary bg-surface-muted hover:bg-border-subtle transition-colors border border-border-subtle"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-display font-semibold text-text-primary dark:text-zinc-100 bg-surface-muted dark:bg-[#242424] hover:bg-border-subtle dark:hover:bg-[#2e2e2e] transition-colors border border-border-subtle dark:border-white/10 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           Back

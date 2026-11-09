@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 import { RoadmapArtifact } from "@/services/roadmaps/roadmap-artifact.service";
 import { ReadOnlyToolbar } from "./ReadOnlyToolbar";
 import { LoadingOverlay } from "./LoadingOverlay";
@@ -36,6 +37,19 @@ export interface RoadmapViewerProps {
   triggerRunId?: string;
   publicAccessToken?: string;
 }
+
+const getDifficultyBadgeClass = (difficulty: string) => {
+  switch (difficulty?.toLowerCase()) {
+    case "beginner":
+      return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60";
+    case "intermediate":
+      return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/60";
+    case "advanced":
+      return "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60";
+    default:
+      return "bg-surface-muted dark:bg-[#242424] text-text-primary border-border-subtle dark:border-white/10";
+  }
+};
 
 export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
   roadmapId,
@@ -275,17 +289,22 @@ export const RoadmapViewer: React.FC<RoadmapViewerProps> = ({
             {artifact.projects.map((p) => (
               <div
                 key={p.id}
-                className="p-4 bg-surface-muted/50 rounded-xl border border-border-subtle"
+                className="p-4 bg-surface-muted/60 dark:bg-[#181818] rounded-xl border border-border-subtle dark:border-white/10"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <span className="text-sm font-display font-semibold text-text-primary">
                     {p.title}
                   </span>
-                  <span className="text-[11px] font-display font-semibold bg-dashboard-metricHighlight/30 text-black px-2.5 py-0.5 rounded-full border border-dashboard-metricHighlight">
+                  <span
+                    className={cn(
+                      "text-[11px] font-display font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap shrink-0",
+                      getDifficultyBadgeClass(p.difficulty)
+                    )}
+                  >
                     {p.difficulty}
                   </span>
                 </div>
-                <p className="text-xs font-sans text-text-secondary mt-1">
+                <p className="text-xs font-sans text-text-secondary mt-1.5 leading-relaxed">
                   {p.description}
                 </p>
               </div>

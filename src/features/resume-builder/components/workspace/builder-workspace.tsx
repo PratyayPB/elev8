@@ -193,9 +193,9 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
             href={BUILDER_ROUTES.NEW}
-            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-dashboard-cardBorder rounded-[var(--card-radius-lg)] hover:border-text-primary/20 hover:bg-surface-muted/50 transition-all min-h-[200px]"
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-dashboard-cardBorder dark:border-zinc-700 rounded-[var(--card-radius-lg)] hover:border-text-primary/20 dark:hover:border-zinc-500 hover:bg-surface-muted/50 dark:hover:bg-[#181818] transition-all min-h-[200px]"
           >
-            <div className="h-10 w-10 rounded-full bg-surface-muted flex items-center justify-center text-text-secondary mb-3">
+            <div className="h-10 w-10 rounded-full bg-surface-muted dark:bg-[#242424] flex items-center justify-center text-text-secondary dark:text-zinc-300 mb-3">
               <Plus className="h-5 w-5" />
             </div>
             <span className="font-display font-semibold text-text-primary text-sm">Create New Resume</span>
@@ -213,22 +213,22 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
             return (
               <div
                 key={resume.id}
-                className="group relative flex flex-col justify-between p-6 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder bg-dashboard-card shadow-sm hover:shadow-md transition-all min-h-[200px]"
+                className="group relative flex flex-col justify-between p-6 rounded-[var(--card-radius-lg)] border border-dashboard-cardBorder dark:border-white/10 bg-dashboard-card shadow-sm hover:shadow-md transition-all min-h-[200px]"
               >
                 {isProcessing && (
-                  <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-[var(--card-radius-lg)]">
+                  <div className="absolute inset-0 z-10 bg-white/60 dark:bg-black/60 backdrop-blur-[1px] flex items-center justify-center rounded-[var(--card-radius-lg)]">
                     <Loader2 className="h-6 w-6 text-text-primary animate-spin" />
                   </div>
                 )}
                 
                 <div>
                   <div className="flex items-start justify-between">
-                    <div className="h-9 w-9 rounded-lg bg-surface-muted flex items-center justify-center text-text-primary">
+                    <div className="h-9 w-9 rounded-lg bg-surface-muted dark:bg-[#181818] border border-border-subtle dark:border-white/10 flex items-center justify-center text-text-primary">
                       <FileText className="h-5 w-5" />
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground border border-border">
+                      <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground border border-border dark:border-white/10">
                         {resume.status === "DRAFT" ? "Draft" : resume.status === "READY" ? "Ready" : "Archived"}
                       </span>
                       
@@ -236,43 +236,43 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                         <button
                           type="button"
                           onClick={(e) => toggleDropdown(resume.id, e)}
-                          className="p-1 text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded transition-colors"
+                          className="p-1 text-text-secondary hover:text-text-primary hover:bg-surface-muted dark:hover:bg-white/10 rounded transition-colors"
                         >
                           <MoreVertical className="h-5 w-5" />
                         </button>
                         
                         {isOpen && (
-                          <div className="absolute right-0 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                          <div className="absolute right-0 mt-1 w-40 origin-top-right rounded-xl bg-white dark:bg-[#1F1F1F] shadow-lg ring-1 ring-black/5 dark:ring-white/10 border border-transparent dark:border-white/10 focus:outline-none z-20 overflow-hidden">
                             <div className="py-1">
                               <Link
                                 href={BUILDER_ROUTES.EDITOR(resume.id)}
-                                className="group flex items-center px-4 py-2 text-sm text-text-primary hover:bg-surface-muted transition-colors w-full text-left"
+                                className="group flex items-center px-4 py-2 text-sm text-text-primary dark:text-zinc-100 hover:bg-surface-muted dark:hover:bg-[#282828] transition-colors w-full text-left"
                               >
-                                <Edit3 className="mr-3 h-4 w-4 text-text-secondary group-hover:text-text-primary" />
+                                <Edit3 className="mr-3 h-4 w-4 text-text-secondary dark:text-zinc-400 group-hover:text-text-primary dark:group-hover:text-white" />
                                 Edit
                               </Link>
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); openRenameModal(resume); }}
-                                className="group flex items-center px-4 py-2 text-sm text-text-primary hover:bg-surface-muted transition-colors w-full text-left"
+                                className="group flex items-center px-4 py-2 text-sm text-text-primary dark:text-zinc-100 hover:bg-surface-muted dark:hover:bg-[#282828] transition-colors w-full text-left"
                               >
-                                <Edit3 className="mr-3 h-4 w-4 text-text-secondary group-hover:text-text-primary" />
+                                <Edit3 className="mr-3 h-4 w-4 text-text-secondary dark:text-zinc-400 group-hover:text-text-primary dark:group-hover:text-white" />
                                 Rename
                               </button>
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); handleDuplicate(resume.id); }}
-                                className="group flex items-center px-4 py-2 text-sm text-text-primary hover:bg-surface-muted transition-colors w-full text-left"
+                                className="group flex items-center px-4 py-2 text-sm text-text-primary dark:text-zinc-100 hover:bg-surface-muted dark:hover:bg-[#282828] transition-colors w-full text-left"
                               >
-                                <Copy className="mr-3 h-4 w-4 text-text-secondary group-hover:text-text-primary" />
+                                <Copy className="mr-3 h-4 w-4 text-text-secondary dark:text-zinc-400 group-hover:text-text-primary dark:group-hover:text-white" />
                                 Duplicate
                               </button>
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); openDeleteModal(resume); }}
-                                className="group flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                                className="group flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border-t border-transparent dark:border-white/10 transition-colors w-full text-left"
                               >
-                                <Trash2 className="mr-3 h-4 w-4 text-red-500 group-hover:text-red-600" />
+                                <Trash2 className="mr-3 h-4 w-4 text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300" />
                                 Delete
                               </button>
                             </div>
@@ -289,7 +289,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                   </div>
                 </div>
 
-                <div className="border-t border-border-subtle mt-6 pt-4 flex items-center justify-between text-xs text-text-secondary">
+                <div className="border-t border-border-subtle dark:border-white/10 mt-6 pt-4 flex items-center justify-between text-xs text-text-secondary dark:text-zinc-300">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>Updated {formattedDate}</span>
@@ -302,7 +302,7 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
 
                 <Link
                   href={BUILDER_ROUTES.EDITOR(resume.id)}
-                  className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-surface-muted text-text-primary font-display font-semibold text-xs transition-all hover:bg-border-subtle"
+                  className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-surface-muted dark:bg-[#242424] text-text-primary dark:text-zinc-100 font-display font-semibold text-xs transition-all hover:bg-border-subtle dark:hover:bg-[#2e2e2e] border border-transparent dark:border-white/10"
                 >
                   Open Editor
                 </Link>
@@ -314,8 +314,8 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
 
       {/* Rename Modal */}
       {renameModalOpen && resumeToRename && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setRenameModalOpen(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setRenameModalOpen(false)}>
+          <div className="w-full max-w-md rounded-xl bg-white dark:bg-[#1F1F1F] border border-border-subtle dark:border-white/10 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-display font-bold text-text-primary">Rename Resume</h2>
             <form onSubmit={handleRenameSubmit} className="mt-4 space-y-4">
               <div>
@@ -326,19 +326,19 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   maxLength={100}
-                  className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm bg-white dark:bg-[#242424] text-text-primary dark:text-zinc-100 focus:outline-none focus:ring-1 ${
                     renameError
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                      : "border-border-subtle focus:border-text-primary focus:ring-text-primary"
+                      : "border-border-subtle dark:border-white/15 focus:border-text-primary dark:focus:border-white/30 focus:ring-text-primary dark:focus:ring-white/30"
                   }`}
                   autoFocus
                 />
                 {renameError ? (
-                  <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+                  <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                     <AlertCircle className="h-3 w-3 shrink-0" /> {renameError}
                   </p>
                 ) : (
-                  <p className="mt-1 text-[11px] text-text-muted">
+                  <p className="mt-1 text-[11px] text-text-muted dark:text-zinc-400">
                     Each resume must have a unique name within your account.
                   </p>
                 )}
@@ -347,13 +347,13 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
                 <button
                   type="button"
                   onClick={() => setRenameModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-text-secondary dark:text-zinc-300 hover:text-text-primary dark:hover:text-white hover:bg-surface-muted dark:hover:bg-white/10 rounded-md transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-text-primary rounded-md hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white dark:text-brand-primary-900 bg-text-primary rounded-md hover:bg-black/80 dark:hover:bg-brand-secondary-200 transition-colors"
                 >
                   Save Changes
                 </button>
@@ -365,28 +365,28 @@ export function BuilderWorkspace({ initialResumes }: BuilderWorkspaceProps) {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && resumeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setDeleteModalOpen(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 text-red-600 mb-2">
-              <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setDeleteModalOpen(false)}>
+          <div className="w-full max-w-md rounded-xl bg-white dark:bg-[#1F1F1F] border border-border-subtle dark:border-white/10 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-2">
+              <div className="h-10 w-10 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center">
                 <Trash2 className="h-5 w-5" />
               </div>
               <h2 className="text-lg font-display font-bold">Delete Resume?</h2>
             </div>
             
             <div className="mt-4">
-              <p className="text-sm text-text-secondary">
+              <p className="text-sm text-text-secondary dark:text-zinc-300">
                 Are you sure you want to delete <span className="font-semibold text-text-primary">&quot;{resumeToDelete.title}&quot;</span>? 
                 This action is permanent and will remove the resume and its saved data.
               </p>
-              {deleteError && <p className="mt-2 text-sm text-red-600">{deleteError}</p>}
+              {deleteError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
             </div>
             
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
                 onClick={() => setDeleteModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-text-secondary dark:text-zinc-300 hover:text-text-primary dark:hover:text-white hover:bg-surface-muted dark:hover:bg-white/10 rounded-md transition-colors"
               >
                 Cancel
               </button>

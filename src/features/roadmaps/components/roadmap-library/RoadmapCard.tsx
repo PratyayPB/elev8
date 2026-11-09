@@ -49,8 +49,8 @@ export const RoadmapCard: React.FC<RoadmapCardProps> = ({
         );
       case "IN_PROGRESS":
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-display font-semibold bg-dashboard-metricHighlight/30 text-black border border-dashboard-metricHighlight px-2.5 py-0.5 rounded-full whitespace-nowrap">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> Generating...
+          <span className="inline-flex items-center gap-1 text-xs font-display font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600 dark:text-amber-400" /> Generating...
           </span>
         );
       case "FAILED":

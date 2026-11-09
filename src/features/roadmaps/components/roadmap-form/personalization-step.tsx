@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { ProfileStatusResult } from "../../actions/profile-status.action";
 import {
   Sparkles,
-  Loader2,
   FastForward,
   UserCheck,
   AlertCircle,
@@ -53,13 +52,15 @@ export function PersonalizationStep({
 
   if (skipped) {
     return (
-      <div className="bg-surface-muted/60 border border-border-subtle rounded-xl p-8 text-center space-y-4">
-        <FastForward className="w-8 h-8 text-text-muted mx-auto" />
+      <div className="bg-surface-muted dark:bg-[#161616] border border-border-subtle dark:border-white/5 rounded-2xl p-6 sm:p-8 text-center space-y-4 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-brand-secondary-200 dark:bg-[#242424] text-text-muted dark:text-text-secondary border border-border-subtle dark:border-white/10 flex items-center justify-center mx-auto shadow-sm">
+          <FastForward className="w-6 h-6" />
+        </div>
         <div>
-          <h3 className="text-sm font-display font-bold text-text-primary">
+          <h3 className="text-sm sm:text-base font-display font-bold text-text-primary">
             Personalization Skipped
           </h3>
-          <p className="text-xs font-sans text-text-secondary max-w-md mx-auto mt-1">
+          <p className="text-xs font-sans text-text-secondary max-w-md mx-auto mt-1 leading-relaxed">
             Your roadmap will be generated based purely on your core inputs
             without injecting profile details.
           </p>
@@ -67,9 +68,9 @@ export function PersonalizationStep({
         <button
           type="button"
           onClick={onUnskip}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 text-xs font-display font-semibold hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-text-primary text-white dark:text-brand-primary-900 text-xs font-display font-semibold hover:bg-black/90 dark:hover:bg-brand-secondary-200 transition-all shadow-sm cursor-pointer active:scale-[0.98]"
         >
-          <Sparkles className="w-3.5 h-3.5 text-dashboard-metricHighlight" />
+          <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
           Review Personalization Options
         </button>
       </div>
@@ -78,9 +79,9 @@ export function PersonalizationStep({
 
   if (hasOptedIn === true) {
     return (
-      <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 space-y-6 shadow-sm">
-        <div className="flex items-center gap-3 border-b border-border-subtle pb-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+      <div className="bg-surface-muted dark:bg-[#161616] border border-border-subtle dark:border-white/5 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+        <div className="flex items-center gap-3 border-b border-border-subtle dark:border-white/10 pb-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
@@ -95,7 +96,7 @@ export function PersonalizationStep({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+          <div className="p-3 bg-white dark:bg-[#242424] rounded-xl border border-border-subtle dark:border-white/10 shadow-sm">
             <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
               Current Role
             </span>
@@ -103,7 +104,7 @@ export function PersonalizationStep({
               {profileStatus?.profileContext?.currentRole || "Not specified"}
             </span>
           </div>
-          <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+          <div className="p-3 bg-white dark:bg-[#242424] rounded-xl border border-border-subtle dark:border-white/10 shadow-sm">
             <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
               Overall Experience
             </span>
@@ -113,7 +114,7 @@ export function PersonalizationStep({
                 : "Not specified"}
             </span>
           </div>
-          <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-border-subtle">
+          <div className="p-3 bg-white dark:bg-[#242424] rounded-xl border border-border-subtle dark:border-white/10 shadow-sm">
             <span className="text-[11px] font-display font-semibold text-text-secondary uppercase tracking-wider block">
               Existing Skills
             </span>
@@ -130,7 +131,7 @@ export function PersonalizationStep({
           <button
             type="button"
             onClick={onSkip}
-            className="text-xs font-display font-semibold text-text-secondary hover:text-text-primary underline underline-offset-2"
+            className="text-xs font-display font-semibold text-text-secondary hover:text-text-primary underline underline-offset-2 cursor-pointer transition-colors"
           >
             Disable Profile Personalization
           </button>
@@ -144,8 +145,8 @@ export function PersonalizationStep({
 
   if (isProfileComplete) {
     return (
-      <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 text-center space-y-6 shadow-sm">
-        <div className="w-12 h-12 rounded-2xl bg-dashboard-metricHighlight/30 text-text-primary border border-dashboard-metricHighlight flex items-center justify-center mx-auto shadow-inner">
+      <div className="bg-surface-muted dark:bg-[#161616] border border-border-subtle dark:border-white/5 rounded-2xl p-6 sm:p-8 text-center space-y-6 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-brand-secondary-200 dark:bg-[#242424] text-text-primary border border-border-subtle dark:border-white/10 flex items-center justify-center mx-auto shadow-sm">
           <UserCheck className="w-6 h-6" />
         </div>
         <div className="max-w-md mx-auto space-y-2">
@@ -163,17 +164,17 @@ export function PersonalizationStep({
           <button
             type="button"
             onClick={onOptIn}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm cursor-pointer active:scale-[0.98]"
           >
-            <Sparkles className="w-4 h-4 text-dashboard-metricHighlight" />
+            <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
             Yes, Personalize with Profile
           </button>
           <button
             type="button"
             onClick={onSkip}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-[#242424] border border-border-subtle dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-[#2c2c2c] text-text-primary text-xs font-display font-semibold transition-all shadow-sm cursor-pointer active:scale-[0.98]"
           >
-            <FastForward className="w-4 h-4 text-text-muted" />
+            <FastForward className="w-4 h-4 text-text-muted dark:text-text-secondary" />
             Skip & Proceed
           </button>
         </div>
@@ -183,8 +184,8 @@ export function PersonalizationStep({
 
   // Profile is incomplete
   return (
-    <div className="bg-surface-muted/60 border border-border-subtle rounded-[var(--card-radius)] p-8 text-center space-y-6 shadow-sm">
-      <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto shadow-inner">
+    <div className="bg-surface-muted dark:bg-[#161616] border border-border-subtle dark:border-white/5 rounded-2xl p-6 sm:p-8 text-center space-y-6 shadow-sm">
+      <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center mx-auto shadow-sm">
         <AlertCircle className="w-6 h-6" />
       </div>
       <div className="max-w-md mx-auto space-y-2">
@@ -199,7 +200,7 @@ export function PersonalizationStep({
       </div>
 
       {error && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs font-sans text-amber-800 max-w-md mx-auto">
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs font-sans text-amber-800 dark:text-amber-300 max-w-md mx-auto">
           {error}
         </div>
       )}
@@ -208,7 +209,7 @@ export function PersonalizationStep({
         <button
           type="button"
           onClick={() => router.push("/dashboard/profile")}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-text-primary hover:bg-black/80 dark:hover:bg-brand-secondary-200 text-white dark:text-brand-primary-900 text-xs font-display font-semibold transition-all shadow-sm cursor-pointer active:scale-[0.98]"
         >
           <span>Complete Profile</span>
           <ArrowRight className="w-4 h-4" />
@@ -216,9 +217,9 @@ export function PersonalizationStep({
         <button
           type="button"
           onClick={onSkip}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-border-subtle hover:bg-border-subtle/50 text-text-primary text-xs font-display font-semibold transition-all"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-[#242424] border border-border-subtle dark:border-white/10 hover:bg-neutral-50 dark:hover:bg-[#2c2c2c] text-text-primary text-xs font-display font-semibold transition-all shadow-sm cursor-pointer active:scale-[0.98]"
         >
-          <FastForward className="w-4 h-4 text-text-muted" />
+          <FastForward className="w-4 h-4 text-text-muted dark:text-text-secondary" />
           Skip for now
         </button>
       </div>
