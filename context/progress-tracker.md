@@ -9,6 +9,11 @@ Phase 7: User Onboarding & Dashboard System
 Phase 7.2: Release & Production Verification
 
 ## Completed
+- [x] **Production Global Catalog & SSR localStorage Safety Fix**:
+  - Resolved `ExperimentalWarning: localStorage is not available because --localstorage-file was not provided` in [`src/store/workflow.store.ts`](file:///d:/Portfolio-projects/elev8-prod/src/store/workflow.store.ts) by implementing an SSR-safe browser storage fallback for Zustand `persist` storage.
+  - Fixed query initialData mismatch in [`RoadmapLibrary.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/components/roadmap-library/RoadmapLibrary.tsx) when switching between `mine` and `global` sections, ensuring global roadmaps are freshly queried on tab navigation.
+  - Added global Redis cache invalidation hooks upon completion of global roadmaps and global interviews in Trigger.dev tasks ([`generate-roadmap.ts`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/generate-roadmap.ts) & [`generate-interview.ts`](file:///d:/Portfolio-projects/elev8-prod/src/trigger/generate-interview.ts)) and fallback actions ([`roadmap-actions.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/roadmaps/actions/roadmap-actions.ts)).
+  - Created canonical seed scripts for global roadmaps ([`prisma/seed-data/global-roadmaps.ts`](file:///d:/Portfolio-projects/elev8-prod/prisma/seed-data/global-roadmaps.ts)) and global interviews ([`prisma/seed-data/global-interviews.ts`](file:///d:/Portfolio-projects/elev8-prod/prisma/seed-data/global-interviews.ts)) and integrated them into [`prisma/seed.ts`](file:///d:/Portfolio-projects/elev8-prod/prisma/seed.ts) to populate initial global catalogs in production.
 - [x] **Notification Detail Modal Contrast Enhancement in Dark Mode**:
   - In [`notification-detail-modal.tsx`](file:///d:/Portfolio-projects/elev8-prod/src/components/notifications/notification-detail-modal.tsx), elevated modal frame to `dark:bg-[#161616]` and `dark:border-white/10`.
   - Upgraded type badges across all notification types with boosted dark-mode text and border contrasts (`dark:bg-[...]/15`, `dark:border-[...]/40`).

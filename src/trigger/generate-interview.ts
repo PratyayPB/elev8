@@ -235,6 +235,12 @@ export const generateInterviewTask = schemaTask({
       metadata.set("progress", 100);
       await JobService.completeJob(jobId, interviewId, "INTERVIEW");
 
+      if (globalInterviewTemplateId) {
+        await CacheService.delPattern(CacheKeys.catalogGlobalInterviewsPattern()).catch((e) =>
+          console.warn("[Trigger.dev] Failed to invalidate global interviews cache:", e)
+        );
+      }
+
       console.log(`[Trigger.dev] Interview generation pipeline completed for interviewId=${interviewId}`);
 
       return {

@@ -73,7 +73,7 @@ export const RoadmapLibrary: React.FC<RoadmapLibraryProps> = ({
       return res.data;
     },
     initialData:
-      isInitialMount.current && initialRoadmaps
+      isInitialMount.current && initialRoadmaps && section === initialSection && !debouncedSearch && page === 1 && sort === "newest"
         ? {
             roadmaps: initialRoadmaps,
             pagination: initialPagination || {

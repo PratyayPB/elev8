@@ -122,6 +122,7 @@ async function executeLocalRoadmapFallback({
         where: { id: roadmapId },
         data: roadmapMetaUpdate,
       });
+      await CacheService.delPattern(CacheKeys.catalogGlobalRoadmapsPattern());
     } else {
       await prisma.roadmap.update({
         where: { id: roadmapId },

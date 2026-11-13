@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { seedRoleSkillMaps } from "./seed-data/role-skill-maps";
 import { seedResumeTemplates } from "./seed-data/resume-templates";
+import { seedGlobalRoadmaps } from "./seed-data/global-roadmaps";
+import { seedGlobalInterviews } from "./seed-data/global-interviews";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +11,8 @@ async function main() {
 
   await seedRoleSkillMaps(prisma);
   await seedResumeTemplates(prisma);
+  await seedGlobalRoadmaps(prisma);
+  await seedGlobalInterviews(prisma);
 
   console.log("Elev8 database seeding completed successfully.");
 }

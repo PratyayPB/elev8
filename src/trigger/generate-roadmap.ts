@@ -132,6 +132,11 @@ export const generateRoadmapTask = schemaTask({
         });
         finalRoadmapId = globalRecord.id;
 
+        // Invalidate global catalog caches so new global roadmaps show up immediately
+        await CacheService.delPattern(CacheKeys.catalogGlobalRoadmapsPattern()).catch((e) =>
+          console.warn("[Trigger.dev] Failed to invalidate global roadmaps cache:", e)
+        );
+
         // Step 7: Complete
         metadata.set("status", "Completed");
         metadata.set("progress", 100);

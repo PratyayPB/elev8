@@ -30,6 +30,12 @@ interface WorkflowState {
   unregisterJob: (id: string) => void;
 }
 
+const fallbackStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
 export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set) => ({
@@ -76,7 +82,11 @@ export const useWorkflowStore = create<WorkflowState>()(
     }),
     {
       name: "elev8-workflow-jobs",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+          ? window.localStorage
+          : fallbackStorage
+      ),
       partialize: (state) => ({ activeJobs: state.activeJobs }),
     }
   )
