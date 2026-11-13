@@ -5,55 +5,86 @@ const React = require("react");
 
 function shimReact(target) {
   if (!target) return;
-  if (!target.createContext) {
-    target.createContext = function (defaultValue) {
-      const context = {
-        $$typeof: Symbol.for("react.context"),
-        _currentValue: defaultValue,
-        _currentValue2: defaultValue,
-        _threadCount: 0,
-        Provider: null,
-        Consumer: null,
-      };
-      context.Provider = {
-        $$typeof: Symbol.for("react.provider"),
-        _context: context,
-      };
-      context.Consumer = context;
-      return context;
-    };
+
+  const mockDispatcher = {
+    useMemo: (factory) => factory(),
+    useCallback: (callback) => callback,
+    useContext: (context) => (context ? context._currentValue : undefined),
+    useId: () => "r:" + Math.random().toString(36).substring(2, 9),
+    useRef: (initialValue) => ({ current: initialValue }),
+    useState: (initial) => [
+      typeof initial === "function" ? initial() : initial,
+      () => {},
+    ],
+    useReducer: (reducer, initial) => [initial, () => {}],
+    useEffect: () => {},
+    useLayoutEffect: () => {},
+    useInsertionEffect: () => {},
+    useDebugValue: () => {},
+  };
+
+  if (target.__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+    target.__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
   }
-  if (!target.useContext) {
-    target.useContext = function (context) {
-      if (!context) return undefined;
-      if (typeof target.use === "function") {
-        try {
-          return target.use(context);
-        } catch {
-          return context._currentValue;
-        }
+  if (target.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+    target.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+  }
+  if (target.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.ReactCurrentDispatcher) {
+    target.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentDispatcher.current = mockDispatcher;
+  }
+
+  target.createContext = function (defaultValue) {
+    const context = {
+      $$typeof: Symbol.for("react.context"),
+      _currentValue: defaultValue,
+      _currentValue2: defaultValue,
+      _threadCount: 0,
+      Provider: null,
+      Consumer: null,
+    };
+    context.Provider = {
+      $$typeof: Symbol.for("react.provider"),
+      _context: context,
+    };
+    context.Consumer = context;
+    return context;
+  };
+
+  target.useContext = function (context) {
+    if (!context) return undefined;
+    if (typeof target.use === "function") {
+      try {
+        return target.use(context);
+      } catch {
+        return context._currentValue;
       }
-      return context._currentValue;
-    };
-  }
-  if (!target.useRef) {
-    target.useRef = function (val) {
-      return { current: val };
-    };
-  }
-  if (!target.useState) {
-    target.useState = function (val) {
-      return [typeof val === "function" ? val() : val, () => {}];
-    };
-  }
-  if (!target.useMemo) {
-    target.useMemo = function (fn) {
-      return fn();
-    };
-  }
-  if (!target.useEffect) target.useEffect = function () {};
-  if (!target.useLayoutEffect) target.useLayoutEffect = function () {};
-  if (!target.useInsertionEffect) target.useInsertionEffect = function () {};
+    }
+    return context._currentValue;
+  };
+
+  target.useMemo = function (fn) {
+    return fn();
+  };
+
+  target.useCallback = function (fn) {
+    return fn;
+  };
+
+  target.useRef = function (val) {
+    return { current: val };
+  };
+
+  target.useState = function (val) {
+    return [typeof val === "function" ? val() : val, () => {}];
+  };
+
+  target.useId = function () {
+    return "r:" + Math.random().toString(36).substring(2, 9);
+  };
+
+  target.useEffect = function () {};
+  target.useLayoutEffect = function () {};
+  target.useInsertionEffect = function () {};
 }
 
 shimReact(React);

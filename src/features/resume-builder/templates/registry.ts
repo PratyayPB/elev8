@@ -3,15 +3,51 @@ import React from "react";
 import { BuilderResumeArtifact } from "../types";
 import { builderToJsonResume } from "../adapters/builder-to-json-resume";
 
-// Polyfill React hooks for Next.js App Router / RSC Webpack server bundles.
+// Polyfill React hooks and dispatcher for Next.js App Router / RSC Webpack server bundles.
 // In Next.js Server Components and route handlers, the server React build (react.react-server)
-// omits client hooks (useContext, createContext, useRef, useState, useEffect).
-// Themes built with styled-components or client hooks crash with "j(...).useContext is not a function"
-// unless these hooks are shimmed on the React module.
+// omits client hooks (useContext, createContext, useRef, useState, useEffect, etc.) and leaves
+// internal hook dispatchers (ReactSharedInternals.H) as null.
+// Themes built with styled-components or client hooks crash with:
+// - "j(...).useContext is not a function"
+// - "Cannot read properties of null (reading 'useMemo')"
+// By mounting a comprehensive mock dispatcher on all internal dispatcher references AND
+// overriding hook methods directly on the React module, styled-components executes
+// seamlessly during renderToStaticMarkup without throwing.
 export function shimReactHooks(targetReact?: any) {
   const target = targetReact || React;
   if (!target) return;
 
+  const mockDispatcher: any = {
+    useMemo: (factory: any) => factory(),
+    useCallback: (callback: any) => callback,
+    useContext: (context: any) => (context ? context._currentValue : undefined),
+    useId: () => "r:" + Math.random().toString(36).substring(2, 9),
+    useRef: (initialValue: any) => ({ current: initialValue }),
+    useState: (initial: any) => [
+      typeof initial === "function" ? initial() : initial,
+      () => {},
+    ],
+    useReducer: (reducer: any, initial: any) => [initial, () => {}],
+    useEffect: () => {},
+    useLayoutEffect: () => {},
+    useInsertionEffect: () => {},
+    useDebugValue: () => {},
+    useTransition: () => [false, (cb: any) => cb()],
+    useDeferredValue: (v: any) => v,
+  };
+
+  // 1. Mount mock dispatcher on React 19 server & client internals
+  if (target.__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+    target.__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+  }
+  if (target.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+    target.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+  }
+  if (target.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.ReactCurrentDispatcher) {
+    target.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentDispatcher.current = mockDispatcher;
+  }
+
+  // 2. Direct hook overrides on the React module object
   if (!target.createContext) {
     target.createContext = function <T>(defaultValue: T) {
       const context: any = {
@@ -19,90 +55,83 @@ export function shimReactHooks(targetReact?: any) {
         _currentValue: defaultValue,
         _currentValue2: defaultValue,
         _threadCount: 0,
-        Provider: null as any,
-        Consumer: null as any,
+        Consumer: {
+          $$typeof: Symbol.for("react.consumer"),
+        },
       };
-      context.Provider = {
-        $$typeof: Symbol.for("react.provider"),
-        _context: context,
-      };
-      context.Consumer = context;
+      context.Provider = context;
+      context.Consumer._context = context;
       return context;
     };
   }
 
-  if (!target.useContext) {
-    target.useContext = function (context: any) {
-      if (!context) return undefined;
-      if (typeof target.use === "function") {
-        try {
-          return target.use(context);
-        } catch {
-          return context._currentValue;
-        }
-      }
-      return context._currentValue;
-    };
-  }
-
-  if (!target.useRef) {
-    target.useRef = function <T>(initialValue: T) {
-      return { current: initialValue };
-    };
-  }
-
-  if (!target.useState) {
-    target.useState = function <T>(initial: T | (() => T)) {
-      const val = typeof initial === "function" ? (initial as Function)() : initial;
-      return [val, () => {}];
-    };
-  }
-
-  if (!target.useMemo) {
-    target.useMemo = function <T>(factory: () => T) {
-      return factory();
-    };
-  }
-
-  if (!target.useCallback) {
-    target.useCallback = function <T extends Function>(callback: T) {
-      return callback;
-    };
-  }
-
-  if (!target.useEffect) {
-    target.useEffect = function () {};
-  }
-
-  if (!target.useLayoutEffect) {
-    target.useLayoutEffect = function () {};
-  }
-
-  if (!target.useInsertionEffect) {
-    target.useInsertionEffect = function () {};
-  }
-
-  if (typeof globalThis !== "undefined") {
-    if (!globalThis.React) {
-      (globalThis as any).React = target;
-    } else {
-      for (const key of [
-        "createContext",
-        "useContext",
-        "useRef",
-        "useState",
-        "useMemo",
-        "useCallback",
-        "useEffect",
-        "useLayoutEffect",
-        "useInsertionEffect",
-      ]) {
-        if (!(globalThis as any).React[key]) {
-          (globalThis as any).React[key] = target[key];
-        }
+  target.useContext = function (context: any) {
+    if (!context) return undefined;
+    if (typeof target.use === "function") {
+      try {
+        return target.use(context);
+      } catch {
+        return context._currentValue;
       }
     }
+    return context._currentValue;
+  };
+
+  target.useMemo = function <T>(factory: () => T): T {
+    return factory();
+  };
+
+  target.useCallback = function <T extends Function>(callback: T): T {
+    return callback;
+  };
+
+  target.useRef = function <T>(initialValue: T): { current: T } {
+    return { current: initialValue };
+  };
+
+  target.useState = function <T>(initial: T | (() => T)): [T, (val: any) => void] {
+    const val = typeof initial === "function" ? (initial as Function)() : initial;
+    return [val, () => {}];
+  };
+
+  target.useId = function (): string {
+    return "r:" + Math.random().toString(36).substring(2, 9);
+  };
+
+  target.useEffect = function () {};
+  target.useLayoutEffect = function () {};
+  target.useInsertionEffect = function () {};
+
+  // 3. Mirror everything onto globalThis for cross-module consistency
+  if (typeof globalThis !== "undefined") {
+    (globalThis as any).React = target;
+    if ((globalThis as any).__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+      (globalThis as any).__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+    }
+    if ((globalThis as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+      (globalThis as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+    }
   }
+
+  // 4. Also mirror onto standard Node require cache if accessible
+  try {
+    const nodeReact = require("react");
+    if (nodeReact && nodeReact !== target) {
+      if (nodeReact.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+        nodeReact.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+      }
+      if (nodeReact.__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+        nodeReact.__SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = mockDispatcher;
+      }
+      nodeReact.useMemo = target.useMemo;
+      nodeReact.useCallback = target.useCallback;
+      nodeReact.useContext = target.useContext;
+      nodeReact.useRef = target.useRef;
+      nodeReact.useState = target.useState;
+      nodeReact.useId = target.useId;
+      nodeReact.createContext = target.createContext;
+    }
+  } catch {}
 }
 
 shimReactHooks(React);
@@ -240,8 +269,20 @@ export async function renderResumeTheme(template: string, jsonResume: any): Prom
     }
   }
 
-  // Re-try with default theme if all else fails
-  const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-  return await fallback(jsonResume);
+  // 3. Fallback to default theme with non-React Handlebars safety net
+  try {
+    const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+    return await fallback(jsonResume);
+  } catch (fallbackErr: any) {
+    console.warn(
+      `[REGISTRY] Fallback theme "academic-cv-lite" failed (${fallbackErr?.message}), trying Handlebars fallback...`
+    );
+    const pureHtmlFallback =
+      RESUME_TEMPLATE_REGISTRY["macchiato"] || RESUME_TEMPLATE_REGISTRY["elegant"];
+    if (pureHtmlFallback) {
+      return await pureHtmlFallback(jsonResume);
+    }
+    throw fallbackErr;
+  }
 }
 
