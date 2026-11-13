@@ -3,12 +3,18 @@ import React from "react";
 import { BuilderResumeArtifact } from "../types";
 import { builderToJsonResume } from "../adapters/builder-to-json-resume";
 
-// Polyfill React and createContext for RSC/Webpack server bundles if missing
-if (typeof React !== "undefined") {
-  if (!React.createContext) {
-    // Basic shim so theme evaluation in RSC does not throw
-    React.createContext = function <T>(defaultValue: T) {
-      const context = {
+// Polyfill React hooks for Next.js App Router / RSC Webpack server bundles.
+// In Next.js Server Components and route handlers, the server React build (react.react-server)
+// omits client hooks (useContext, createContext, useRef, useState, useEffect).
+// Themes built with styled-components or client hooks crash with "j(...).useContext is not a function"
+// unless these hooks are shimmed on the React module.
+export function shimReactHooks(targetReact?: any) {
+  const target = targetReact || React;
+  if (!target) return;
+
+  if (!target.createContext) {
+    target.createContext = function <T>(defaultValue: T) {
+      const context: any = {
         $$typeof: Symbol.for("react.context"),
         _currentValue: defaultValue,
         _currentValue2: defaultValue,
@@ -24,16 +30,82 @@ if (typeof React !== "undefined") {
       return context;
     };
   }
+
+  if (!target.useContext) {
+    target.useContext = function (context: any) {
+      if (!context) return undefined;
+      if (typeof target.use === "function") {
+        try {
+          return target.use(context);
+        } catch {
+          return context._currentValue;
+        }
+      }
+      return context._currentValue;
+    };
+  }
+
+  if (!target.useRef) {
+    target.useRef = function <T>(initialValue: T) {
+      return { current: initialValue };
+    };
+  }
+
+  if (!target.useState) {
+    target.useState = function <T>(initial: T | (() => T)) {
+      const val = typeof initial === "function" ? (initial as Function)() : initial;
+      return [val, () => {}];
+    };
+  }
+
+  if (!target.useMemo) {
+    target.useMemo = function <T>(factory: () => T) {
+      return factory();
+    };
+  }
+
+  if (!target.useCallback) {
+    target.useCallback = function <T extends Function>(callback: T) {
+      return callback;
+    };
+  }
+
+  if (!target.useEffect) {
+    target.useEffect = function () {};
+  }
+
+  if (!target.useLayoutEffect) {
+    target.useLayoutEffect = function () {};
+  }
+
+  if (!target.useInsertionEffect) {
+    target.useInsertionEffect = function () {};
+  }
+
+  if (typeof globalThis !== "undefined") {
+    if (!globalThis.React) {
+      (globalThis as any).React = target;
+    } else {
+      for (const key of [
+        "createContext",
+        "useContext",
+        "useRef",
+        "useState",
+        "useMemo",
+        "useCallback",
+        "useEffect",
+        "useLayoutEffect",
+        "useInsertionEffect",
+      ]) {
+        if (!(globalThis as any).React[key]) {
+          (globalThis as any).React[key] = target[key];
+        }
+      }
+    }
+  }
 }
 
-if (typeof globalThis !== "undefined") {
-  if (!(globalThis as any).React) {
-    (globalThis as any).React = React;
-  }
-  if ((globalThis as any).React && !(globalThis as any).React.createContext) {
-    (globalThis as any).React.createContext = React.createContext;
-  }
-}
+shimReactHooks(React);
 
 export type ThemeRenderer = (resume: any) => string | Promise<string>;
 
@@ -134,12 +206,28 @@ export const RESUME_TEMPLATE_REGISTRY: Record<string, ThemeRenderer> = {
 };
 
 /**
- * Universal theme renderer that dispatches to the isolated Node worker when running on a Node.js server,
- * avoiding Next.js RSC Webpack bundle limitations where createContext / useContext is stripped.
- * Falls back to in-process rendering if the worker cannot be invoked.
+ * Universal theme renderer that uses direct in-process rendering with comprehensive
+ * RSC React hook shims, with isolated Node worker fallback.
  */
 export async function renderResumeTheme(template: string, jsonResume: any): Promise<string> {
-  // 1. Primary server path: isolated child process with unbundled Node runtime
+  // Always ensure RSC React hooks (useContext, createContext, useRef, etc.) are shimmed before render
+  shimReactHooks(React);
+
+  const renderer = RESUME_TEMPLATE_REGISTRY[template] || RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+  if (!renderer) {
+    throw new Error(`Template not found: ${template}`);
+  }
+
+  // 1. Direct in-process rendering (fastest, robust with hook shims)
+  try {
+    return await renderer(jsonResume);
+  } catch (inProcessErr: any) {
+    console.warn(
+      `[REGISTRY] In-process rendering for "${template}" failed (${inProcessErr?.message}), trying worker fallback...`
+    );
+  }
+
+  // 2. Secondary path: isolated worker fallback if in-process encounters runtime restrictions
   const isServer = typeof window === "undefined";
   if (isServer) {
     try {
@@ -147,25 +235,13 @@ export async function renderResumeTheme(template: string, jsonResume: any): Prom
       return await renderThemeInNodeWorker({ template, jsonResume });
     } catch (workerErr: any) {
       console.warn(
-        `[REGISTRY] Worker execution for "${template}" failed (${workerErr?.message}), trying in-process renderer...`
+        `[REGISTRY] Worker execution for "${template}" also failed (${workerErr?.message}), falling back to default theme...`
       );
     }
   }
 
-  // 2. In-process rendering (used on client or as fallback if worker is unavailable)
-  const renderer = RESUME_TEMPLATE_REGISTRY[template] || RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-  if (!renderer) {
-    throw new Error(`Template not found: ${template}`);
-  }
-  
-  try {
-    return await renderer(jsonResume);
-  } catch (inProcessErr: any) {
-    console.warn(
-      `[REGISTRY] In-process rendering for "${template}" failed (${inProcessErr?.message}), falling back to default theme...`
-    );
-    const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-    return await fallback(jsonResume);
-  }
+  // Re-try with default theme if all else fails
+  const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+  return await fallback(jsonResume);
 }
 

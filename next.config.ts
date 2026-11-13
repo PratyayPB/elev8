@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -51,8 +50,9 @@ const nextConfig: NextConfig = {
     "@jsonresume/jsonresume-theme-consultant-polished",
     "@jsonresume/jsonresume-theme-creative-studio",
     "@jsonresume/types",
-    "@jsonresume/utils"
+    "@jsonresume/utils",
   ],
 };
 
 export default nextConfig;
+
