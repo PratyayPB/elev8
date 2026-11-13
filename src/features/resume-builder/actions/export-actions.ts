@@ -90,28 +90,51 @@ export async function switchResumeTemplateAction(
       type: JobType.RESUME_BUILD,
     });
 
-    const handle = await tasks.trigger<typeof compileResumeTemplateTask>(
-      "compile-resume-template",
-      {
-        resumeId,
-        userId: user.id,
-        jobId: job.id,
-        template: newTemplate,
-      }
-    );
+    let triggerRunId: string | undefined;
+    let publicAccessToken: string | undefined;
 
-    await prisma.job.update({
-      where: { id: job.id },
-      data: { triggerRunId: handle.id },
-    });
+    try {
+      const handle = await tasks.trigger<typeof compileResumeTemplateTask>(
+        "compile-resume-template",
+        {
+          resumeId,
+          userId: user.id,
+          jobId: job.id,
+          template: newTemplate,
+        }
+      );
 
-    const publicAccessToken = await RealtimeTokenService.mintRunToken({
-      triggerRunId: handle.id,
-    });
+      triggerRunId = handle.id;
+
+      await prisma.job.update({
+        where: { id: job.id },
+        data: { triggerRunId: handle.id },
+      });
+
+      publicAccessToken = await RealtimeTokenService.mintRunToken({
+        triggerRunId: handle.id,
+      }).catch((tokenErr) => {
+        console.warn("[switchResumeTemplateAction] Failed to mint public token:", tokenErr);
+        return undefined;
+      });
+    } catch (triggerError) {
+      console.warn(
+        "[Trigger.dev] Cloud trigger failed or no matching branch env, executing local template update fallback:",
+        triggerError
+      );
+
+      // Local fallback: update template directly in DB and mark job complete
+      await prisma.resumeBuild.update({
+        where: { id: resumeId },
+        data: { template: newTemplate },
+      });
+
+      await JobService.completeJob(job.id, resumeId, "RESUME_BUILD");
+    }
 
     return {
       jobId: job.id,
-      triggerRunId: handle.id,
+      triggerRunId,
       publicAccessToken,
     };
   });

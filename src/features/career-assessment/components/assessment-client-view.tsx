@@ -355,13 +355,14 @@ export function AssessmentClientView({
 
           {/* Audit & Metadata Snapshot Footer */}
           <div className="pt-6 border-t border-border-subtle flex flex-wrap items-center justify-between gap-4 text-[11px] font-sans text-text-muted">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <Cpu className="h-3 w-3" />
-                Engine: {assessment!.model}
-              </span>
-            </div>
-            <span>Snapshot ID: {assessment!.id}</span>
+            <span className="flex items-center gap-1.5">
+              <Cpu className="h-3 w-3" />
+              Engine: {assessment!.model}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" />
+              Evaluated on {new Date(assessment!.createdAt).toLocaleDateString()}
+            </span>
           </div>
         </div>
       )}

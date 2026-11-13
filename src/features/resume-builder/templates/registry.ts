@@ -134,10 +134,25 @@ export const RESUME_TEMPLATE_REGISTRY: Record<string, ThemeRenderer> = {
 };
 
 /**
- * Universal theme renderer that dispatches to the isolated Node worker when running in a Node.js server,
- * avoiding Next.js RSC Webpack bundle limitations where createContext is stripped.
+ * Universal theme renderer that uses direct in-process rendering first via serverExternalPackages,
+ * with isolated Node child-process fallback.
  */
 export async function renderResumeTheme(template: string, jsonResume: any): Promise<string> {
+  const renderer = RESUME_TEMPLATE_REGISTRY[template] || RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+  if (!renderer) {
+    throw new Error(`Template not found: ${template}`);
+  }
+
+  // 1. Primary path: direct in-process rendering (native Node module via serverExternalPackages)
+  try {
+    return await renderer(jsonResume);
+  } catch (inProcessErr: any) {
+    console.warn(
+      `[REGISTRY] In-process rendering for "${template}" failed (${inProcessErr?.message}), trying worker fallback...`
+    );
+  }
+
+  // 2. Secondary path: isolated worker fallback if in-process encounters runtime restrictions
   const isServer = typeof window === "undefined";
   if (isServer) {
     try {
@@ -145,15 +160,13 @@ export async function renderResumeTheme(template: string, jsonResume: any): Prom
       return await renderThemeInNodeWorker({ template, jsonResume });
     } catch (workerErr: any) {
       console.warn(
-        `[REGISTRY] Worker execution for "${template}" failed (${workerErr?.message}), trying in-process renderer...`
+        `[REGISTRY] Worker execution for "${template}" also failed (${workerErr?.message})`
       );
     }
   }
 
-  const renderer = RESUME_TEMPLATE_REGISTRY[template] || RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-  if (!renderer) {
-    throw new Error(`Template not found: ${template}`);
-  }
-  return await renderer(jsonResume);
+  // Re-try with fallback theme if all else fails
+  const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+  return await fallback(jsonResume);
 }
 
