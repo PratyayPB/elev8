@@ -29,6 +29,12 @@ const nextConfig: NextConfig = {
     "jsonresume-theme-macchiato",
     "jsonresume-theme-elegant",
     "jsonresume-theme-even",
+    "ably",
+  ],
+  outputFileTracingIncludes: {
+    "/api/builder/preview": ["./src/features/resume-builder/workers/**/*"],
+  },
+  transpilePackages: [
     "jsonresume-theme-academic-cv-lite",
     "jsonresume-theme-architects-portfolio",
     "jsonresume-theme-art-deco",
@@ -45,11 +51,8 @@ const nextConfig: NextConfig = {
     "@jsonresume/jsonresume-theme-consultant-polished",
     "@jsonresume/jsonresume-theme-creative-studio",
     "@jsonresume/types",
-    "@jsonresume/utils",
-    "styled-components",
-    "ably",
+    "@jsonresume/utils"
   ],
-  transpilePackages: [],
 };
 
 export default nextConfig;

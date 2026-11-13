@@ -134,25 +134,12 @@ export const RESUME_TEMPLATE_REGISTRY: Record<string, ThemeRenderer> = {
 };
 
 /**
- * Universal theme renderer that uses direct in-process rendering first via serverExternalPackages,
- * with isolated Node child-process fallback.
+ * Universal theme renderer that dispatches to the isolated Node worker when running on a Node.js server,
+ * avoiding Next.js RSC Webpack bundle limitations where createContext / useContext is stripped.
+ * Falls back to in-process rendering if the worker cannot be invoked.
  */
 export async function renderResumeTheme(template: string, jsonResume: any): Promise<string> {
-  const renderer = RESUME_TEMPLATE_REGISTRY[template] || RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-  if (!renderer) {
-    throw new Error(`Template not found: ${template}`);
-  }
-
-  // 1. Primary path: direct in-process rendering (native Node module via serverExternalPackages)
-  try {
-    return await renderer(jsonResume);
-  } catch (inProcessErr: any) {
-    console.warn(
-      `[REGISTRY] In-process rendering for "${template}" failed (${inProcessErr?.message}), trying worker fallback...`
-    );
-  }
-
-  // 2. Secondary path: isolated worker fallback if in-process encounters runtime restrictions
+  // 1. Primary server path: isolated child process with unbundled Node runtime
   const isServer = typeof window === "undefined";
   if (isServer) {
     try {
@@ -160,13 +147,25 @@ export async function renderResumeTheme(template: string, jsonResume: any): Prom
       return await renderThemeInNodeWorker({ template, jsonResume });
     } catch (workerErr: any) {
       console.warn(
-        `[REGISTRY] Worker execution for "${template}" also failed (${workerErr?.message})`
+        `[REGISTRY] Worker execution for "${template}" failed (${workerErr?.message}), trying in-process renderer...`
       );
     }
   }
 
-  // Re-try with fallback theme if all else fails
-  const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
-  return await fallback(jsonResume);
+  // 2. In-process rendering (used on client or as fallback if worker is unavailable)
+  const renderer = RESUME_TEMPLATE_REGISTRY[template] || RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+  if (!renderer) {
+    throw new Error(`Template not found: ${template}`);
+  }
+  
+  try {
+    return await renderer(jsonResume);
+  } catch (inProcessErr: any) {
+    console.warn(
+      `[REGISTRY] In-process rendering for "${template}" failed (${inProcessErr?.message}), falling back to default theme...`
+    );
+    const fallback = RESUME_TEMPLATE_REGISTRY["academic-cv-lite"];
+    return await fallback(jsonResume);
+  }
 }
 

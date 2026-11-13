@@ -1,10 +1,32 @@
 import path from "path";
+import fs from "fs";
 import { fork } from "child_process";
 
 export interface RenderThemeOptions {
   template: string;
   jsonResume: any;
   timeoutMs?: number;
+}
+
+/**
+ * Finds the worker script across different runtime environments (local vs. Vercel serverless Lambda)
+ */
+function resolveWorkerPath(): string {
+  const candidatePaths = [
+    path.resolve(process.cwd(), "src/features/resume-builder/workers/theme-worker.cjs"),
+    path.resolve(__dirname, "theme-worker.cjs"),
+    path.resolve(__dirname, "../../workers/theme-worker.cjs"),
+    path.resolve(process.cwd(), ".next/server/chunks/theme-worker.cjs"),
+  ];
+
+  for (const candidate of candidatePaths) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  // Fallback to primary expected path
+  return candidatePaths[0];
 }
 
 /**
@@ -19,10 +41,7 @@ export async function renderThemeInNodeWorker({
 }: RenderThemeOptions): Promise<string> {
   return new Promise((resolve, reject) => {
     // Resolve absolute path to worker script
-    const workerPath = path.resolve(
-      process.cwd(),
-      "src/features/resume-builder/workers/theme-worker.cjs"
-    );
+    const workerPath = resolveWorkerPath();
 
     let child: ReturnType<typeof fork> | null = null;
     let timer: NodeJS.Timeout | null = null;

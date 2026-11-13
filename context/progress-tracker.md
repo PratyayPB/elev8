@@ -9,9 +9,11 @@ Phase 7: User Onboarding & Dashboard System
 Phase 7.2: Release & Production Verification
 
 ## Completed
-- [x] **Resume Builder Live Preview & Template Switch Resilience Fix**:
-  - Moved all `jsonresume-theme-*` and `@jsonresume/*` packages, along with `styled-components`, into `serverExternalPackages` in [`next.config.ts`](file:///d:/Portfolio-projects/elev8-prod/next.config.ts) and removed them from `transpilePackages`. This prevents Next.js RSC Webpack compilation from stripping React hooks like `useContext`, fixing the `TypeError: j(...).useContext is not a function` 500 error in `POST /api/builder/preview`.
-  - Inverted dispatch flow in [`src/features/resume-builder/templates/registry.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/templates/registry.ts) to execute direct in-process rendering first via externalized native modules, retaining the isolated worker as a fallback.
+- [x] **Resume Builder Live Preview & Template Switch Production Fix**:
+  - Restored `transpilePackages` in [`next.config.ts`](file:///d:/Portfolio-projects/elev8-prod/next.config.ts) for `jsonresume-theme-*` and `@jsonresume/*` packages, resolving the Vercel build failure (`Module parse failed: Unexpected token in node_modules/jsonresume-theme-.../src/index.jsx`).
+  - Added `outputFileTracingIncludes` in [`next.config.ts`](file:///d:/Portfolio-projects/elev8-prod/next.config.ts) for `/api/builder/preview` targeting `./src/features/resume-builder/workers/**/*` to ensure `theme-worker.cjs` is traced into Vercel Lambda serverless function bundles.
+  - Enhanced [`src/features/resume-builder/workers/node-theme-renderer.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/workers/node-theme-renderer.ts) with `resolveWorkerPath()`, evaluating multiple candidate paths across both local and Vercel serverless environments (`process.cwd()`, `__dirname`, etc.).
+  - Set the isolated Node worker as the primary server execution path in [`src/features/resume-builder/templates/registry.ts`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/templates/registry.ts) with graceful in-process fallback, completely eliminating Next.js React 19 RSC `j(...).useContext is not a function` errors.
   - Added robust local fallback to [`switchResumeTemplateAction`](file:///d:/Portfolio-projects/elev8-prod/src/features/resume-builder/actions/export-actions.ts): catches `TriggerApiError: No matching branch env` or dispatch failures, directly updates the resume's template in Prisma, marks the job complete, and prevents the red error toast in the UI.
 - [x] **Production Global Catalog & SSR localStorage Safety Fix**:
   - Resolved `ExperimentalWarning: localStorage is not available because --localstorage-file was not provided` in [`src/store/workflow.store.ts`](file:///d:/Portfolio-projects/elev8-prod/src/store/workflow.store.ts) by implementing an SSR-safe browser storage fallback for Zustand `persist` storage.
