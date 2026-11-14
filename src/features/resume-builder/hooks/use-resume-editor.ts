@@ -109,9 +109,9 @@ export function useResumeEditor({
       setSaveStatus("saved");
 
       // Clear local draft write-ahead log upon successful server save
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && window.localStorage) {
         try {
-          localStorage.removeItem(draftKey);
+          window.localStorage.removeItem(draftKey);
         } catch {}
       }
 
@@ -134,9 +134,9 @@ export function useResumeEditor({
 
   // Check for unsaved local draft on initial mount
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !window.localStorage) return;
     try {
-      const raw = localStorage.getItem(draftKey);
+      const raw = window.localStorage.getItem(draftKey);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.artifact) {
@@ -159,9 +159,9 @@ export function useResumeEditor({
 
   // Sync dirty draft to localStorage write-ahead log
   useEffect(() => {
-    if (saveStatus === "dirty" && typeof window !== "undefined") {
+    if (saveStatus === "dirty" && typeof window !== "undefined" && window.localStorage) {
       try {
-        localStorage.setItem(
+        window.localStorage.setItem(
           draftKey,
           JSON.stringify({
             artifact,

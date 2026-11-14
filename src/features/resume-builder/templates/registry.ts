@@ -20,7 +20,19 @@ export function shimReactHooks(targetReact?: any) {
   const mockDispatcher: any = {
     useMemo: (factory: any) => factory(),
     useCallback: (callback: any) => callback,
-    useContext: (context: any) => (context ? context._currentValue : undefined),
+    useContext: (context: any) =>
+      context
+        ? context._currentValue2 !== undefined
+          ? context._currentValue2
+          : context._currentValue
+        : undefined,
+    use: (usable: any) => {
+      if (usable && typeof usable === "object") {
+        if (usable._currentValue2 !== undefined) return usable._currentValue2;
+        if (usable._currentValue !== undefined) return usable._currentValue;
+      }
+      return usable;
+    },
     useId: () => "r:" + Math.random().toString(36).substring(2, 9),
     useRef: (initialValue: any) => ({ current: initialValue }),
     useState: (initial: any) => [
@@ -67,14 +79,21 @@ export function shimReactHooks(targetReact?: any) {
 
   target.useContext = function (context: any) {
     if (!context) return undefined;
-    if (typeof target.use === "function") {
-      try {
-        return target.use(context);
-      } catch {
-        return context._currentValue;
-      }
+    if (context._currentValue2 !== undefined) {
+      return context._currentValue2;
     }
-    return context._currentValue;
+    if (context._currentValue !== undefined) {
+      return context._currentValue;
+    }
+    return undefined;
+  };
+
+  target.use = function (usable: any) {
+    if (usable && typeof usable === "object") {
+      if (usable._currentValue2 !== undefined) return usable._currentValue2;
+      if (usable._currentValue !== undefined) return usable._currentValue;
+    }
+    return usable;
   };
 
   target.useMemo = function <T>(factory: () => T): T {
@@ -126,6 +145,7 @@ export function shimReactHooks(targetReact?: any) {
       nodeReact.useMemo = target.useMemo;
       nodeReact.useCallback = target.useCallback;
       nodeReact.useContext = target.useContext;
+      nodeReact.use = target.use;
       nodeReact.useRef = target.useRef;
       nodeReact.useState = target.useState;
       nodeReact.useId = target.useId;

@@ -117,11 +117,22 @@ export async function switchResumeTemplateAction(
         console.warn("[switchResumeTemplateAction] Failed to mint public token:", tokenErr);
         return undefined;
       });
-    } catch (triggerError) {
-      console.warn(
-        "[Trigger.dev] Cloud trigger failed or no matching branch env, executing local template update fallback:",
-        triggerError
-      );
+    } catch (triggerError: any) {
+      const isBranchEnv =
+        triggerError?.message?.includes("No matching branch env") ||
+        triggerError?.error === "No matching branch env" ||
+        triggerError?.status === 401;
+
+      if (isBranchEnv) {
+        console.info(
+          `[Trigger.dev] Branch environment not configured on Trigger.dev cloud (${triggerError?.message || "No matching branch env"}), applying local template update fallback for "${newTemplate}".`
+        );
+      } else {
+        console.warn(
+          "[Trigger.dev] Cloud trigger failed, executing local template update fallback:",
+          triggerError?.message || triggerError
+        );
+      }
 
       // Local fallback: update template directly in DB and mark job complete
       await prisma.resumeBuild.update({

@@ -4,20 +4,28 @@ const vite = require("vite");
 
 async function buildTheme(themeName) {
   const root = process.cwd();
-  const themeDir = path.join(root, "node_modules", "jsonresume-theme-" + themeName);
+  const isScoped = themeName.startsWith("@");
+  const themeDir = isScoped
+    ? path.join(root, "node_modules", themeName)
+    : path.join(root, "node_modules", "jsonresume-theme-" + themeName);
 
   if (!fs.existsSync(themeDir)) {
     console.log(`[build-themes] Skipping ${themeName} - not found in node_modules`);
     return;
   }
 
-  const indexJsx = path.join(themeDir, "index.jsx");
-  if (!fs.existsSync(indexJsx)) {
+  let entry = path.join(themeDir, "index.jsx");
+  if (!fs.existsSync(entry)) {
+    entry = path.join(themeDir, "src", "index.jsx");
+  }
+
+  if (!fs.existsSync(entry)) {
+    console.log(`[build-themes] Skipping ${themeName} - no index.jsx or src/index.jsx found`);
     return;
   }
 
   const outDir = path.join(themeDir, "dist");
-  console.log(`[build-themes] Building ${themeName} to ${outDir}...`);
+  console.log(`[build-themes] Building ${themeName} from ${path.relative(root, entry)} to ${path.relative(root, outDir)}...`);
 
   await vite.build({
     configFile: false,
@@ -29,7 +37,7 @@ async function buildTheme(themeName) {
       emptyOutDir: true,
       minify: false,
       lib: {
-        entry: indexJsx,
+        entry,
         formats: ["es"],
         fileName: "index",
       },
@@ -55,13 +63,33 @@ async function buildTheme(themeName) {
       import: "./dist/index.js",
       default: "./dist/index.js",
     },
+    "./dist": {
+      import: "./dist/index.js",
+      default: "./dist/index.js",
+    },
   };
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
   console.log(`[build-themes] Successfully compiled and linked ${themeName}`);
 }
 
 async function main() {
-  const themes = ["brutalist", "art-school-modern", "art-deco"];
+  const themes = [
+    "brutalist",
+    "art-school-modern",
+    "art-deco",
+    "academic-cv-lite",
+    "developer-mono",
+    "government-standard",
+    "architects-portfolio",
+    "minimalist-grid",
+    "nordic-minimal",
+    "desert-modern",
+    "sidebar",
+    "executive-slate",
+    "@jsonresume/jsonresume-theme-consultant-polished",
+    "@jsonresume/jsonresume-theme-creative-studio",
+  ];
+
   for (const theme of themes) {
     try {
       await buildTheme(theme);

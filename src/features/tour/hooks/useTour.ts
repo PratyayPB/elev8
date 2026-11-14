@@ -29,8 +29,9 @@ export function useOnboarding() {
   // Initialize from localStorage
   useEffect(() => {
     setIsClient(true);
+    if (typeof window === "undefined" || !window.localStorage) return;
     try {
-      const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      const stored = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as OnboardingState;
         if (parsed.version === ONBOARDING_VERSION) {
@@ -51,8 +52,12 @@ export function useOnboarding() {
 
   const persistState = useCallback((newState: OnboardingState) => {
     setState(newState);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(newState));
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        window.localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(newState));
+      } catch (err) {
+        console.error("Failed to persist onboarding state", err);
+      }
     }
   }, []);
 

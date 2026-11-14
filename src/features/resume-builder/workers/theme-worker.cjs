@@ -9,7 +9,19 @@ function shimReact(target) {
   const mockDispatcher = {
     useMemo: (factory) => factory(),
     useCallback: (callback) => callback,
-    useContext: (context) => (context ? context._currentValue : undefined),
+    useContext: (context) =>
+      context
+        ? context._currentValue2 !== undefined
+          ? context._currentValue2
+          : context._currentValue
+        : undefined,
+    use: (usable) => {
+      if (usable && typeof usable === "object") {
+        if (usable._currentValue2 !== undefined) return usable._currentValue2;
+        if (usable._currentValue !== undefined) return usable._currentValue;
+      }
+      return usable;
+    },
     useId: () => "r:" + Math.random().toString(36).substring(2, 9),
     useRef: (initialValue) => ({ current: initialValue }),
     useState: (initial) => [
@@ -52,14 +64,21 @@ function shimReact(target) {
 
   target.useContext = function (context) {
     if (!context) return undefined;
-    if (typeof target.use === "function") {
-      try {
-        return target.use(context);
-      } catch {
-        return context._currentValue;
-      }
+    if (context._currentValue2 !== undefined) {
+      return context._currentValue2;
     }
-    return context._currentValue;
+    if (context._currentValue !== undefined) {
+      return context._currentValue;
+    }
+    return undefined;
+  };
+
+  target.use = function (usable) {
+    if (usable && typeof usable === "object") {
+      if (usable._currentValue2 !== undefined) return usable._currentValue2;
+      if (usable._currentValue !== undefined) return usable._currentValue;
+    }
+    return usable;
   };
 
   target.useMemo = function (fn) {
